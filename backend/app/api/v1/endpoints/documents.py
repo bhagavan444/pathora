@@ -20,6 +20,7 @@ SUPPORTED_TYPES = [
 
 @router.post("/upload")
 async def upload_document(
+    background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(...)
 ):
     """
@@ -45,8 +46,11 @@ async def upload_document(
         # For local execution, we'll read bytes to pass to Celery or save locally.
         content = await file.read()
         
-        # Dispatch to robust Celery background worker
-        process_document.delay(doc_id, file.filename, content_type, content)
+        # Dispatch to robust Celery background worker if available, otherwise run synchronously via background tasks
+        if hasattr(process_document, "delay"):
+            process_document.delay(doc_id, file.filename, content_type, content)
+        else:
+            background_tasks.add_task(process_document, doc_id, file.filename, content_type, content)
         
         uploaded_docs.append({"doc_id": doc_id, "filename": file.filename, "status": "queued_for_intelligence"})
         
