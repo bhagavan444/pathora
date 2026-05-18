@@ -6,8 +6,11 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
+  GoogleAuthProvider
 } from "firebase/auth";
-import { auth, googleProvider } from "../firebase";
+import { auth } from "../firebase";
+
+const googleProvider = new GoogleAuthProvider();
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import './Login.css';
