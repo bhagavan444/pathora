@@ -579,9 +579,16 @@ export default function Predict() {
       setResult(normalise(mappedResult));
       setAnimScore(0);
     } catch (err) {
-      console.warn("API unavailable — rendering demo data:", err?.message);
-      setResult(normalise(MOCK_RESULT));
-      setAnimScore(0);
+      console.error("API Error:", err);
+      if (err.response) {
+        if (err.response.status === 404) setErrorMsg("Intelligence API not found (404). Check API routes.");
+        else if (err.response.status >= 500) setErrorMsg("Intelligence core is currently unavailable (Backend Error).");
+        else setErrorMsg(`Analysis failed: ${err.response.data?.detail || err.message}`);
+      } else if (err.request) {
+        setErrorMsg("Network error: Unable to reach the intelligence core. Please check your connection.");
+      } else {
+        setErrorMsg(`Error: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }

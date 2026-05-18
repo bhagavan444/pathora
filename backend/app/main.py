@@ -17,22 +17,24 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Set up CORS
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
 from app.middleware.telemetry import TelemetryMiddleware
 from app.middleware.security import SecurityMiddleware
 
 # Add custom middlewares
 app.add_middleware(SecurityMiddleware)
 app.add_middleware(TelemetryMiddleware)
+
+# Set up CORS - Add last so it's the outermost middleware (executed first)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://carrer-intelligence.vercel.app",
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Metrics - Prometheus Instrumentator
 Instrumentator().instrument(app).expose(app, include_in_schema=False)

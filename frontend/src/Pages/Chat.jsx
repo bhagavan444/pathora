@@ -685,7 +685,7 @@ export default function ChatUI() {
   // ── API ────────────────────────────────────────────────────────────────────
   const fetchChats = async () => {
     try {
-      const r = await fetch(`${API_BASE}/chats`);
+      const r = await fetch(`${API_BASE}/chat/chats`);
       if (!r.ok) throw new Error();
       const d = await r.json();
       const list = (d.sessions || []).reverse().map((s) => ({
@@ -707,7 +707,7 @@ export default function ChatUI() {
       setError(null);
       setUserScrolled(false);
       if (window.innerWidth < 768) setSidebarOpen(false);
-      const r = await fetch(`${API_BASE}/chats/${_id}`);
+      const r = await fetch(`${API_BASE}/chat/chats/${_id}`);
       if (!r.ok) throw new Error();
       const d = await r.json();
       setMessages(d.messages || []);
@@ -724,7 +724,7 @@ export default function ChatUI() {
   const handleNewChat = async () => {
     try {
       setError(null);
-      const r = await fetch(`${API_BASE}/chats`, {
+      const r = await fetch(`${API_BASE}/chat/chats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: "New chat", reply: "Started" }),
@@ -805,11 +805,16 @@ export default function ChatUI() {
         fd.append("chat_id", currentSessionId);
         attachedFiles.forEach((f) => fd.append("files", f));
         
-        await fetch(`${API_BASE}/documents/upload`, { 
+        const uploadRes = await fetch(`${API_BASE}/documents/upload`, { 
           method: "POST", 
           body: fd,
           signal 
         });
+        if (!uploadRes.ok) {
+          if (uploadRes.status === 404) throw new Error("Document upload endpoint not found (404).");
+          if (uploadRes.status >= 500) throw new Error("Intelligence core is currently unavailable (Backend Error).");
+          throw new Error(`Failed to upload files: ${uploadRes.status}`);
+        }
       }
 
       // 2. Stream SSE Response from Intelligence Engine
@@ -820,7 +825,11 @@ export default function ChatUI() {
         signal
       });
 
-      if (!res.ok) throw new Error("API error during streaming request.");
+      if (!res.ok) {
+        if (res.status === 404) throw new Error("Streaming endpoint not found (404). Check API routes.");
+        if (res.status >= 500) throw new Error("Intelligence core is currently unavailable (Backend Error).");
+        throw new Error(`API error during streaming request: ${res.statusText || res.status}`);
+      }
       
       clearInterval(thinkingInterval);
       setMessages((c) => c.map((m) => (m.id === aid ? { ...m, isThinking: false } : m)));
@@ -890,7 +899,7 @@ export default function ChatUI() {
 
   const delSession = async (_id) => {
     try {
-      await fetch(`${API_BASE}/chats/${_id}`, { method: "DELETE" });
+      await fetch(`${API_BASE}/chat/chats/${_id}`, { method: "DELETE" });
       if (chatId === _id) { setChatId(null); setMessages([]); }
       setTabs((prev) => prev.filter((t) => t.id !== _id));
       await fetchChats();
@@ -902,7 +911,7 @@ export default function ChatUI() {
 
   const delAll = async () => {
     try {
-      await fetch(`${API_BASE}/chats`, { method: "DELETE" });
+      await fetch(`${API_BASE}/chat/chats`, { method: "DELETE" });
       setChatId(null);
       setMessages([]);
       setTabs([]);

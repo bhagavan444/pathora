@@ -7,7 +7,11 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "https://pathora-intelligence.vercel.app", "https://pathora-backend1.onrender.com"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "https://carrer-intelligence.vercel.app",
+        "http://localhost:5173",
+        "https://pathora-backend1.onrender.com"
+    ]
     
     # Security
     SECRET_KEY: str
