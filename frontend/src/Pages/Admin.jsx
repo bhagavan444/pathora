@@ -6,7 +6,7 @@ import {
 } from "recharts";
 
 /* ================= CONFIG ================= */
-const ADMIN_EMAIL = "admin@pathnex.com";
+const ADMIN_EMAIL = "admin@pathora.com";
 const ADMIN_PASSWORD = "admin123";
 const DOMAINS = ["tech", "data", "ai", "cloud", "business"];
 const LEVELS = ["easy", "medium", "hard"];
@@ -127,7 +127,7 @@ function AdminLogin({ onAuth }) {
               Admin Portal
             </h2>
             <p style={{ color: "#64748B", fontSize: "14px" }}>
-              Secure access to PathNex operations
+              Secure access to Pathora operations
             </p>
           </div>
 
@@ -137,7 +137,7 @@ function AdminLogin({ onAuth }) {
             </label>
             <input
               type="email"
-              placeholder="admin@pathnex.com"
+              placeholder="admin@pathora.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
               style={{
@@ -472,7 +472,7 @@ function AdminDashboard({ onLogout }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `pathnex-questions-${new Date().toISOString().slice(0,10)}.json`;
+    link.download = `pathora-questions-${new Date().toISOString().slice(0,10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
     showToast("Database exported successfully");
@@ -565,7 +565,7 @@ function AdminDashboard({ onLogout }) {
                 </div>
                 <div>
                   <h2 style={{ fontSize: "16px", fontWeight: "700", color: "#1E293B", margin: 0 }}>
-                    PathNex
+                    Pathora
                   </h2>
                   <p style={{ fontSize: "11px", color: "#64748B", margin: 0 }}>Admin Portal</p>
                 </div>

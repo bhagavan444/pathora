@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import "./Quiz.css";
 
 /* ======================================================
    MASTER QUESTION BANK (150 questions across 9 domains)
@@ -724,319 +725,90 @@ export default function Quiz() {
   /* ======================
      GLOBAL STYLES
   ======================= */
-  
-  // Import Google Fonts for cursive headings
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-    
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []);
-
-  const globalStyles = {
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    WebkitFontSmoothing: 'antialiased',
-    MozOsxFontSmoothing: 'grayscale',
-  };
-
-  const headingStyles = {
-    fontFamily: "'Playfair Display', 'Dancing Script', serif",
-    fontStyle: 'italic',
-  };
-
-  const containerStyle = {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-    padding: '24px',
-    ...globalStyles,
-  };
 
   /* ======================
      RENDER: DOMAIN SELECTION
   ======================= */
   if (stage === "selection") {
     return (
-      <div style={containerStyle}>
+      <div className="quiz-wrap">
+        <div className="quiz-grid-bg" />
         <MagneticCursor />
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          paddingTop: '60px',
-        }}>
-          {/* Header */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '64px',
-            animation: 'fadeInDown 0.8s ease-out',
-          }}>
-            <style>{`
-              @keyframes fadeInDown {
-                from {
-                  opacity: 0;
-                  transform: translateY(-30px);
-                }
-                to {
-                  opacity: 1;
-                  transform: translateY(0);
-                }
-              }
-              
-              @keyframes fadeInUp {
-                from {
-                  opacity: 0;
-                  transform: translateY(30px);
-                }
-                to {
-                  opacity: 1;
-                  transform: translateY(0);
-                }
-              }
-              
-              @keyframes scaleIn {
-                from {
-                  opacity: 0;
-                  transform: scale(0.9);
-                }
-                to {
-                  opacity: 1;
-                  transform: scale(1);
-                }
-              }
-              
-              @keyframes slideInLeft {
-                from {
-                  opacity: 0;
-                  transform: translateX(-30px);
-                }
-                to {
-                  opacity: 1;
-                  transform: translateX(0);
-                }
-              }
-              
-              @keyframes pulse {
-                0%, 100% {
-                  transform: scale(1);
-                }
-                50% {
-                  transform: scale(1.05);
-                }
-              }
-              
-              .domain-card {
-                animation: scaleIn 0.5s ease-out;
-                animation-fill-mode: both;
-              }
-              
-              .domain-card:nth-child(1) { animation-delay: 0.1s; }
-              .domain-card:nth-child(2) { animation-delay: 0.15s; }
-              .domain-card:nth-child(3) { animation-delay: 0.2s; }
-              .domain-card:nth-child(4) { animation-delay: 0.25s; }
-              .domain-card:nth-child(5) { animation-delay: 0.3s; }
-              .domain-card:nth-child(6) { animation-delay: 0.35s; }
-              .domain-card:nth-child(7) { animation-delay: 0.4s; }
-              .domain-card:nth-child(8) { animation-delay: 0.45s; }
-              .domain-card:nth-child(9) { animation-delay: 0.5s; }
-              .domain-card:nth-child(10) { animation-delay: 0.55s; }
-              .domain-card:nth-child(11) { animation-delay: 0.6s; }
-              .domain-card:nth-child(12) { animation-delay: 0.65s; }
-            `}</style>
-            
-            <div style={{
-              display: 'inline-block',
-              padding: '8px 20px',
-              background: 'rgba(99, 102, 241, 0.1)',
-              borderRadius: '24px',
-              marginBottom: '24px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#6366f1',
-              letterSpacing: '0.5px',
-              animation: 'fadeInDown 0.6s ease-out',
-            }}>
-              PathNex AI Intelligence Platform
+        <div className="quiz-content">
+          <div className="quiz-selection-inner">
+            {/* Header */}
+            <div className="quiz-header-section">
+              <div className="quiz-badge">
+                Pathora AI Intelligence Platform
+              </div>
+
+              <h1 className="quiz-main-title">
+                Select Your Career Focus Areas
+              </h1>
+
+              <p className="quiz-subtitle">
+                Choose one or more domains to generate a personalized intelligence assessment
+              </p>
             </div>
-            
-            <h1 style={{
-              fontSize: '56px',
-              fontWeight: '700',
-              color: '#0f172a',
-              margin: '0 0 16px 0',
-              letterSpacing: '-1px',
-              lineHeight: '1.1',
-              ...headingStyles,
-            }}>
-              Select Your Career Focus Areas
-            </h1>
-            
-            <p style={{
-              fontSize: '18px',
-              color: '#64748b',
-              margin: '0',
-              fontWeight: '400',
-              lineHeight: '1.6',
-              animation: 'fadeInUp 0.8s ease-out',
-            }}>
-              Choose one or more domains to generate a personalized intelligence assessment
-            </p>
-          </div>
 
-          {/* Domain Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '20px',
-            marginBottom: '48px',
-          }}>
-            <style>{`
-              .domain-card:hover {
-                transform: translateY(-4px) !important;
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
-              }
-              
-              .domain-card:active {
-                transform: translateY(-2px) scale(0.98) !important;
-              }
-            `}</style>
-            
-            {Object.entries(domainInfo).map(([key, info]) => {
-              const isSelected = selectedDomains.includes(key);
-              return (
-                <div
-                  key={key}
-                  className="domain-card"
-                  onClick={() => toggleDomain(key)}
-                  style={{
-                    background: '#ffffff',
-                    borderRadius: '16px',
-                    padding: '28px',
-                    cursor: 'pointer',
-                    border: `2px solid ${isSelected ? info.color : '#e2e8f0'}`,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    boxShadow: isSelected 
-                      ? `0 8px 24px ${info.color}30` 
-                      : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    transform: isSelected ? 'translateY(-2px)' : 'none',
-                  }}
-                >
-                  <div style={{
-                    width: '4px',
-                    height: '48px',
-                    background: info.color,
-                    borderRadius: '4px',
-                    position: 'absolute',
-                    left: '0',
-                    top: '28px',
-                    opacity: isSelected ? 1 : 0.3,
-                    transition: 'all 0.3s',
-                  }} />
-                  
-                  <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    color: '#0f172a',
-                    margin: '0 0 8px 0',
-                    letterSpacing: '-0.3px',
-                    transition: 'color 0.3s',
-                  }}>
-                    {info.name}
-                  </h3>
-                  
-                  <p style={{
-                    fontSize: '15px',
-                    color: '#64748b',
-                    margin: '0',
-                    lineHeight: '1.5',
-                  }}>
-                    {info.description}
-                  </p>
+            {/* Domain Grid */}
+            <div className="quiz-domains-grid">
+              {Object.entries(domainInfo).map(([key, info]) => {
+                const isSelected = selectedDomains.includes(key);
+                return (
+                  <div
+                    key={key}
+                    className={`quiz-domain-card${isSelected ? ' selected' : ''}`}
+                    onClick={() => toggleDomain(key)}
+                    style={{
+                      borderColor: isSelected ? info.color : undefined,
+                      boxShadow: isSelected ? `0 8px 24px ${info.color}30` : undefined,
+                    }}
+                  >
+                    <div
+                      className="quiz-domain-accent-bar"
+                      style={{
+                        background: info.color,
+                        opacity: isSelected ? 1 : 0.3,
+                      }}
+                    />
 
-                  {isSelected && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '24px',
-                      right: '24px',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: info.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      animation: 'scaleIn 0.3s ease-out',
-                    }}>
-                      ✓
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    <h3 className="quiz-domain-name">
+                      {info.name}
+                    </h3>
 
-          {/* CTA Section */}
-          <div style={{
-            textAlign: 'center',
-            paddingTop: '24px',
-            borderTop: '1px solid #e2e8f0',
-            animation: 'fadeInUp 1s ease-out',
-          }}>
-            <style>{`
-              .cta-button {
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              }
-              
-              .cta-button:not(:disabled):hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
-              }
-              
-              .cta-button:not(:disabled):active {
-                transform: translateY(0);
-                box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3) !important;
-              }
-            `}</style>
-            
-            <button
-              className="cta-button"
-              onClick={startQuiz}
-              disabled={selectedDomains.length === 0}
-              style={{
-                padding: '16px 48px',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#ffffff',
-                background: selectedDomains.length > 0 
-                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
-                  : '#cbd5e1',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: selectedDomains.length > 0 ? 'pointer' : 'not-allowed',
-                boxShadow: selectedDomains.length > 0 
-                  ? '0 4px 16px rgba(99, 102, 241, 0.3)' 
-                  : 'none',
-                letterSpacing: '0.3px',
-              }}
-            >
-              Start Personalized Assessment
-              {selectedDomains.length > 0 && ` (${selectedDomains.length} selected)`}
-            </button>
+                    <p className="quiz-domain-desc">
+                      {info.description}
+                    </p>
 
-            <p style={{
-              marginTop: '20px',
-              fontSize: '14px',
-              color: '#94a3b8',
-              fontWeight: '400',
-            }}>
-              This assessment adapts to your strengths and gaps
-            </p>
+                    {isSelected && (
+                      <div
+                        className="quiz-domain-check"
+                        style={{ background: info.color }}
+                      >
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CTA Section */}
+            <div className="quiz-cta-section">
+              <button
+                className="quiz-start-btn"
+                onClick={startQuiz}
+                disabled={selectedDomains.length === 0}
+              >
+                Start Personalized Assessment
+                {selectedDomains.length > 0 && ` (${selectedDomains.length} selected)`}
+              </button>
+
+              <p className="quiz-hint-text">
+                This assessment adapts to your strengths and gaps
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -1052,288 +824,133 @@ export default function Quiz() {
     const overallPercentage = Math.round((totalScore / (maxPossibleScore * selectedDomains.length)) * 100);
 
     return (
-      <div style={containerStyle}>
+      <div className="quiz-wrap">
+        <div className="quiz-grid-bg" />
         <MagneticCursor />
-        <div style={{
-          maxWidth: '900px',
-          margin: '0 auto',
-          paddingTop: '40px',
-        }}>
-          {/* Header */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '48px',
-            animation: 'fadeInDown 0.8s ease-out',
-          }}>
-            <div style={{
-              display: 'inline-block',
-              padding: '8px 20px',
-              background: 'rgba(99, 102, 241, 0.1)',
-              borderRadius: '24px',
-              marginBottom: '24px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#6366f1',
-              letterSpacing: '0.5px',
-            }}>
-              Assessment Complete
-            </div>
-            
-            <h1 style={{
-              fontSize: '52px',
-              fontWeight: '700',
-              color: '#0f172a',
-              margin: '0 0 12px 0',
-              letterSpacing: '-1px',
-              ...headingStyles,
-            }}>
-              Career Readiness Report
-            </h1>
-            
-            <p style={{
-              fontSize: '17px',
-              color: '#64748b',
-              margin: '0',
-              fontWeight: '400',
-              animation: 'fadeInUp 0.8s ease-out',
-            }}>
-              Based on your selected interests and performance across {maxRounds} progressive rounds
-            </p>
-          </div>
+        <div className="quiz-content">
+          <div className="quiz-results-inner">
+            {/* Header */}
+            <div className="quiz-results-header">
+              <div className="quiz-badge">
+                Assessment Complete
+              </div>
 
-          {/* Top Highlight Card */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '20px',
-            padding: '40px',
-            marginBottom: '32px',
-            border: `2px solid ${domainInfo[bestDomain].color}`,
-            boxShadow: `0 12px 32px ${domainInfo[bestDomain].color}20`,
-            position: 'relative',
-            overflow: 'hidden',
-            animation: 'scaleIn 0.6s ease-out',
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '6px',
-              background: `linear-gradient(90deg, ${domainInfo[bestDomain].color}, ${domainInfo[bestDomain].color}99)`,
-            }} />
-            
-            <div style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: domainInfo[bestDomain].color,
-              marginBottom: '12px',
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-            }}>
-              Top Recommended Path
-            </div>
-            
-            <h2 style={{
-              fontSize: '36px',
-              fontWeight: '700',
-              color: '#0f172a',
-              margin: '0 0 8px 0',
-              letterSpacing: '-0.5px',
-              ...headingStyles,
-            }}>
-              {bestDomainName}
-            </h2>
-            
-            <div style={{
-              fontSize: '48px',
-              fontWeight: '700',
-              color: domainInfo[bestDomain].color,
-              margin: '16px 0',
-              letterSpacing: '-1px',
-            }}>
-              {sortedDomains[0]?.score || 0} <span style={{fontSize: '24px', color: '#94a3b8'}}>points</span>
-            </div>
-            
-            <div style={{
-              display: 'inline-block',
-              padding: '8px 16px',
-              background: `${domainInfo[bestDomain].color}15`,
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: domainInfo[bestDomain].color,
-            }}>
-              {overallPercentage}% Overall Performance
-            </div>
-          </div>
+              <h1 className="quiz-results-title">
+                Career Readiness Report
+              </h1>
 
-          {/* Performance Breakdown */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            padding: '32px',
-            marginBottom: '24px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            animation: 'fadeInUp 0.8s ease-out',
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#0f172a',
-              margin: '0 0 24px 0',
-              letterSpacing: '-0.3px',
-            }}>
-              Performance Across Selected Domains
-            </h3>
+              <p className="quiz-results-subtitle">
+                Based on your selected interests and performance across {maxRounds} progressive rounds
+              </p>
+            </div>
 
-            <style>{`
-              @keyframes fillBar {
-                from {
-                  width: 0;
-                }
-                to {
-                  width: var(--target-width);
-                }
-              }
-              
-              .performance-bar {
-                animation: fillBar 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-                animation-fill-mode: both;
-              }
-              
-              .performance-bar:nth-child(1) { animation-delay: 0.2s; }
-              .performance-bar:nth-child(2) { animation-delay: 0.35s; }
-              .performance-bar:nth-child(3) { animation-delay: 0.5s; }
-              .performance-bar:nth-child(4) { animation-delay: 0.65s; }
-              .performance-bar:nth-child(5) { animation-delay: 0.8s; }
-              .performance-bar:nth-child(6) { animation-delay: 0.95s; }
-              .performance-bar:nth-child(7) { animation-delay: 1.1s; }
-              .performance-bar:nth-child(8) { animation-delay: 1.25s; }
-              .performance-bar:nth-child(9) { animation-delay: 1.4s; }
-              .performance-bar:nth-child(10) { animation-delay: 1.55s; }
-              .performance-bar:nth-child(11) { animation-delay: 1.7s; }
-              .performance-bar:nth-child(12) { animation-delay: 1.85s; }
-            `}</style>
+            {/* Top Highlight Card */}
+            <div
+              className="quiz-highlight-card"
+              style={{ border: `2px solid ${domainInfo[bestDomain].color}` }}
+            >
+              <div
+                className="quiz-highlight-bar"
+                style={{ background: `linear-gradient(90deg, ${domainInfo[bestDomain].color}, ${domainInfo[bestDomain].color}99)` }}
+              />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {sortedDomains.map(({ domain, score }, i) => {
-                const percentage = (score / (maxRounds * 3 * totalQuestionsPerRound)) * 100;
-                return (
-                  <div key={domain}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                    }}>
+              <div
+                className="quiz-highlight-label"
+                style={{ color: domainInfo[bestDomain].color }}
+              >
+                Top Recommended Path
+              </div>
+
+              <h2 className="quiz-highlight-domain">
+                {bestDomainName}
+              </h2>
+
+              <div
+                className="quiz-highlight-score"
+                style={{ color: domainInfo[bestDomain].color }}
+              >
+                {sortedDomains[0]?.score || 0} <span>points</span>
+              </div>
+
+              <div
+                className="quiz-highlight-perf"
+                style={{
+                  background: `${domainInfo[bestDomain].color}15`,
+                  color: domainInfo[bestDomain].color,
+                }}
+              >
+                {overallPercentage}% Overall Performance
+              </div>
+            </div>
+
+            {/* Performance Breakdown */}
+            <div className="quiz-breakdown-card">
+              <h3 className="quiz-breakdown-title">
+                Performance Across Selected Domains
+              </h3>
+
+              <div className="quiz-bar-container">
+                {sortedDomains.map(({ domain, score }, i) => {
+                  const percentage = (score / (maxRounds * 3 * totalQuestionsPerRound)) * 100;
+                  return (
+                    <div key={domain}>
                       <div style={{
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        color: '#0f172a',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px',
                       }}>
-                        {domainInfo[domain].name}
+                        <div className="quiz-bar-label">
+                          {domainInfo[domain].name}
+                        </div>
+                        <div
+                          className="quiz-bar-score"
+                          style={{ color: domainInfo[domain].color }}
+                        >
+                          {score} pts
+                        </div>
                       </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        color: domainInfo[domain].color,
-                      }}>
-                        {score} pts
+
+                      <div className="quiz-bar-bg">
+                        <div
+                          className="quiz-bar-fill"
+                          style={{
+                            '--target-width': `${percentage}%`,
+                            background: `linear-gradient(90deg, ${domainInfo[domain].color}, ${domainInfo[domain].color}cc)`,
+                            animationDelay: `${0.2 + i * 0.15}s`,
+                          }}
+                        />
                       </div>
                     </div>
-                    
-                    <div style={{
-                      width: '100%',
-                      height: '8px',
-                      background: '#f1f5f9',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                    }}>
-                      <div 
-                        className="performance-bar"
-                        style={{
-                          '--target-width': `${percentage}%`,
-                          height: '100%',
-                          background: `linear-gradient(90deg, ${domainInfo[domain].color}, ${domainInfo[domain].color}cc)`,
-                          borderRadius: '8px',
-                        }} 
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Improvement Section */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            padding: '32px',
-            marginBottom: '32px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #f1f5f9',
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#0f172a',
-              margin: '0 0 16px 0',
-              letterSpacing: '-0.3px',
-            }}>
-              Recommended Next Steps for {bestDomainName}
-            </h3>
-            
-            <p style={{
-              fontSize: '15px',
-              color: '#475569',
-              lineHeight: '1.7',
-              margin: '0',
-            }}>
-              {improvementMap[bestDomain]}
-            </p>
-          </div>
+            {/* Improvement Section */}
+            <div className="quiz-improvement-card">
+              <h3 className="quiz-improvement-title">
+                Recommended Next Steps for {bestDomainName}
+              </h3>
 
-          {/* CTA Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            justifyContent: 'center',
-            paddingTop: '24px',
-          }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: '14px 32px',
-                fontSize: '15px',
-                fontWeight: '600',
-                color: '#6366f1',
-                background: 'rgba(99, 102, 241, 0.1)',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-              }}
-            >
-              Retake Assessment
-            </button>
-            
-            <button
-              style={{
-                padding: '14px 32px',
-                fontSize: '15px',
-                fontWeight: '600',
-                color: '#ffffff',
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)',
-              }}
-            >
-              Generate Full Career Roadmap →
-            </button>
+              <p className="quiz-improvement-text">
+                {improvementMap[bestDomain]}
+              </p>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="quiz-result-actions">
+              <button
+                className="quiz-btn-outline"
+                onClick={() => window.location.reload()}
+              >
+                Retake Assessment
+              </button>
+
+              <button className="quiz-btn-primary">
+                Generate Full Career Roadmap →
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1347,14 +964,13 @@ export default function Quiz() {
 
   if (!currentQuestion) {
     return (
-      <div style={{...containerStyle, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      <div className="quiz-wrap">
+        <div className="quiz-grid-bg" />
         <MagneticCursor />
-        <div style={{
-          fontSize: '18px',
-          color: '#64748b',
-          fontWeight: '500',
-        }}>
-          Preparing your personalized assessment...
+        <div className="quiz-content quiz-loading">
+          <div className="quiz-loading-text">
+            Preparing your personalized assessment...
+          </div>
         </div>
       </div>
     );
@@ -1364,274 +980,116 @@ export default function Quiz() {
   const isTimeUrgent = timeLeft < 30;
 
   return (
-    <div style={containerStyle}>
+    <div className="quiz-wrap">
+      <div className="quiz-grid-bg" />
       <MagneticCursor />
-      <div style={{
-        maxWidth: '800px',
-        margin: '0 auto',
-        paddingTop: '40px',
-      }}>
-        {/* Header */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '24px 32px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-          }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#0f172a',
-              margin: 0,
-              letterSpacing: '-0.3px',
-            }}>
-              Career Intelligence Assessment
-            </h2>
-            
-            <div style={{
-              padding: '8px 16px',
-              background: isTimeUrgent ? '#fef2f2' : '#f8fafc',
-              border: `1px solid ${isTimeUrgent ? '#fecaca' : '#e2e8f0'}`,
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              color: isTimeUrgent ? '#dc2626' : '#475569',
-              fontVariantNumeric: 'tabular-nums',
-            }}>
-              {formatTime(timeLeft)}
-            </div>
-          </div>
+      <div className="quiz-content">
+        <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: '40px' }}>
+          {/* Header */}
+          <div className="quiz-progress-card">
+            <div className="quiz-progress-header">
+              <h2 className="quiz-progress-title">
+                Career Intelligence Assessment
+              </h2>
 
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px',
-            }}>
-              <span style={{
-                fontSize: '14px',
-                color: '#64748b',
-                fontWeight: '500',
-              }}>
-                Round {round}/3 ({getDifficultyByRound(round).toUpperCase()}) • Question {currentIndex + 1} of {questions.length}
-              </span>
-              <span style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#6366f1',
-              }}>
-                {Math.round(progress)}%
-              </span>
+              <div className={`quiz-timer${isTimeUrgent ? ' urgent' : ''}`}>
+                {formatTime(timeLeft)}
+              </div>
             </div>
-            
-            <div style={{
-              width: '100%',
-              height: '6px',
-              background: '#f1f5f9',
-              borderRadius: '8px',
-              overflow: 'hidden',
-            }}>
+
+            <div style={{ marginBottom: '12px' }}>
               <div style={{
-                width: `${progress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-                borderRadius: '8px',
-                transition: 'width 0.3s ease-out',
-              }} />
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '8px',
+              }}>
+                <span className="quiz-round-info">
+                  Round {round}/3 ({getDifficultyByRound(round).toUpperCase()}) • Question {currentIndex + 1} of {questions.length}
+                </span>
+                <span className="quiz-progress-pct">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+
+              <div className="quiz-progress-bar-bg">
+                <div
+                  className="quiz-progress-bar-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="quiz-domains-hint">
+              Focused on: {selectedDomains.map(d => domainInfo[d].name).join(', ')}
             </div>
           </div>
 
-          <div style={{
-            fontSize: '13px',
-            color: '#94a3b8',
-            fontWeight: '400',
-          }}>
-            Focused on: {selectedDomains.map(d => domainInfo[d].name).join(', ')}
-          </div>
-        </div>
+          {/* Question Card */}
+          <div className="quiz-question-card">
+            <h3 className="quiz-question-text">
+              {currentQuestion.q}
+            </h3>
 
-        {/* Question Card */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '40px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
-          marginBottom: '24px',
-          animation: 'scaleIn 0.4s ease-out',
-        }}>
-          <style>{`
-            .option-button {
-              transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            
-            .option-button:not(:disabled):hover {
-              transform: translateX(4px);
-              border-color: #6366f1 !important;
-              box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-            }
-            
-            .option-button:not(:disabled):active {
-              transform: translateX(2px) scale(0.98);
-            }
-          `}</style>
-          
-          <h3 style={{
-            fontSize: '24px',
-            fontWeight: '600',
-            color: '#0f172a',
-            lineHeight: '1.4',
-            margin: '0 0 32px 0',
-            letterSpacing: '-0.3px',
-          }}>
-            {currentQuestion.q}
-          </h3>
+            <div className="quiz-options-list">
+              {currentQuestion.options.map((option, i) => {
+                const isCorrect = isAnswered && option === currentQuestion.answer;
+                const isWrong = isAnswered && selectedOption === option && !isCorrect;
+                const isDisabled = isAnswered;
+                const isFaded = isDisabled && !isCorrect && !isWrong;
 
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-          }}>
-            {currentQuestion.options.map((option, i) => {
-              const isCorrect = isAnswered && option === currentQuestion.answer;
-              const isWrong = isAnswered && selectedOption === option && !isCorrect;
-              const isDisabled = isAnswered;
+                let btnClass = 'quiz-option-btn';
+                if (isCorrect) btnClass += ' correct';
+                else if (isWrong) btnClass += ' wrong';
+                else if (isFaded) btnClass += ' faded';
 
-              let btnStyle = {
-                width: '100%',
-                padding: '18px 24px',
-                fontSize: '16px',
-                fontWeight: '500',
-                color: '#0f172a',
-                background: '#ffffff',
-                border: '2px solid #e2e8f0',
-                borderRadius: '12px',
-                cursor: isDisabled ? 'default' : 'pointer',
-                textAlign: 'left',
-                position: 'relative',
-              };
+                let letterClass = 'quiz-option-letter';
+                if (isCorrect) letterClass += ' correct';
+                else if (isWrong) letterClass += ' wrong';
+                else letterClass += ' default';
 
-              if (isCorrect) {
-                btnStyle = {
-                  ...btnStyle,
-                  background: '#f0fdf4',
-                  borderColor: '#10b981',
-                  color: '#065f46',
-                  animation: 'pulse 0.5s ease-out',
-                };
-              } else if (isWrong) {
-                btnStyle = {
-                  ...btnStyle,
-                  background: '#fef2f2',
-                  borderColor: '#ef4444',
-                  color: '#991b1b',
-                };
-              } else if (isDisabled) {
-                btnStyle = {
-                  ...btnStyle,
-                  opacity: 0.5,
-                };
-              }
+                return (
+                  <button
+                    key={i}
+                    className={btnClass}
+                    onClick={() => handleOptionClick(option)}
+                    disabled={isAnswered}
+                  >
+                    <span className={letterClass}>
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    {option}
 
-              return (
-                <button
-                  key={i}
-                  className="option-button"
-                  onClick={() => handleOptionClick(option)}
-                  disabled={isAnswered}
-                  style={btnStyle}
-                >
-                  <span style={{
-                    display: 'inline-block',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '8px',
-                    background: isCorrect ? '#10b981' : isWrong ? '#ef4444' : '#f1f5f9',
-                    color: isCorrect || isWrong ? '#ffffff' : '#64748b',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    marginRight: '12px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    verticalAlign: 'middle',
-                  }}>
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  {option}
-                  
-                  {isCorrect && (
-                    <span style={{
-                      position: 'absolute',
-                      right: '24px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontSize: '18px',
-                      animation: 'scaleIn 0.3s ease-out',
-                    }}>✓</span>
-                  )}
-                  {isWrong && (
-                    <span style={{
-                      position: 'absolute',
-                      right: '24px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontSize: '18px',
-                      animation: 'scaleIn 0.3s ease-out',
-                    }}>✗</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {isAnswered && (
-            <div style={{
-              marginTop: '24px',
-              padding: '16px',
-              borderRadius: '12px',
-              background: selectedOption === currentQuestion.answer ? '#f0fdf4' : '#fef2f2',
-              border: `1px solid ${selectedOption === currentQuestion.answer ? '#86efac' : '#fecaca'}`,
-              animation: 'slideInLeft 0.4s ease-out',
-            }}>
-              {selectedOption === currentQuestion.answer ? (
-                <p style={{
-                  margin: 0,
-                  fontSize: '15px',
-                  color: '#065f46',
-                  fontWeight: '500',
-                }}>
-                  Correct! +{currentQuestion.weight} points
-                </p>
-              ) : (
-                <p style={{
-                  margin: 0,
-                  fontSize: '15px',
-                  color: '#991b1b',
-                  fontWeight: '500',
-                }}>
-                  Incorrect. Correct answer: <strong>{currentQuestion.answer}</strong>
-                </p>
-              )}
+                    {isCorrect && (
+                      <span className="quiz-option-icon">✓</span>
+                    )}
+                    {isWrong && (
+                      <span className="quiz-option-icon">✗</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: '13px',
-          color: '#94a3b8',
-          fontWeight: '400',
-        }}>
-          Adaptive difficulty • Time-bound • Personalized scoring
+            {isAnswered && (
+              <div className={`quiz-feedback ${selectedOption === currentQuestion.answer ? 'correct' : 'wrong'}`}>
+                {selectedOption === currentQuestion.answer ? (
+                  <p>
+                    Correct! +{currentQuestion.weight} points
+                  </p>
+                ) : (
+                  <p>
+                    Incorrect. Correct answer: <strong>{currentQuestion.answer}</strong>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="quiz-footer-hint">
+            Adaptive difficulty • Time-bound • Personalized scoring
+          </div>
         </div>
       </div>
     </div>

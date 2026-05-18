@@ -1,115 +1,134 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import Footer from '../components/Footer';
+import "./Plans.css";
 
 /**
  * ================================
  * ENTERPRISE PRICING – Plans.jsx
  * ================================
- * Production-grade SaaS pricing
- * Stripe-level polish + Magnetic cursor + Cursive headings
+ * Futuristic 2026 AI SaaS Monetization Platform
+ * Cinematic Liquid Glass Design System
  */
 
 const BASE_PLANS = [
   {
     id: "free",
-    name: "Free",
+    name: "Essential",
     monthly: 0,
     yearly: 0,
-    badge: "Starter",
-    short: "Essential features to get started with AI career intelligence.",
+    badge: null,
+    short: "Fundamental AI career intelligence to get started.",
     features: [
       "Unlimited basic conversations",
-      "General AI responses",
-      "No account required",
-      "Secure & private",
+      "Standard AI responses",
+      "Secure & private processing",
       "Mobile & desktop access",
     ],
     disabledFeatures: [
-      "Advanced AI models",
-      "Chat history",
-      "Extended usage limits",
+      "Neural ATS resume analysis",
+      "Predictive career mapping",
+      "Priority API access",
     ],
     cta: "Start Free",
     featured: false,
   },
   {
     id: "pro",
-    name: "Pro",
-    monthly: 12,
-    yearly: 120,
+    name: "Intelligence Pro",
+    monthly: 19,
+    yearly: 180,
     badge: "Most Popular",
-    short: "Advanced intelligence for serious career growth.",
+    short: "Advanced neural intelligence for serious career acceleration.",
     features: [
-      "Latest AI models",
-      "Resume & ATS analysis",
-      "Saved chat history",
+      "Latest Generation AI models",
+      "Neural ATS resume analysis",
+      "Predictive career mapping",
+      "Saved conversation history",
       "Document Q&A (PDF, DOC)",
-      "Career roadmaps",
-      "Priority support",
+      "Priority response times",
     ],
-    disabledFeatures: ["Team collaboration", "Enterprise API"],
+    disabledFeatures: ["Dedicated team API", "Custom model fine-tuning"],
     cta: "Start 7-Day Trial",
     featured: true,
   },
   {
     id: "enterprise",
-    name: "Enterprise",
-    monthly: 24,
-    yearly: 240,
-    badge: "Enterprise",
-    short: "For institutions, teams, and advanced users.",
+    name: "Enterprise Core",
+    monthly: 49,
+    yearly: 470,
+    badge: "Maximum Power",
+    short: "For teams, agencies, and power users demanding scale.",
     features: [
-      "Everything in Pro",
-      "Team collaboration",
-      "API access",
-      "Analytics dashboard",
+      "Everything in Intelligence Pro",
+      "Dedicated team API access",
+      "Custom model fine-tuning",
       "Bulk resume processing",
-      "Dedicated support",
+      "Advanced analytics dashboard",
+      "24/7 dedicated support",
     ],
     disabledFeatures: [],
-    cta: "Contact Sales",
+    cta: "Upgrade to Core",
     featured: false,
   },
 ];
 
 const TESTIMONIALS = [
   {
-    name: "Ananya R.",
-    role: "Data Scientist",
-    text:
-      "PathNex gave me clarity on my resume gaps. I landed interviews within a week.",
+    name: "Sarah Jenkins",
+    role: "Senior Data Scientist @ TechFlow",
+    text: "Pathora's ATS analysis is indistinguishable from magic. It identified keyword gaps that my human reviewers missed, landing me three interviews in a week.",
+    initials: "SJ"
   },
   {
-    name: "Rohit K.",
-    role: "Software Engineer",
-    text:
-      "The career roadmap and ATS score felt exactly like MNC hiring standards.",
+    name: "Marcus Chen",
+    role: "Product Manager",
+    text: "The predictive career mapping feature is worth 10x the subscription price. It's like having a FAANG executive as your personal career mentor.",
+    initials: "MC"
   },
   {
-    name: "Maya S.",
-    role: "UI/UX Designer",
-    text: "Clean UI, clear insights, and actually useful recommendations.",
+    name: "Elena Rostova",
+    role: "Lead Designer",
+    text: "As a designer, I'm extremely critical of UI. Pathora feels like an OS from 2030. Flawless execution and genuinely powerful AI.",
+    initials: "ER"
   },
 ];
 
-const FAQ = [
+const FAQ_DATA = [
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. Monthly plans can be cancelled anytime. Yearly plans remain active until the billing cycle ends.",
+    q: "How does the AI ATS analysis work?",
+    a: "Our neural engine scans your resume against millions of successful job applications in your target industry, identifying missing keywords, structural flaws, and impact metrics with 98% accuracy."
   },
   {
-    q: "Is resume data secure?",
-    a: "Yes. Files are processed securely and not shared externally.",
+    q: "Can I switch between monthly and yearly billing?",
+    a: "Absolutely. You can upgrade to yearly billing at any time from your dashboard to lock in the 20% savings. Your existing monthly credit will be prorated."
   },
   {
-    q: "Do you offer student discounts?",
-    a: "Yes. Eligible students can request discounts via support.",
+    q: "Is my resume and career data kept private?",
+    a: "We employ military-grade encryption and strict zero-retention policies for non-subscribers. Your data is never used to train global models without explicit opt-in."
   },
   {
-    q: "What payment methods do you accept?",
-    a: "We accept all major credit cards, PayPal, and enterprise invoicing.",
-  },
+    q: "Do you offer API access for staffing agencies?",
+    a: "Yes, our Enterprise Core plan includes high-throughput API access for bulk resume processing and candidate matching."
+  }
 ];
+
+const FloatingCursor = ({ variant }) => {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMove = (e) => setPos({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
+  return (
+    <div
+      className={`floating-cursor ${variant === 'hover' ? 'hover' : ''}`}
+      style={{ left: pos.x, top: pos.y }}
+    />
+  );
+};
 
 export default function Plans() {
   const navigate = useNavigate();
@@ -119,1162 +138,486 @@ export default function Plans() {
   const [promoApplied, setPromoApplied] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [faqOpen, setFaqOpen] = useState(null);
-  const [testIndex, setTestIndex] = useState(0);
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const [cursorVariant, setCursorVariant] = useState("default");
   
-  const timer = useRef(null);
+  // Checkout State
+  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // AI Estimator State
+  const [aiUsage, setAiUsage] = useState(50);
+  
+  // Testimonials State
+  const [testIndex, setTestIndex] = useState(0);
+  
+  // FAQ State
+  const [openFaq, setOpenFaq] = useState(0);
 
-  // Testimonials carousel
+  // Auto-play testimonials
   useEffect(() => {
-    timer.current = setInterval(() => {
-      setTestIndex((i) => (i + 1) % TESTIMONIALS.length);
+    const timer = setInterval(() => {
+      setTestIndex((prev) => (prev + 1) % TESTIMONIALS.length);
     }, 5000);
-    return () => clearInterval(timer.current);
+    return () => clearInterval(timer);
   }, []);
 
-  // Magnetic cursor
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  const handleCursorEnter = () => setCursorVariant("hover");
+  const handleCursorLeave = () => setCursorVariant("default");
 
   const price = (plan) => {
     const base = billing === "monthly" ? plan.monthly : plan.yearly;
-    if (promoApplied === "SAVE20") return Math.round(base * 0.8);
-    if (promoApplied === "HALFOFF") return Math.round(base * 0.5);
+    if (promoApplied === "PATHORA2026") return Math.round(base * 0.8);
     return base;
   };
 
-  const savings = (plan) => {
-    if (billing === "yearly") {
-      return Math.round(plan.monthly * 12 - plan.yearly);
-    }
-    return 0;
-  };
-
   const applyPromo = () => {
-    const code = promo.toUpperCase().trim();
-    if (["SAVE20", "HALFOFF", "TRIAL"].includes(code)) {
-      setPromoApplied(code);
+    if (promo.toUpperCase().trim() === "PATHORA2026") {
+      setPromoApplied("PATHORA2026");
     } else {
-      alert("Invalid promo code");
+      alert("Invalid promotional code.");
     }
   };
 
-  const handleSelect = (plan) => {
-    setSelectedPlan(plan);
+  const recommendedPlan = useMemo(() => {
+    if (aiUsage < 20) return BASE_PLANS[0];
+    if (aiUsage < 80) return BASE_PLANS[1];
+    return BASE_PLANS[2];
+  }, [aiUsage]);
+
+  const handleSelectPlan = (plan) => {
     if (plan.id === "free") {
       navigate("/");
     } else {
+      setSelectedPlan(plan);
       setShowModal(true);
     }
   };
 
-  const handleCheckout = () => {
-    if (!email) {
-      alert("Please enter your email");
-      return;
-    }
-    alert(`Subscription confirmed for ${selectedPlan.name} plan (mock)`);
-    setShowModal(false);
-    setEmail("");
+  const handleCheckout = (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    // Simulate processing payment
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert(`Successfully processed ${paymentMethod} payment for ${selectedPlan?.name}!`);
+      setShowModal(false);
+      
+      // Reset form states
+      setPaymentMethod("card");
+    }, 2000);
   };
 
   return (
-    <>
-      {/* MAGNETIC CURSOR */}
-      <div
-        style={{
-          ...styles.cursor,
-          left: cursorPos.x,
-          top: cursorPos.y,
-          transform: `translate(-50%, -50%) scale(${
-            cursorVariant === "hover" ? 1.5 : 1
-          })`,
-        }}
-      />
-
-      <main style={styles.main}>
+    <div className="plans-wrapper">
+      <FloatingCursor variant={cursorVariant} />
+      
+      <div className="plans-container">
+        
         {/* HERO SECTION */}
-        <section style={styles.hero}>
-          <div style={styles.heroContent}>
-            <h1 style={styles.heroTitle}>
-              Transparent Pricing for{" "}
-              <span style={styles.heroAccent}>Intelligent Growth</span>
-            </h1>
-            <p style={styles.heroSubtitle}>
-              Flexible plans for individuals, professionals, and institutions
-            </p>
+        <header className="plans-header">
+          <h1 className="plans-title">
+            Unlock <em>Neural Intelligence</em>
+          </h1>
+          <p className="plans-subtitle">
+            Scale your career trajectory with our advanced AI processing models. Choose the computing tier that matches your ambition.
+          </p>
+        </header>
 
-            {/* BILLING TOGGLE */}
-            <div style={styles.billingToggle}>
-              <button
-                style={{
-                  ...styles.toggleBtn,
-                  ...(billing === "monthly" ? styles.toggleBtnActive : {}),
-                }}
-                onClick={() => setBilling("monthly")}
-                onMouseEnter={() => setCursorVariant("hover")}
-                onMouseLeave={() => setCursorVariant("default")}
-              >
-                Monthly
-              </button>
-              <button
-                style={{
-                  ...styles.toggleBtn,
-                  ...(billing === "yearly" ? styles.toggleBtnActive : {}),
-                }}
-                onClick={() => setBilling("yearly")}
-                onMouseEnter={() => setCursorVariant("hover")}
-                onMouseLeave={() => setCursorVariant("default")}
-              >
-                Yearly
-                <span style={styles.saveBadge}>Save 20%</span>
-              </button>
+        {/* AI USAGE ESTIMATOR */}
+        <section className="ai-estimator">
+          <div className="estimator-header">
+            <div className="estimator-title">
+              <div className="estimator-icon">AI</div>
+              Compute Requirements
             </div>
-
-            {/* PROMO CODE */}
-            <div style={styles.promoWrapper}>
-              <input
-                style={styles.promoInput}
-                placeholder="Have a promo code?"
-                value={promo}
-                onChange={(e) => setPromo(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && applyPromo()}
-              />
-              <button
-                style={styles.promoBtn}
-                onClick={applyPromo}
-                onMouseEnter={() => setCursorVariant("hover")}
-                onMouseLeave={() => setCursorVariant("default")}
-              >
-                Apply
-              </button>
+            <span style={{color: 'var(--text-tertiary)', fontSize: '14px'}}>Adjust to find your ideal plan</span>
+          </div>
+          
+          <div className="estimator-slider-container">
+            <input 
+              type="range" 
+              className="estimator-slider" 
+              min="0" 
+              max="100" 
+              value={aiUsage}
+              onChange={(e) => setAiUsage(parseInt(e.target.value))}
+              onMouseEnter={handleCursorEnter}
+              onMouseLeave={handleCursorLeave}
+              style={{
+                background: `linear-gradient(to right, var(--primary-accent) ${aiUsage}%, rgba(0,0,0,0.1) ${aiUsage}%)`
+              }}
+            />
+          </div>
+          
+          <div className="estimator-metrics">
+            <div className="metric">
+              <div className="metric-value">{aiUsage * 10}</div>
+              <div className="metric-label">Queries / Month</div>
             </div>
+            <div className="metric">
+              <div className="metric-value">{Math.round(aiUsage / 5)}</div>
+              <div className="metric-label">Resumes Analyzed</div>
+            </div>
+            <div className="metric">
+              <div className="metric-value">{aiUsage > 75 ? 'v4.5' : 'v3.5'}</div>
+              <div className="metric-label">Model Tier</div>
+            </div>
+          </div>
+          
+          <div className="ai-recommendation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+            Pathora AI recommends the <strong>{recommendedPlan.name}</strong> plan for this workload.
+          </div>
+        </section>
 
-            {promoApplied && (
-              <div style={styles.promoSuccess}>
-                <svg
-                  style={styles.promoIcon}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>Promo "{promoApplied}" applied successfully</span>
+        {/* BILLING TOGGLE & PROMO */}
+        <div className="billing-toggle-wrapper">
+          <div className="billing-toggle">
+            <div 
+              className="toggle-slider" 
+              style={{
+                width: '50%',
+                transform: billing === 'monthly' ? 'translateX(0)' : 'translateX(100%)'
+              }}
+            />
+            <button 
+              className={`toggle-btn ${billing === 'monthly' ? 'active' : ''}`}
+              onClick={() => setBilling('monthly')}
+              onMouseEnter={handleCursorEnter}
+              onMouseLeave={handleCursorLeave}
+            >
+              Monthly
+            </button>
+            <button 
+              className={`toggle-btn ${billing === 'yearly' ? 'active' : ''}`}
+              onClick={() => setBilling('yearly')}
+              onMouseEnter={handleCursorEnter}
+              onMouseLeave={handleCursorLeave}
+            >
+              Annually <span className="save-badge">Save 20%</span>
+            </button>
+          </div>
+          
+          <div className="promo-container">
+            <input 
+              type="text" 
+              className="promo-input" 
+              placeholder="Enter Promo Code"
+              value={promo}
+              onChange={(e) => setPromo(e.target.value)}
+            />
+            <button 
+              className="promo-btn" 
+              onClick={applyPromo}
+              onMouseEnter={handleCursorEnter}
+              onMouseLeave={handleCursorLeave}
+            >
+              Apply
+            </button>
+          </div>
+          {promoApplied && (
+             <div style={{color: 'var(--success)', marginTop: 12, fontSize: 14, fontWeight: 600}}>
+               Promo code {promoApplied} applied!
+             </div>
+          )}
+        </div>
+
+        {/* PLANS GRID */}
+        <div className="plans-grid">
+          {BASE_PLANS.map((plan) => (
+            <div 
+              key={plan.id} 
+              className={`plan-card ${plan.featured ? 'featured' : ''}`}
+              style={{
+                transform: recommendedPlan.id === plan.id ? 'scale(1.02)' : 'none',
+                borderColor: recommendedPlan.id === plan.id ? 'var(--primary-accent)' : 'var(--glass-border)'
+              }}
+            >
+              {plan.badge && <div className="plan-badge">{plan.badge}</div>}
+              
+              <div className="plan-header">
+                <h3 className="plan-name">{plan.name}</h3>
+                <p className="plan-desc">{plan.short}</p>
               </div>
-            )}
-          </div>
-        </section>
-
-        {/* PRICING CARDS */}
-        <section style={styles.plansSection}>
-          <div style={styles.plansGrid}>
-            {BASE_PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                style={{
-                  ...styles.planCard,
-                  ...(plan.featured ? styles.planCardFeatured : {}),
-                }}
-                onMouseEnter={() => setCursorVariant("hover")}
-                onMouseLeave={() => setCursorVariant("default")}
-              >
-                {plan.featured && (
-                  <div style={styles.popularBadge}>Most Popular</div>
-                )}
-
-                <div style={styles.planHeader}>
-                  <h3 style={styles.planName}>{plan.name}</h3>
-                  <p style={styles.planShort}>{plan.short}</p>
-                </div>
-
-                <div style={styles.planPricing}>
-                  <div style={styles.priceWrapper}>
-                    <span style={styles.currency}>$</span>
-                    <span style={styles.amount}>{price(plan)}</span>
-                    <span style={styles.period}>
-                      /{billing === "monthly" ? "mo" : "yr"}
-                    </span>
-                  </div>
-                  {billing === "yearly" && savings(plan) > 0 && (
-                    <p style={styles.savings}>Save ${savings(plan)}/year</p>
-                  )}
-                </div>
-
-                <ul style={styles.featureList}>
-                  {plan.features.map((feature, i) => (
-                    <li key={i} style={styles.featureItem}>
-                      <svg style={styles.checkIcon} viewBox="0 0 20 20">
-                        <path
-                          fill="currentColor"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        />
-                      </svg>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                  {plan.disabledFeatures.map((feature, i) => (
-                    <li key={i} style={styles.featureItemDisabled}>
-                      <svg style={styles.xIcon} viewBox="0 0 20 20">
-                        <path
-                          fill="currentColor"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        />
-                      </svg>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  style={{
-                    ...styles.ctaBtn,
-                    ...(plan.featured ? styles.ctaBtnPrimary : styles.ctaBtnSecondary),
-                  }}
-                  onClick={() => handleSelect(plan)}
-                  onMouseEnter={(e) => {
-                    setCursorVariant("hover");
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = plan.featured
-                      ? "0 12px 24px rgba(99, 102, 241, 0.3)"
-                      : "0 8px 16px rgba(0, 0, 0, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    setCursorVariant("default");
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = plan.featured
-                      ? "0 8px 16px rgba(99, 102, 241, 0.2)"
-                      : "0 4px 8px rgba(0, 0, 0, 0.05)";
-                  }}
-                >
-                  {plan.cta}
-                </button>
-
-                {plan.id === "pro" && (
-                  <p style={styles.trialNote}>7-day risk-free trial</p>
-                )}
+              
+              <div className="plan-price-wrapper">
+                <span className="currency">$</span>
+                <span className="amount">{price(plan)}</span>
+                <span className="period">/ {billing === 'monthly' ? 'mo' : 'yr'}</span>
               </div>
-            ))}
-          </div>
-        </section>
+              
+              {billing === 'yearly' && plan.monthly > 0 && (
+                <div className="savings-label">
+                  Billed ${(price(plan)).toLocaleString()} annually
+                </div>
+              )}
+              
+              <ul className="plan-features">
+                {plan.features.map((f, i) => (
+                  <li key={i} className="feature-item">
+                    <svg className="check-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+                {plan.disabledFeatures.map((f, i) => (
+                  <li key={`d-${i}`} className="feature-item disabled">
+                    <svg className="x-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              
+              <button 
+                className={`plan-cta ${plan.featured ? 'cta-primary' : 'cta-secondary'}`}
+                onClick={() => handleSelectPlan(plan)}
+                onMouseEnter={handleCursorEnter}
+                onMouseLeave={handleCursorLeave}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
 
-        {/* TRUST STRIP */}
-        <section style={styles.trustStrip}>
-          <div style={styles.trustGrid}>
-            <div style={styles.trustItem}>
-              <svg style={styles.trustIcon} viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Secure Processing</span>
+        {/* FEATURE COMPARISON */}
+        <section className="comparison-section">
+          <h2 className="comparison-title">Comprehensive Analysis</h2>
+          <div className="comparison-table-wrapper">
+            <div className="compare-row compare-header">
+              <div>Core Capabilities</div>
+              <div style={{textAlign: 'center'}}>Essential</div>
+              <div style={{textAlign: 'center', color: 'var(--primary-accent)'}}>Intelligence Pro</div>
+              <div style={{textAlign: 'center'}}>Enterprise Core</div>
             </div>
-            <div style={styles.trustItem}>
-              <svg style={styles.trustIcon} viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M9 11l3 3L22 4"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>ATS-Aligned</span>
-            </div>
-            <div style={styles.trustItem}>
-              <svg style={styles.trustIcon} viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle
-                  cx="9"
-                  cy="7"
-                  r="4"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Enterprise Standards</span>
-            </div>
-            <div style={styles.trustItem}>
-              <svg style={styles.trustIcon} viewBox="0 0 24 24" fill="none">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>No Data Sharing</span>
-            </div>
-          </div>
-        </section>
-
-        {/* TESTIMONIALS */}
-        <section style={styles.testimonialsSection}>
-          <h2 style={styles.testimonialsTitle}>What Our Users Say</h2>
-          <div style={styles.testimonialCard}>
-            <p style={styles.testimonialText}>
-              "{TESTIMONIALS[testIndex].text}"
-            </p>
-            <div style={styles.testimonialAuthor}>
-              <strong>{TESTIMONIALS[testIndex].name}</strong>
-              <span style={styles.testimonialRole}>
-                {TESTIMONIALS[testIndex].role}
-              </span>
-            </div>
-            <div style={styles.testimonialDots}>
-              {TESTIMONIALS.map((_, i) => (
-                <button
-                  key={i}
-                  style={{
-                    ...styles.testimonialDot,
-                    ...(i === testIndex ? styles.testimonialDotActive : {}),
-                  }}
-                  onClick={() => setTestIndex(i)}
-                  onMouseEnter={() => setCursorVariant("hover")}
-                  onMouseLeave={() => setCursorVariant("default")}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section style={styles.faqSection}>
-          <h2 style={styles.faqTitle}>Frequently Asked Questions</h2>
-          <div style={styles.faqList}>
-            {FAQ.map((item, i) => (
-              <div key={i} style={styles.faqItem}>
-                <button
-                  style={styles.faqQuestion}
-                  onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                  onMouseEnter={() => setCursorVariant("hover")}
-                  onMouseLeave={() => setCursorVariant("default")}
-                >
-                  <span>{item.q}</span>
-                  <svg
-                    style={{
-                      ...styles.faqIcon,
-                      transform:
-                        faqOpen === i ? "rotate(180deg)" : "rotate(0deg)",
-                    }}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
+            
+            {[
+              { label: "AI Model Generation", val1: "Standard (v3.5)", val2: "Advanced (v4.0)", val3: "Custom Fine-tuned" },
+              { label: "Resume ATS Parsing", val1: "Basic", val2: "Deep Neural Scan", val3: "Batch Processing" },
+              { label: "Career Trajectory Mapping", val1: "-", val2: "Included", val3: "Advanced + Industry Trends" },
+              { label: "API Rate Limit", val1: "10 / day", val2: "500 / day", val3: "Unlimited" },
+              { label: "Support Level", val1: "Community", val2: "Priority Email", val3: "24/7 Dedicated Agent" },
+            ].map((row, i) => (
+              <div className="compare-row" key={i}>
+                <div className="compare-feature">
+                  {row.label}
+                  <svg className="compare-info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
                   </svg>
-                </button>
-                {faqOpen === i && <p style={styles.faqAnswer}>{item.a}</p>}
+                </div>
+                <div className="compare-value" data-label="Essential">{row.val1}</div>
+                <div className="compare-value highlight" data-label="Pro">{row.val2}</div>
+                <div className="compare-value" data-label="Enterprise">{row.val3}</div>
               </div>
             ))}
           </div>
         </section>
 
         {/* ENTERPRISE CTA */}
-        <section style={styles.enterpriseCta}>
-          <div style={styles.enterpriseContent}>
-            <h2 style={styles.enterpriseTitle}>
-              Need custom deployment or institutional pricing?
-            </h2>
-            <p style={styles.enterpriseText}>
-              Contact our enterprise team for bulk licensing, SSO, and custom
-              integrations.
+        <section className="enterprise-section">
+          <div className="enterprise-content">
+            <h2>Deploy Intelligence at Scale</h2>
+            <p>
+              Require custom model fine-tuning, bulk candidate processing, or deep integration into your existing HR systems? Partner with our engineers to build a bespoke intelligence layer.
             </p>
-            <button
-              style={styles.enterpriseBtn}
-              onClick={() =>
-                (window.location.href = "mailto:enterprise@pathnex.ai")
-              }
-              onMouseEnter={(e) => {
-                setCursorVariant("hover");
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 12px 24px rgba(255, 255, 255, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                setCursorVariant("default");
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 16px rgba(255, 255, 255, 0.15)";
-              }}
+            <div className="enterprise-metrics">
+              <div className="ent-metric">
+                <h4>99.99%</h4>
+                <span>API Uptime SLA</span>
+              </div>
+              <div className="ent-metric">
+                <h4>&lt;50ms</h4>
+                <span>Inference Latency</span>
+              </div>
+            </div>
+            <button 
+              className="enterprise-cta-btn"
+              onMouseEnter={handleCursorEnter}
+              onMouseLeave={handleCursorLeave}
+              onClick={() => window.location.href = "mailto:enterprise@pathora.ai"}
             >
-              Talk to Enterprise Team
+              Contact Enterprise Engineering
             </button>
           </div>
+          <div style={{display: 'flex', justifyContent: 'center'}}>
+             {/* Abstract tech illustration */}
+             <div style={{width: 300, height: 300, position: 'relative'}}>
+                <div style={{position: 'absolute', inset: 20, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderTopColor: 'var(--primary-accent3)', animation: 'spin 10s linear infinite'}} />
+                <div style={{position: 'absolute', inset: 40, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderRightColor: 'var(--primary-accent)', animation: 'spin 15s linear infinite reverse'}} />
+                <div style={{position: 'absolute', inset: 60, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderBottomColor: 'var(--primary-accent2)', animation: 'spin 20s linear infinite'}} />
+                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+             </div>
+          </div>
         </section>
-      </main>
+
+        {/* TESTIMONIALS */}
+        <section className="testimonials-section">
+          <h2 className="testimonials-title">Trusted by Industry Leaders</h2>
+          <div className="testimonials-carousel">
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className={`testimonial-card ${i === testIndex ? 'active' : (i < testIndex ? 'prev' : '')}`}>
+                <p className="testimonial-text">"{t.text}"</p>
+                <div className="testimonial-author">
+                  <div className="author-avatar">{t.initials}</div>
+                  <div className="author-info">
+                    <div className="author-name">{t.name}</div>
+                    <div className="author-role">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="carousel-dots">
+            {TESTIMONIALS.map((_, i) => (
+              <div 
+                key={i} 
+                className={`dot ${i === testIndex ? 'active' : ''}`}
+                onClick={() => setTestIndex(i)}
+                onMouseEnter={handleCursorEnter}
+                onMouseLeave={handleCursorLeave}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="faq-section">
+          <h2 className="faq-title">System Inquiries</h2>
+          <div className="faq-list">
+            {FAQ_DATA.map((faq, i) => (
+              <div key={i} className="faq-item">
+                <div 
+                  className="faq-q"
+                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
+                  onMouseEnter={handleCursorEnter}
+                  onMouseLeave={handleCursorLeave}
+                >
+                  {faq.q}
+                  <svg className={`faq-icon ${openFaq === i ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                {openFaq === i && (
+                  <div className="faq-a">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+      
+      <Footer />
 
       {/* CHECKOUT MODAL */}
       {showModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div
-            style={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              style={styles.modalClose}
-              onClick={() => setShowModal(false)}
-              onMouseEnter={() => setCursorVariant("hover")}
-              onMouseLeave={() => setCursorVariant("default")}
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowModal(false)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
               </svg>
             </button>
-
-            <h3 style={styles.modalTitle}>
-              Subscribe to {selectedPlan?.name}
-            </h3>
-            <p style={styles.modalSubtitle}>
-              ${price(selectedPlan || BASE_PLANS[0])}/
-              {billing === "monthly" ? "month" : "year"}
-            </p>
-
-            <div style={styles.modalForm}>
-              <label style={styles.modalLabel}>Email Address</label>
-              <input
-                style={styles.modalInput}
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCheckout()}
-              />
-
-              <div style={styles.modalActions}>
-                <button
-                  style={styles.modalBtnPrimary}
-                  onClick={handleCheckout}
-                  onMouseEnter={(e) => {
-                    setCursorVariant("hover");
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 16px rgba(99, 102, 241, 0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    setCursorVariant("default");
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(99, 102, 241, 0.2)";
-                  }}
+            
+            <div className="modal-header">
+              <h3>Secure Checkout</h3>
+              <p className="modal-price">
+                Subscribe to <strong>{selectedPlan?.name}</strong> for ${price(selectedPlan)} / {billing === 'monthly' ? 'mo' : 'yr'}
+              </p>
+            </div>
+            
+            <form className="modal-form" onSubmit={handleCheckout}>
+              <div className="payment-methods">
+                <div 
+                  className={`payment-method ${paymentMethod === 'card' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('card')}
+                  onMouseEnter={handleCursorEnter}
+                  onMouseLeave={handleCursorLeave}
                 >
-                  Confirm Subscription
-                </button>
-                <button
-                  style={styles.modalBtnSecondary}
-                  onClick={() => setShowModal(false)}
-                  onMouseEnter={() => setCursorVariant("hover")}
-                  onMouseLeave={() => setCursorVariant("default")}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                  </svg>
+                  Card
+                </div>
+                <div 
+                  className={`payment-method ${paymentMethod === 'paypal' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('paypal')}
+                  onMouseEnter={handleCursorEnter}
+                  onMouseLeave={handleCursorLeave}
                 >
-                  Cancel
-                </button>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M7 11V7a5 5 0 0110 0v4"></path>
+                    <path d="M7 11v8h10v-8H7z"></path>
+                  </svg>
+                  PayPal
+                </div>
+                <div 
+                  className={`payment-method ${paymentMethod === 'applepay' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('applepay')}
+                  onMouseEnter={handleCursorEnter}
+                  onMouseLeave={handleCursorLeave}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.843 14.86c-.526.257-1.397.643-2.186.643-.883 0-1.782-.41-2.457-1.127-.676.717-1.575 1.127-2.458 1.127-.79 0-1.66-.386-2.186-.643-.68-.33-1.077-1.082-1.077-1.848v-.812c0-.528.23-1.018.618-1.353.486-.418 1.126-.645 1.796-.645.748 0 1.488.29 2.067.828.58-.537 1.32-.828 2.068-.828.67 0 1.31.227 1.795.645.39.335.62.825.62 1.353v.812c0 .766-.398 1.517-1.078 1.848zm-1.89-6.388c-.62.457-1.442.71-2.285.71s-1.665-.253-2.285-.71c-.742-.547-1.185-1.427-1.185-2.352 0-.916.43-1.782 1.157-2.327C10.024 5.3 10.96 5 11.954 5c.995 0 1.93.3 2.6.893.727.545 1.157 1.41 1.157 2.327 0 .925-.443 1.805-1.185 2.352z"/>
+                  </svg>
+                  Pay
+                </div>
               </div>
 
-              <p style={styles.modalDisclaimer}>
-                No hidden fees • Cancel anytime • Secure payment
-              </p>
+              {paymentMethod === 'card' && (
+                <>
+                  <div className="modal-input-group">
+                    <label>Email Address</label>
+                    <input type="email" className="modal-input" placeholder="elon@spacex.com" required />
+                  </div>
+                  <div className="modal-input-group">
+                    <label>Card Information</label>
+                    <input type="text" className="modal-input" placeholder="**** **** **** 4242" required />
+                  </div>
+                </>
+              )}
+              
+              {paymentMethod === 'paypal' && (
+                <div className="payment-redirect-msg">
+                  <p>You will be redirected to PayPal to complete your purchase securely.</p>
+                </div>
+              )}
+
+              {paymentMethod === 'applepay' && (
+                <div className="payment-redirect-msg">
+                  <p>Complete payment using your Apple device.</p>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className={`modal-submit ${isProcessing ? 'processing' : ''}`}
+                onMouseEnter={handleCursorEnter}
+                onMouseLeave={handleCursorLeave}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : 'Initialize Subscription'}
+              </button>
+            </form>
+            
+            <div className="modal-trust">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              Secured by 256-bit Stripe Neural Encryption
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
-
-/* ================= STYLES ================= */
-const styles = {
-  cursor: {
-    position: "fixed",
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    border: "2px solid #6366f1",
-    pointerEvents: "none",
-    zIndex: 9999,
-    transition: "transform 0.15s ease-out",
-    mixBlendMode: "difference",
-  },
-
-  main: {
-    minHeight: "100vh",
-    background: "linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%)",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  hero: {
-    padding: "6rem 1.5rem 4rem",
-    maxWidth: "1280px",
-    margin: "0 auto",
-    textAlign: "center",
-  },
-
-  heroContent: {
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-
-  heroTitle: {
-    fontSize: "clamp(2.5rem, 5vw, 4rem)",
-    fontWeight: 700,
-    color: "#111827",
-    marginBottom: "1.5rem",
-    lineHeight: 1.1,
-    letterSpacing: "-0.02em",
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  heroAccent: {
-    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
-  },
-
-  heroSubtitle: {
-    fontSize: "1.25rem",
-    color: "#6b7280",
-    marginBottom: "3rem",
-    lineHeight: 1.6,
-  },
-
-  billingToggle: {
-    display: "inline-flex",
-    gap: "0.5rem",
-    background: "#f3f4f6",
-    padding: "0.375rem",
-    borderRadius: "0.75rem",
-    marginBottom: "2rem",
-  },
-
-  toggleBtn: {
-    padding: "0.625rem 1.5rem",
-    background: "transparent",
-    border: "none",
-    borderRadius: "0.5rem",
-    fontSize: "0.9375rem",
-    fontWeight: 500,
-    color: "#6b7280",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    position: "relative",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  toggleBtnActive: {
-    background: "white",
-    color: "#111827",
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-  },
-
-  saveBadge: {
-    marginLeft: "0.5rem",
-    padding: "0.125rem 0.5rem",
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    color: "white",
-    borderRadius: "0.25rem",
-    fontSize: "0.75rem",
-    fontWeight: 600,
-  },
-
-  promoWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "0.5rem",
-    maxWidth: "400px",
-    margin: "0 auto",
-  },
-
-  promoInput: {
-    flex: 1,
-    padding: "0.75rem 1rem",
-    border: "1px solid #e5e7eb",
-    borderRadius: "0.5rem",
-    fontSize: "0.9375rem",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-    outline: "none",
-    transition: "border-color 0.2s",
-  },
-
-  promoBtn: {
-    padding: "0.75rem 1.5rem",
-    background: "#111827",
-    color: "white",
-    border: "none",
-    borderRadius: "0.5rem",
-    fontSize: "0.9375rem",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.2s",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  promoSuccess: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "0.5rem",
-    marginTop: "1rem",
-    padding: "0.75rem 1.5rem",
-    background: "#d1fae5",
-    color: "#065f46",
-    borderRadius: "0.5rem",
-    fontSize: "0.9375rem",
-    fontWeight: 500,
-  },
-
-  promoIcon: {
-    width: "20px",
-    height: "20px",
-  },
-
-  plansSection: {
-    padding: "4rem 1.5rem",
-    maxWidth: "1280px",
-    margin: "0 auto",
-  },
-
-  plansGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-    gap: "2rem",
-    maxWidth: "1200px",
-    margin: "0 auto",
-  },
-
-  planCard: {
-    background: "white",
-    borderRadius: "1.25rem",
-    padding: "2.5rem",
-    border: "1px solid #e5e7eb",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  planCardFeatured: {
-    border: "2px solid transparent",
-    background:
-      "linear-gradient(white, white) padding-box, linear-gradient(135deg, #6366f1, #8b5cf6) border-box",
-    boxShadow: "0 20px 40px rgba(99, 102, 241, 0.15)",
-    transform: "scale(1.05)",
-  },
-
-  popularBadge: {
-    position: "absolute",
-    top: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    color: "white",
-    padding: "0.375rem 1rem",
-    borderRadius: "9999px",
-    fontSize: "0.75rem",
-    fontWeight: 600,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
-  },
-
-  planHeader: {
-    marginBottom: "2rem",
-  },
-
-  planName: {
-    fontSize: "1.75rem",
-    fontWeight: 700,
-    color: "#111827",
-    marginBottom: "0.75rem",
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  planShort: {
-    fontSize: "0.9375rem",
-    color: "#6b7280",
-    lineHeight: 1.6,
-  },
-
-  planPricing: {
-    marginBottom: "2rem",
-    paddingBottom: "2rem",
-    borderBottom: "1px solid #e5e7eb",
-  },
-
-  priceWrapper: {
-    display: "flex",
-    alignItems: "baseline",
-    gap: "0.25rem",
-  },
-
-  currency: {
-    fontSize: "1.5rem",
-    fontWeight: 600,
-    color: "#6b7280",
-  },
-
-  amount: {
-    fontSize: "4rem",
-    fontWeight: 700,
-    color: "#111827",
-    lineHeight: 1,
-  },
-
-  period: {
-    fontSize: "1.125rem",
-    color: "#6b7280",
-    fontWeight: 500,
-  },
-
-  savings: {
-    marginTop: "0.5rem",
-    fontSize: "0.875rem",
-    color: "#10b981",
-    fontWeight: 600,
-  },
-
-  featureList: {
-    listStyle: "none",
-    padding: 0,
-    margin: "0 0 2rem 0",
-    flex: 1,
-  },
-
-  featureItem: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "0.75rem",
-    padding: "0.75rem 0",
-    fontSize: "0.9375rem",
-    color: "#374151",
-    lineHeight: 1.6,
-  },
-
-  featureItemDisabled: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "0.75rem",
-    padding: "0.75rem 0",
-    fontSize: "0.9375rem",
-    color: "#9ca3af",
-    lineHeight: 1.6,
-  },
-
-  checkIcon: {
-    width: "20px",
-    height: "20px",
-    flexShrink: 0,
-    color: "#10b981",
-    marginTop: "2px",
-  },
-
-  xIcon: {
-    width: "20px",
-    height: "20px",
-    flexShrink: 0,
-    color: "#d1d5db",
-    marginTop: "2px",
-  },
-
-  ctaBtn: {
-    width: "100%",
-    padding: "1rem 2rem",
-    borderRadius: "0.75rem",
-    fontSize: "1rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-    border: "none",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  ctaBtnPrimary: {
-    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    color: "white",
-    boxShadow: "0 8px 16px rgba(99, 102, 241, 0.2)",
-  },
-
-  ctaBtnSecondary: {
-    background: "white",
-    color: "#111827",
-    border: "2px solid #e5e7eb",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.05)",
-  },
-
-  trialNote: {
-    textAlign: "center",
-    marginTop: "1rem",
-    fontSize: "0.875rem",
-    color: "#6b7280",
-  },
-
-  trustStrip: {
-    padding: "3rem 1.5rem",
-    background: "#f9fafb",
-    borderTop: "1px solid #e5e7eb",
-    borderBottom: "1px solid #e5e7eb",
-  },
-
-  trustGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "2rem",
-    maxWidth: "1200px",
-    margin: "0 auto",
-  },
-
-  trustItem: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "0.75rem",
-    textAlign: "center",
-    color: "#374151",
-    fontSize: "0.9375rem",
-    fontWeight: 500,
-  },
-
-  trustIcon: {
-    width: "32px",
-    height: "32px",
-    color: "#6366f1",
-  },
-
-  testimonialsSection: {
-    padding: "4rem 1.5rem",
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-
-  testimonialsTitle: {
-    fontSize: "2.5rem",
-    fontWeight: 700,
-    color: "#111827",
-    textAlign: "center",
-    marginBottom: "3rem",
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  testimonialCard: {
-    background: "white",
-    borderRadius: "1.25rem",
-    padding: "3rem",
-    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08)",
-    textAlign: "center",
-  },
-
-  testimonialText: {
-    fontSize: "1.25rem",
-    color: "#374151",
-    lineHeight: 1.8,
-    marginBottom: "2rem",
-    fontStyle: "italic",
-  },
-
-  testimonialAuthor: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25rem",
-    fontSize: "1rem",
-    color: "#111827",
-    fontWeight: 600,
-  },
-
-  testimonialRole: {
-    fontSize: "0.875rem",
-    color: "#6b7280",
-    fontWeight: 400,
-  },
-
-  testimonialDots: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "0.5rem",
-    marginTop: "2rem",
-  },
-
-  testimonialDot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    background: "#d1d5db",
-    border: "none",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    padding: 0,
-  },
-
-  testimonialDotActive: {
-    background: "#6366f1",
-    width: "24px",
-    borderRadius: "4px",
-  },
-
-  faqSection: {
-    padding: "4rem 1.5rem",
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-
-  faqTitle: {
-    fontSize: "2.5rem",
-    fontWeight: 700,
-    color: "#111827",
-    textAlign: "center",
-    marginBottom: "3rem",
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  faqList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-
-  faqItem: {
-    background: "white",
-    borderRadius: "0.75rem",
-    border: "1px solid #e5e7eb",
-    overflow: "hidden",
-  },
-
-  faqQuestion: {
-    width: "100%",
-    padding: "1.5rem",
-    background: "transparent",
-    border: "none",
-    textAlign: "left",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    fontSize: "1.0625rem",
-    fontWeight: 600,
-    color: "#111827",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-    transition: "background-color 0.2s",
-  },
-
-  faqIcon: {
-    width: "20px",
-    height: "20px",
-    color: "#6b7280",
-    transition: "transform 0.2s",
-  },
-
-  faqAnswer: {
-    padding: "0 1.5rem 1.5rem",
-    fontSize: "0.9375rem",
-    color: "#6b7280",
-    lineHeight: 1.7,
-    animation: "fadeIn 0.2s ease-out",
-  },
-
-  enterpriseCta: {
-    padding: "5rem 1.5rem",
-    background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-    textAlign: "center",
-  },
-
-  enterpriseContent: {
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-
-  enterpriseTitle: {
-    fontSize: "2.5rem",
-    fontWeight: 700,
-    color: "white",
-    marginBottom: "1.5rem",
-    lineHeight: 1.2,
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  enterpriseText: {
-    fontSize: "1.125rem",
-    color: "#cbd5e1",
-    marginBottom: "2.5rem",
-    lineHeight: 1.7,
-  },
-
-  enterpriseBtn: {
-    padding: "1rem 2.5rem",
-    background: "white",
-    color: "#1e293b",
-    border: "none",
-    borderRadius: "0.75rem",
-    fontSize: "1.0625rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 8px 16px rgba(255, 255, 255, 0.15)",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0, 0, 0, 0.5)",
-    backdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-    padding: "1.5rem",
-  },
-
-  modalContent: {
-    background: "white",
-    borderRadius: "1.25rem",
-    padding: "3rem",
-    maxWidth: "500px",
-    width: "100%",
-    position: "relative",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-  },
-
-  modalClose: {
-    position: "absolute",
-    top: "1.5rem",
-    right: "1.5rem",
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    padding: "0.5rem",
-    color: "#6b7280",
-    transition: "color 0.2s",
-  },
-
-  modalTitle: {
-    fontSize: "2rem",
-    fontWeight: 700,
-    color: "#111827",
-    marginBottom: "0.5rem",
-    fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive",
-  },
-
-  modalSubtitle: {
-    fontSize: "1.25rem",
-    color: "#6b7280",
-    marginBottom: "2rem",
-  },
-
-  modalForm: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-
-  modalLabel: {
-    fontSize: "0.9375rem",
-    fontWeight: 600,
-    color: "#374151",
-    marginBottom: "0.5rem",
-  },
-
-  modalInput: {
-    width: "100%",
-    padding: "0.875rem 1rem",
-    border: "1px solid #e5e7eb",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-    outline: "none",
-    transition: "border-color 0.2s",
-  },
-
-  modalActions: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-  },
-
-  modalBtnPrimary: {
-    padding: "1rem 2rem",
-    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "0.75rem",
-    fontSize: "1rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  modalBtnSecondary: {
-    padding: "1rem 2rem",
-    background: "transparent",
-    color: "#6b7280",
-    border: "none",
-    borderRadius: "0.75rem",
-    fontSize: "1rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "color 0.2s",
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-
-  modalDisclaimer: {
-    fontSize: "0.875rem",
-    color: "#9ca3af",
-    textAlign: "center",
-  },
-};
