@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import google.generativeai as genai
 import uuid
@@ -16,8 +16,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ---------------- Gemini Setup ----------------
-genai.configure(api_key="your api key")  # Replace with your actual API key
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+if not gemini_api_key:
+    raise RuntimeError("CRITICAL STARTUP ERROR: GEMINI_API_KEY environment variable is missing. Server cannot start.")
+
+genai.configure(api_key=gemini_api_key)
 def get_working_model():
     for m in genai.list_models():
         if "generateContent" in m.supported_generation_methods:
@@ -84,12 +92,12 @@ def chat():
         chat_sessions.setdefault(chat_id, []).append({
             "role": "user",
             "message": message,
-            "time": datetime.now().strftime("%H:%M")
+            "time": datetime.now().isoformat()
         })
         chat_sessions[chat_id].append({
             "role": "assistant",
             "message": reply,
-            "time": datetime.now().strftime("%H:%M")
+            "time": datetime.now().isoformat()
         })
 
         return jsonify({"reply": reply, "chat_id": chat_id})
@@ -106,7 +114,152 @@ def chat():
 
 @app.route("/api/chats", methods=["GET"])
 def get_chats():
-    return jsonify(chat_sessions)
+    sessions = []
+    for cid, msgs in chat_sessions.items():
+        title = msgs[0]['message'][:30] if msgs else "New Chat"
+        sessions.append({
+            "_id": cid, 
+            "title": title, 
+            "messages": msgs,
+            "createdAt": msgs[0].get("time") if msgs else datetime.now().isoformat()
+        })
+    return jsonify({"sessions": sessions})
+
+@app.route("/api/chats", methods=["POST"])
+def create_chat():
+    chat_id = str(uuid.uuid4())
+    chat_sessions[chat_id] = []
+    return jsonify({"chat_id": chat_id})
+
+@app.route("/api/chats/<chat_id>", methods=["GET"])
+def get_chat(chat_id):
+    if chat_id in chat_sessions:
+        return jsonify({"messages": chat_sessions[chat_id]})
+    return jsonify({"error": "Not found"}), 404
+
+@app.route("/api/chats/<chat_id>", methods=["DELETE"])
+def delete_chat(chat_id):
+    if chat_id in chat_sessions:
+        del chat_sessions[chat_id]
+        return jsonify({"success": True})
+    return jsonify({"error": "Not found"}), 404
+
+@app.route("/api/chats", methods=["DELETE"])
+def delete_all_chats():
+    chat_sessions.clear()
+    return jsonify({"success": True})
+
+import os
+import tempfile
+
+@app.route("/api/documents/upload", methods=["POST"])
+def upload_documents():
+    chat_id = request.form.get("chat_id")
+    files = request.files.getlist("files")
+    
+    if not chat_id:
+        return jsonify({"error": "chat_id required"}), 400
+
+    uploaded_gemini_files = []
+    
+    for f in files:
+        try:
+            # Determine extension
+            ext = os.path.splitext(f.filename)[1]
+            if not ext:
+                ext = ".txt"
+                
+            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+                f.save(tmp.name)
+                # Upload to Gemini natively (handles OCR for Image PDFs, Docs, Images, etc.)
+                g_file = genai.upload_file(tmp.name, display_name=f.filename)
+                uploaded_gemini_files.append({"name": g_file.name, "display_name": f.filename})
+            os.remove(tmp.name)
+        except Exception as e:
+            logger.error(f"Failed to upload {f.filename} to Gemini: {e}")
+    
+    if uploaded_gemini_files:
+        chat_sessions.setdefault(chat_id, []).append({
+            "role": "user",
+            "message": "[SYSTEM ALERT: User attached files]",
+            "gemini_files": uploaded_gemini_files,
+            "time": datetime.now().isoformat()
+        })
+        
+    return jsonify({"status": "processing_started", "message": "Files received successfully."})
+
+@app.route("/api/chat/stream/<chat_id>", methods=["POST"])
+def chat_stream(chat_id):
+    try:
+        data = request.get_json(force=True)
+        message = data.get("message", "").strip()
+        
+        history = chat_sessions.get(chat_id, [])
+        
+        # Build prompt and gather any attached files
+        context_str = ""
+        prompt_parts = []
+        
+        for msg in history[-8:]:  # Include last 8 messages for context
+            role = "User" if msg["role"] == "user" else "Assistant"
+            if "gemini_files" in msg:
+                context_str += f"{role} attached files:\n"
+                for gf in msg["gemini_files"]:
+                    try:
+                        g_file = genai.get_file(gf["name"])
+                        prompt_parts.append(g_file)
+                        context_str += f"- {gf['display_name']}\n"
+                    except Exception as e:
+                        logger.error(f"Could not retrieve Gemini file: {e}")
+            else:
+                context_str += f"{role}: {msg['message']}\n"
+            
+        system_prompt = (
+            "You are a career guidance assistant and AI Document Analyzer.\n"
+            "Explain topics clearly in your OWN words. Do NOT quote textbooks or copyrighted content.\n"
+            "Analyze the attached files thoroughly if the user asks about them.\n\n"
+            f"{context_str}"
+            f"User: {message}\n"
+            "Assistant:"
+        )
+        
+        prompt_parts.append(system_prompt)
+        
+        def generate():
+            try:
+                # Streaming response from Gemini with Native Multimodal parts
+                response = model.generate_content(prompt_parts, stream=True)
+                full_reply = ""
+                for chunk in response:
+                    if chunk.text:
+                        full_reply += chunk.text
+                        # Encode as JSON to safely transport newlines
+                        data_payload = json.dumps({"text": chunk.text})
+                        yield f"data: {data_payload}\n\n"
+                
+                # Save to sessions
+                chat_sessions.setdefault(chat_id, []).append({
+                    "role": "user",
+                    "message": message,
+                    "time": datetime.now().isoformat()
+                })
+                chat_sessions[chat_id].append({
+                    "role": "assistant",
+                    "message": full_reply,
+                    "time": datetime.now().isoformat()
+                })
+                
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                logger.exception("Stream error")
+                error_msg = json.dumps({"text": f"\n\n⚠️ Error: {str(e)}"})
+                yield f"data: {error_msg}\n\n"
+                yield "data: [DONE]\n\n"
+                
+        return Response(generate(), mimetype="text/event-stream")
+    except Exception as e:
+        logger.exception("Chat stream setup error")
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------- RESUME PREDICT API (UPDATED) ----------------
