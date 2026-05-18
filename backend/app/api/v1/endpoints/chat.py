@@ -87,7 +87,7 @@ async def sse_chat(session_id: str, query: dict):
         try:
             async for token in router_engine.stream_rag_response(user_message, session_id):
                 full_reply += token
-                yield f"data: {json.dumps({'text': token})}\n\n"
+                yield f"data: {json.dumps({'message': token})}\n\n"
                 
             chat_sessions.setdefault(session_id, []).append({
                 "role": "assistant",
@@ -96,7 +96,7 @@ async def sse_chat(session_id: str, query: dict):
             })
             yield "data: [DONE]\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'text': f'\\n\\n⚠️ Error: {str(e)}'})}\n\n"
+            yield f"data: {json.dumps({'message': f'\\n\\n⚠️ Error: {str(e)}'})}\n\n"
             yield "data: [DONE]\n\n"
         
     return StreamingResponse(sse_generator(), media_type="text/event-stream")

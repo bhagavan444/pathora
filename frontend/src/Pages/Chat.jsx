@@ -837,14 +837,18 @@ export default function ChatUI() {
       // Read SSE stream
       const reader = res.body.getReader();
       const decoder = new TextDecoder("utf-8");
+      
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (stopRef.current) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep the incomplete last line in the buffer
+
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const dataStr = line.replace("data: ", "").trim();
@@ -854,14 +858,19 @@ export default function ChatUI() {
             if (dataStr) {
               try {
                 const parsed = JSON.parse(dataStr);
-                built += parsed.text;
+                built += parsed.message || parsed.text || "";
                 setMessages((c) => c.map((m) => (m.id === aid ? { ...m, reply: built } : m)));
               } catch (e) {
-                // Ignore parse errors for incomplete chunks
+                // Ignore parse errors
               }
             }
           }
         }
+      }
+      
+      if (!built.trim()) {
+         built = "I couldn't process that properly. Please try again or ask something else.";
+         setMessages((c) => c.map((m) => (m.id === aid ? { ...m, reply: built } : m)));
       }
 
       setStreamingId(null);
