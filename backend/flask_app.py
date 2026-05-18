@@ -26,7 +26,7 @@ if not gemini_api_key:
     raise RuntimeError("CRITICAL STARTUP ERROR: GEMINI_API_KEY environment variable is missing. Server cannot start.")
 
 client = genai.Client(api_key=gemini_api_key)
-model_name = 'gemini-1.5-flash'
+model_name = 'gemini-2.5-flash'
 
 # ---------------- Storage ----------------
 chat_sessions = {}
@@ -95,13 +95,19 @@ def chat():
         return jsonify({"reply": reply, "chat_id": chat_id})
 
     except Exception as e:
-        if "429" in str(e) or "ResourceExhausted" in str(e):
+        error_str = str(e)
+        logger.exception(f"Chat error: {error_str}")
+
+        if "429" in error_str or "ResourceExhausted" in error_str or "RESOURCE_EXHAUSTED" in error_str:
             return jsonify({
                 "reply": "AI usage limit reached. Please wait a minute and try again."
             }), 429
+        if "403" in error_str or "PERMISSION_DENIED" in error_str:
+            return jsonify({"reply": "AI service authentication error. Check API key."}), 403
+        if "404" in error_str or "NOT_FOUND" in error_str:
+            return jsonify({"reply": f"Model '{model_name}' not found. Contact support."}), 500
 
-        logger.exception("Chat error")
-        return jsonify({"reply": "Chat error occurred"}), 500
+        return jsonify({"reply": "I encountered an issue generating a response. Please try again."}), 500
 
 
 @app.route("/api/chats", methods=["GET"])

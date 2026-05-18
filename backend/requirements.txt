@@ -1,23 +1,43 @@
+# Core Framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 gunicorn>=21.2.0
 pydantic>=2.5.3
 pydantic-settings>=2.1.0
-motor>=3.3.2
-asyncpg>=0.29.0
-redis>=5.0.1
-celery>=5.3.6
-google-genai>=0.1.2
-openai>=1.10.0
-anthropic>=0.18.1
-qdrant-client>=1.7.0
-python-multipart>=0.0.6
-websockets>=12.0
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
+
+# AI SDK (Google Gemini — latest stable)
+google-genai>=1.0.0
+
+# File Processing
 pdfplumber>=0.10.3
-celery[redis]>=5.3.6
-prometheus-fastapi-instrumentator>=6.1.0
+python-multipart>=0.0.6
+
+# HTTP Client
 httpx>=0.26.0
+
+# Environment & Auth
 python-dotenv>=1.0.1
 PyJWT>=2.8.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Optional: Flask (for local dev with flask_app.py)
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Optional: Monitoring (gracefully skipped if missing)
+# prometheus-fastapi-instrumentator>=6.1.0
+
+# Optional: Database drivers (only needed if services are configured)
+# motor>=3.3.2
+# asyncpg>=0.29.0
+# redis>=5.0.1
+# qdrant-client>=1.7.0
+
+# Optional: Background workers
+# celery>=5.3.6
+# celery[redis]>=5.3.6
+
+# Optional: Additional AI providers
+# openai>=1.10.0
+# anthropic>=0.18.1

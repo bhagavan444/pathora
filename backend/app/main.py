@@ -1,10 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
 import logging
+import os
 
 from app.core.config import settings
-from app.api.v1.api import api_router
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
@@ -13,55 +12,76 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    description="Enterprise AI Backend 2026 - Scalable, Streaming, Distributed",
+    description="Pathora AI Backend — Career Intelligence Platform",
     version="2.0.0"
 )
 
-from app.middleware.telemetry import TelemetryMiddleware
-from app.middleware.security import SecurityMiddleware
+# ─── Middlewares ────────────────────────────────────────────────────────────────
 
-# Add custom middlewares
-app.add_middleware(SecurityMiddleware)
-app.add_middleware(TelemetryMiddleware)
+# Telemetry middleware (lightweight, always safe to load)
+try:
+    from app.middleware.telemetry import TelemetryMiddleware
+    app.add_middleware(TelemetryMiddleware)
+except Exception as e:
+    logger.warning(f"Telemetry middleware skipped: {e}")
 
-# Set up CORS - Add last so it's the outermost middleware (executed first)
+# Security middleware (lightweight, always safe to load)
+try:
+    from app.middleware.security import SecurityMiddleware
+    app.add_middleware(SecurityMiddleware)
+except Exception as e:
+    logger.warning(f"Security middleware skipped: {e}")
+
+# CORS — must be added last so it's the outermost middleware (executed first)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://carrer-intelligence.vercel.app",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Metrics - Prometheus Instrumentator
-Instrumentator().instrument(app).expose(app, include_in_schema=False)
+# ─── Prometheus Metrics (optional) ─────────────────────────────────────────────
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app, include_in_schema=False)
+except Exception as e:
+    logger.info(f"Prometheus metrics skipped: {e}")
 
-# Include Routers
+# ─── API Routes ────────────────────────────────────────────────────────────────
+from app.api.v1.api import api_router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("=== Starting Enterprise AI Backend ===")
+    logger.info("=== Starting Pathora AI Backend ===")
+    logger.info(f"API prefix: {settings.API_V1_STR}")
+    logger.info(f"GEMINI_API_KEY configured: {'Yes' if settings.GEMINI_API_KEY else 'No'}")
     
-    # Check Infrastructure Services
-    services = {
+    # Check optional infrastructure services
+    optional_services = {
         "PostgreSQL": settings.POSTGRES_URI,
         "MongoDB": settings.MONGODB_URI,
         "Redis": settings.REDIS_URI,
         "Qdrant": settings.QDRANT_URL,
-        "Celery Broker": settings.CELERY_BROKER_URL,
-        "Celery Backend": settings.CELERY_RESULT_BACKEND,
     }
     
-    for service, uri in services.items():
+    for service, uri in optional_services.items():
         if uri:
-            logger.info(f"[ACTIVE] {service} is configured.")
+            logger.info(f"  [ACTIVE] {service} configured")
         else:
-            logger.warning(f"[SKIPPED] {service} is missing. Running in lightweight mode.")
+            logger.info(f"  [SKIPPED] {service} not configured (lightweight mode)")
+
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "version": app.version}
+    return {
+        "status": "healthy",
+        "version": app.version,
+        "gemini_configured": bool(settings.GEMINI_API_KEY),
+    }
