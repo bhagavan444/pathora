@@ -40,6 +40,26 @@ Instrumentator().instrument(app).expose(app, include_in_schema=False)
 # Include Routers
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.on_event("startup")
+async def startup_event():
+    logger.info("=== Starting Enterprise AI Backend ===")
+    
+    # Check Infrastructure Services
+    services = {
+        "PostgreSQL": settings.POSTGRES_URI,
+        "MongoDB": settings.MONGODB_URI,
+        "Redis": settings.REDIS_URI,
+        "Qdrant": settings.QDRANT_URL,
+        "Celery Broker": settings.CELERY_BROKER_URL,
+        "Celery Backend": settings.CELERY_RESULT_BACKEND,
+    }
+    
+    for service, uri in services.items():
+        if uri:
+            logger.info(f"[ACTIVE] {service} is configured.")
+        else:
+            logger.warning(f"[SKIPPED] {service} is missing. Running in lightweight mode.")
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": app.version}

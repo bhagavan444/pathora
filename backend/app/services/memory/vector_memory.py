@@ -11,9 +11,16 @@ class VectorMemoryEngine:
     def __init__(self):
         self.collection_name = "conversational_memory"
         # In a real scenario, this client would be a singleton initialized at app startup.
-        self.client = AsyncQdrantClient(url=settings.QDRANT_URL)
+        if settings.QDRANT_URL:
+            self.client = AsyncQdrantClient(url=settings.QDRANT_URL)
+            logger.info("Qdrant client initialized successfully.")
+        else:
+            self.client = None
+            logger.info("QDRANT_URL not found. Qdrant initialization skipped.")
         
     async def ensure_collection(self):
+        if not self.client:
+            return
         try:
             collections = await self.client.get_collections()
             if not any(c.name == self.collection_name for c in collections.collections):
@@ -29,6 +36,9 @@ class VectorMemoryEngine:
         """
         Store a conversation turn as an embedded memory.
         """
+        if not self.client:
+            return
+
         if metadata is None:
             metadata = {}
         metadata["session_id"] = session_id
@@ -51,6 +61,9 @@ class VectorMemoryEngine:
         """
         Retrieve semantically relevant past conversation turns using Vector Search.
         """
+        if not self.client:
+            return []
+
         # Note: Need to filter by session_id in production using Qdrant Filter models.
         results = await self.client.search(
             collection_name=self.collection_name,

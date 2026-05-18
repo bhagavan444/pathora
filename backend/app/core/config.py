@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     
     # Databases
-    POSTGRES_URI: str
-    MONGODB_URI: str
-    REDIS_URI: str
-    QDRANT_URL: str
+    POSTGRES_URI: str | None = None
+    MONGODB_URI: str | None = None
+    REDIS_URI: str | None = None
+    QDRANT_URL: str | None = None
     
     # AI API Keys
     GEMINI_API_KEY: str
@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     
     # Worker
-    CELERY_BROKER_URL: str
-    CELERY_RESULT_BACKEND: str
+    CELERY_BROKER_URL: str | None = None
+    CELERY_RESULT_BACKEND: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra='allow')
 
