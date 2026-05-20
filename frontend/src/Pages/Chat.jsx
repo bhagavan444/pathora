@@ -4,6 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { githubGist } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { useIntelligenceStore } from "../store/intelligenceStore";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` : "https://pathora-backend1.onrender.com/api/v1";
@@ -586,6 +587,10 @@ function MessageReactions({ onReact, reactions }) {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function ChatUI() {
+  const globalAnalysis = useIntelligenceStore(state => state.resumeAnalysis);
+  const globalDomain = useIntelligenceStore(state => state.currentDomain);
+  const globalResume = useIntelligenceStore(state => state.resumeData);
+
   const [sessions, setSessions] = useState([]);
   const [chatId, setChatId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -766,7 +771,14 @@ export default function ChatUI() {
       date: new Date().toDateString(),
     };
     setMessages((c) => [...c, userMsg]);
-    const cap = input;
+    
+    let cap = input;
+    if (messages.length === 0 && globalAnalysis) {
+      const strengths = globalAnalysis.skills ? globalAnalysis.skills.slice(0, 5).join(', ') : "";
+      const contextPreamble = `[SYSTEM CONTEXT: The user has previously uploaded their resume. Their ATS Score is ${globalAnalysis.score}/100. Target Role: ${globalDomain}. Key Skills Detected: ${strengths}. Keep this context in mind to provide highly personalized engineering advice. Do not explicitly state that you are reading system context unless asked.]\n\n`;
+      cap = contextPreamble + cap;
+    }
+    
     setInput("");
     const attachedFiles = [...selectedFiles];
     setSelectedFiles([]);
@@ -1334,7 +1346,7 @@ export default function ChatUI() {
         </AnimatePresence>
 
         {/* ── MAIN ── */}
-        <main style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "radial-gradient(ellipse at top right, rgba(255,255,255,1), rgba(248,248,252,1))" }}>
+        <main style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "radial-gradient(ellipse at top right, rgba(255,255,255,0.55), rgba(248,248,252,0.5))", backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" }}>
 
           {/* Error banner */}
           <AnimatePresence>

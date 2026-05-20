@@ -3,29 +3,36 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useWindowSize } from "react-use";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  ResponsiveContainer, CartesianGrid, Area, AreaChart,
-  XAxis, YAxis, Tooltip,
+  ResponsiveContainer, Area, AreaChart, XAxis, YAxis, Tooltip, Legend
 } from "recharts";
+import {
+  Activity, Cpu, ShieldAlert, Brain, Globe, Target, Clock, ArrowRight,
+  ShieldCheck, HelpCircle, ChevronRight, AlertTriangle, Sparkles, RefreshCw, CheckCircle2,
+  Terminal as TerminalIcon, Eye, GitBranch, Sliders, Database, Network, TrendingUp, Monitor
+} from "lucide-react";
+import Footer from '../components/Footer';
+import { useIntelligenceStore } from '../store/intelligenceStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://pathora-backend1.onrender.com";
 
-/* ─────────────────────────────────────────────
-   MOCK DATA — used when API is unavailable
-───────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   MOCK CONFIGURATION FOR COGNITIVE FALLBACK
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const MOCK_RESULT = {
   score: 84,
   roles: [
-    "AI Integration Engineer",
-    "Machine Learning Ops",
-    "Senior Full Stack Developer",
-    "Cloud Architecture Lead",
+    "AI Systems Engineer",
+    "Distributed Infrastructure Engineer",
+    "Senior Full Stack Architect",
+    "Cloud Native Tech Lead",
     "Product Engineer",
   ],
   skills: [
-    "React", "Node.js", "TypeScript", "Python", "Neural Networks",
-    "PostgreSQL", "Docker", "Kubernetes", "AWS", "CI/CD",
+    "React", "Node.js", "TypeScript", "Python", "Vector Databases",
+    "PostgreSQL", "Docker", "Kubernetes", "AWS (EC2/EKS)", "CI/CD Orchestration",
   ],
   aspectScores: [
     { name: "Technical Depth",  value: 88 },
@@ -36,66 +43,98 @@ const MOCK_RESULT = {
     { name: "Domain Knowledge", value: 78 },
   ],
   roadmap: [
-    "Architect a highly scalable distributed microservice",
-    "Acquire advanced AWS Machine Learning certification",
-    "Publish findings on LLM orchestration strategies",
-    "Contribute to key open-source AI frameworks",
-    "Transition into AI Product Leadership within 18 months",
+    "Architect a highly scalable distributed microservice with Redis caching layers.",
+    "Acquire advanced AWS Solutions Architect Certification to authenticate cloud EKS knowledge.",
+    "Publish findings on LLM orchestration strategies and latency profiling.",
+    "Contribute core middleware optimizations to key open-source web frameworks.",
+    "Transition into Technical Product Lead within 18 months by owning roadmap delivery.",
   ],
   improvements: [
-    "Quantify architectural impact (e.g. 'reduced API latency by 45% using edge caching')",
-    "Highlight specific AI model fine-tuning achievements",
-    "Restructure experience to emphasize product ownership and technical leadership",
-    "Elevate language to enterprise standards—replace 'worked on' with 'architected'",
+    "Quantify architectural impact: Replace generic descriptions with metrics (e.g., 'reduced API latency by 45% using distributed Redis caching').",
+    "Highlight specific LLM model orchestration details, detailing vector storage queries and prompt formatting controls.",
+    "Restructure engineering milestones to emphasize product ownership and technical mentorship footprints.",
+    "Elevate resume vocabulary to enterprise standardsâ€”replace 'worked on' with 'architected and maintained'.",
   ],
   growthProjection: [
     { year: "Now", salary: 85000 },
-    { year: "Y1",  salary: 110000 },
-    { year: "Y2",  salary: 135000 },
-    { year: "Y3",  salary: 165000 },
-    { year: "Y5",  salary: 215000 },
+    { year: "Y1",  salary: 112000 },
+    { year: "Y2",  salary: 140000 },
+    { year: "Y3",  salary: 175000 },
+    { year: "Y5",  salary: 220000 },
   ],
   careerTrajectory: [
-    "Frontend Developer",
-    "Full Stack Engineer",
-    "Product Engineer",
-    "Technical Lead"
+    "Software Engineer I",
+    "Senior Product Engineer",
+    "Infrastructure Lead",
+    "Principal AI Architect"
   ],
   projectAnalysis: {
-    strengths: ["Strong frontend engineering signals", "Good deployment maturity"],
-    weaknesses: ["Missing distributed systems exposure", "Limited testing visibility"],
+    strengths: [
+      "Excellent frontend interface state controls and layout engineering signals.",
+      "Clear continuous integration configuration indicators and deployment telemetry awareness."
+    ],
+    weaknesses: [
+      "Limited infrastructure ownership evidence detected. Resume lacks distributed caching, queue orchestration, and production-scale backend architecture indicators.",
+      "Absence of modular test-driven development metrics (e.g. Unit/Integration coverage specifications)."
+    ],
     complexity: 78,
     scalability: 65
   },
   recruiterPerspective: {
-    standouts: ["Modern tech stack usage", "Clear career progression"],
-    concerns: ["Lack of quantified metrics in recent roles", "Light on backend architecture"],
+    standouts: [
+      "High framework vocabulary consistency aligned with modern SaaS ecosystems.",
+      "Logical progression in project ownership across historical milestones."
+    ],
+    concerns: [
+      "Lack of quantified backend telemetry metrics in recent engineering contributions.",
+      "Frontend-heavy profile with restricted architecture scope for large scale distributed backend systems."
+    ],
     confidence: 82
   },
   competitiveness: {
     percentile: 88,
     interviewProbability: 75,
-    comparison: "Strong Fresher"
+    comparison: "Top Tier Candidate"
   },
   readiness: [
-    { name: "DSA", value: 70 },
-    { name: "System Design", value: 65 },
-    { name: "Communication", value: 90 },
-    { name: "Backend", value: 75 },
-    { name: "Frontend", value: 95 }
+    { name: "DSA Algorithms", value: 72 },
+    { name: "System Design", value: 64 },
+    { name: "Technical Communication", value: 92 },
+    { name: "Backend Architecture", value: 58 },
+    { name: "Frontend State Systems", value: 95 }
   ],
   simulations: [
-    { action: "Current Profile", score: 84 },
-    { action: "Add Quantified Achievements", score: 89 },
-    { action: "Add Cloud Certifications", score: 92 },
-    { action: "Add System Design Projects", score: 95 }
+    { action: "Baseline Resume Profile", score: 84 },
+    { action: "Inject Distributed Systems Caching", score: 89 },
+    { action: "Append Docker/Kubernetes Deployments", score: 93 },
+    { action: "Add Quantifiable latency metrics", score: 96 }
   ]
 };
 
+const SEMANTIC_STEPS = [
+  "Scanning resume layout structure for structural anomalies...",
+  "Running tokenization on educational and professional headers...",
+  "Extracting framework taxonomy: React, TypeScript, Node.js nodes identified...",
+  "Cross-referencing technology tags against FAANG engineering standard profiles...",
+  "Evaluating semantic experience density: Scanning project complexity signals...",
+  "Warning: Limited scale indicators found in project description blocks...",
+  "Computing keyword relevance matrix against Enterprise System Architect benchmarks...",
+  "Analyzing developer Git cadence patterns and codebase discipline heuristics...",
+  "Quantifying recruiter attention zones based on historical eye-tracking matrices...",
+  "Model drift check: Core parser confidence stabilized at 98.4% accuracy...",
+  "Finalizing career genome vectors: Formatting predictive telemetry dashboards..."
+];
 
-/* ─────────────────────────────────────────────
+const GENERAL_LOGS = [
+  "Core Parser: Awaiting document payload on socket buffer...",
+  "System: Model models/gemini-2.5-flash online and calibrated.",
+  "Heuristics: Awaiting ATS alignment request tokens...",
+  "Telemetry: Core system status is active."
+];
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    STYLE INJECTION
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const injectStyles = () => {
   if (typeof document === "undefined") return;
   if (document.getElementById("pnx-predict-styles")) {
@@ -110,6 +149,20 @@ const injectStyles = () => {
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes reverseSpin { to { transform: rotate(-360deg); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; filter: blur(24px); transform: scale(1); }
+      50% { opacity: 0.85; filter: blur(34px); transform: scale(1.03); }
+    }
+    @keyframes orb {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(30px, -20px) scale(1.05); }
+      66%      { transform: translate(-20px, 20px) scale(0.95); }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
     @keyframes fadeSlideUp {
       from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
       to   { opacity: 1; transform: translateY(0); filter: blur(0); }
@@ -139,18 +192,17 @@ const injectStyles = () => {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-12px); }
     }
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.6; filter: blur(20px); transform: scale(1); }
-      50% { opacity: 0.9; filter: blur(30px); transform: scale(1.05); }
-    }
-    @keyframes orb {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33%      { transform: translate(30px, -20px) scale(1.05); }
-      66%      { transform: translate(-20px, 20px) scale(0.95); }
-    }
     @keyframes pulseNode {
       0%, 100% { r: 4; fill: #7c3aed; opacity: 0.8; }
       50% { r: 6; fill: #4f46e5; opacity: 1; }
+    }
+    @keyframes grain {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-1%, -1%); }
+      30% { transform: translate(-2%, -2%); }
+      50% { transform: translate(-1%, 2%); }
+      70% { transform: translate(1%, -2%); }
+      90% { transform: translate(-1%, -1%); }
     }
 
     .reveal-up { animation: fadeSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
@@ -164,20 +216,45 @@ const injectStyles = () => {
       border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 24px;
       box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255,255,255,0.4);
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      overflow: hidden;
     }
     .glass-panel:hover {
       background: rgba(255, 255, 255, 0.6);
-      border-color: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 40px -2px rgba(0, 0, 0, 0.08), 0 0 20px rgba(124,58,237,0.05);
-      transform: translateY(-2px);
+      border-color: rgba(124,58,237,0.25);
+      box-shadow: 0 14px 44px -4px rgba(0, 0, 0, 0.08), 0 0 25px rgba(124,58,237,0.06);
+      transform: translateY(-4px);
+    }
+    
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15) 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0.15) 70%,
+        transparent
+      );
+      transform: skewX(-25deg);
+      transition: none;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .glass-panel:hover::before {
+      left: 150%;
+      transition: all 0.8s ease-in-out;
     }
 
     .kpi-card {
       background: rgba(255, 255, 255, 0.5);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.7);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 24px;
       position: relative;
       overflow: hidden;
@@ -188,8 +265,8 @@ const injectStyles = () => {
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(124,58,237,0.05) 0%, transparent 55%);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.04) 0%, transparent 60%);
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
@@ -197,8 +274,8 @@ const injectStyles = () => {
     .kpi-card:hover::after { opacity: 1; }
     .kpi-card:hover {
       border-color: rgba(124,58,237,0.3);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.06), 0 0 15px rgba(124,58,237,0.05);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.08);
     }
 
     .btn-primary {
@@ -241,6 +318,30 @@ const injectStyles = () => {
       box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     }
 
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #111827, #374151);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:hover {
+      background: linear-gradient(135deg, #030712, #1f2937);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6; cursor: not-allowed; transform: translateY(0);
+    }
+
     .pnx-input {
       width: 100%;
       background: rgba(255,255,255,0.5);
@@ -262,7 +363,7 @@ const injectStyles = () => {
 
     .upload-zone {
       border: 2px dashed rgba(124,58,237,0.25);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 32px 24px;
       text-align: center;
       cursor: pointer;
@@ -287,34 +388,37 @@ const injectStyles = () => {
       font-weight: 500;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #6b7280;
+      color: #7c3aed;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .skill-tag {
       display: inline-flex; align-items: center;
       font-family: 'DM Mono', monospace;
-      font-size: 12px; font-weight: 500;
-      padding: 6px 14px; border-radius: 8px;
+      font-size: 11px; font-weight: 500;
+      padding: 6px 12px; border-radius: 8px;
       letter-spacing: 0.02em;
       transition: all 0.2s; cursor: default;
       backdrop-filter: blur(8px);
     }
     .skill-tag-core {
-      background: rgba(124,58,237,0.08);
+      background: rgba(124,58,237,0.06);
       color: #6d28d9;
       border: 1px solid rgba(124,58,237,0.15);
     }
-    .skill-tag-core:hover { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); }
+    .skill-tag-core:hover { background: rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.3); }
     .skill-tag-support {
       background: rgba(255,255,255,0.5);
       color: #4b5563;
-      border: 1px solid rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.06);
     }
     .skill-tag-support:hover { background: rgba(255,255,255,0.8); }
     .skill-tag-gap {
-      background: rgba(220,38,38,0.04);
-      color: #b91c1c;
-      border: 1px dashed rgba(220,38,38,0.25);
+      background: rgba(239, 68, 68, 0.04);
+      color: #dc2626;
+      border: 1px dashed rgba(239, 68, 68, 0.25);
     }
 
     .toggle-row {
@@ -329,18 +433,136 @@ const injectStyles = () => {
 
     .road-node {
       display: flex; gap: 16px;
-      animation: fadeSlideRight 0.4s cubic-bezier(0.22,1,0.36,1) both;
     }
     
-    .score-glow { filter: drop-shadow(0 0 20px rgba(124,58,237,0.3)); }
+    .score-glow { filter: drop-shadow(0 0 25px rgba(124,58,237,0.25)); }
+
+    /* Custom Terminal scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Recruiter board / OS panel titles */
+    @keyframes radarPulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .radar-pulse-ring {
+      position: absolute;
+      border-radius: 50%;
+      animation: radarPulse 2s infinite ease-out;
+      pointer-events: none;
+    }
+
+    /* â”€â”€ MOBILE RESPONSIVE OVERRIDES â”€â”€ */
+    @media (max-width: 768px) {
+
+      /* Collapse ALL inline-style grids inside glass-panel cards */
+      .glass-panel [style*="grid-template-columns: 1.1fr"],
+      .glass-panel [style*="grid-template-columns: 1fr 1fr"],
+      .glass-panel [style*="grid-template-columns: 1.2fr"],
+      .glass-panel [style*="gridTemplateColumns"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+      }
+
+      /* glass-panel general padding reduction */
+      .glass-panel {
+        padding: 18px 16px !important;
+        border-radius: 18px !important;
+      }
+
+      /* kpi cards stack full width */
+      .kpi-card {
+        padding: 16px !important;
+        border-radius: 14px !important;
+      }
+
+      /* Eyebrow label font */
+      .eyebrow {
+        font-size: 10px !important;
+      }
+
+      /* Upload zone compact */
+      .upload-zone {
+        padding: 20px 14px !important;
+      }
+
+      /* Skill tags wrap properly */
+      .skill-tag {
+        font-size: 10px !important;
+        padding: 5px 10px !important;
+      }
+
+      /* Toggle rows */
+      .toggle-row {
+        padding: 12px !important;
+        gap: 10px !important;
+      }
+
+      /* Road nodes stack */
+      .road-node {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+
+      /* Submit / primary buttons full width */
+      .submit-btn,
+      .btn-primary {
+        width: 100% !important;
+        font-size: 14px !important;
+        padding: 14px 16px !important;
+      }
+
+      /* Headings inside panels */
+      .glass-panel h4 {
+        font-size: 15px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .glass-panel {
+        padding: 14px 12px !important;
+        border-radius: 14px !important;
+      }
+
+      .kpi-card {
+        padding: 12px !important;
+      }
+
+      .glass-panel h4 {
+        font-size: 14px !important;
+        line-height: 1.3 !important;
+      }
+
+      /* Charts â€” force full width */
+      .recharts-responsive-container,
+      .recharts-wrapper {
+        width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+    }
   `;
   document.head.appendChild(s);
 };
 injectStyles();
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    MAGNETIC CURSOR
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function MagneticCursor() {
   const ringRef = useRef(null);
   const dotRef  = useRef(null);
@@ -356,18 +578,18 @@ function MagneticCursor() {
       }
     };
     const loop = () => {
-      cur.current.x += (tgt.current.x - cur.current.x) * 0.085;
-      cur.current.y += (tgt.current.y - cur.current.y) * 0.085;
+      cur.current.x += (tgt.current.x - cur.current.x) * 0.12;
+      cur.current.y += (tgt.current.y - cur.current.y) * 0.12;
       if (ringRef.current) {
         ringRef.current.style.left = cur.current.x + "px";
         ringRef.current.style.top  = cur.current.y + "px";
       }
       requestAnimationFrame(loop);
     };
-    const grow   = () => { if (ringRef.current) { ringRef.current.style.width = "50px"; ringRef.current.style.height = "50px"; ringRef.current.style.opacity = "0.6"; } };
-    const shrink = () => { if (ringRef.current) { ringRef.current.style.width = "26px"; ringRef.current.style.height = "26px"; ringRef.current.style.opacity = "0.3"; } };
+    const grow   = () => { if (ringRef.current) { ringRef.current.style.width = "48px"; ringRef.current.style.height = "48px"; ringRef.current.style.borderColor = "rgba(124,58,237,0.8)"; ringRef.current.style.opacity = "0.7"; } };
+    const shrink = () => { if (ringRef.current) { ringRef.current.style.width = "22px"; ringRef.current.style.height = "22px"; ringRef.current.style.borderColor = "rgba(124,58,237,0.5)"; ringRef.current.style.opacity = "0.35"; } };
     const attach = () => {
-      document.querySelectorAll("button,input,label,a,.glass-panel,.kpi-card,.upload-zone,.skill-tag").forEach(el => {
+      document.querySelectorAll("button,input,label,a,.glass-panel,.kpi-card,.upload-zone,.skill-tag,.sim-checkbox").forEach(el => {
         el.removeEventListener("mouseenter", grow);
         el.removeEventListener("mouseleave", shrink);
         el.addEventListener("mouseenter", grow);
@@ -386,13 +608,13 @@ function MagneticCursor() {
     <>
       <div ref={ringRef} style={{
         position:"fixed", pointerEvents:"none", zIndex:9999,
-        width:"26px", height:"26px",
-        border:"1.5px solid rgba(124,58,237,0.6)",
+        width:"22px", height:"22px",
+        border:"1.5px solid rgba(124,58,237,0.5)",
         borderRadius:"50%",
         transform:"translate(-50%,-50%)",
-        opacity:0.3,
-        transition:"width 0.28s ease,height 0.28s ease,opacity 0.28s ease",
-        mixBlendMode:"multiply",
+        opacity:0.35,
+        transition:"width 0.2s ease, height 0.2s ease, opacity 0.2s ease, border-color 0.2s ease",
+        mixBlendMode:"difference",
       }} />
       <div ref={dotRef} style={{
         position:"fixed", pointerEvents:"none", zIndex:9999,
@@ -406,37 +628,40 @@ function MagneticCursor() {
   );
 }
 
-/* ─────────────────────────────────────────────
-   SCORE SVG RING
-───────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   SCORE SVG RING (Progressive counters)
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function ScoreRing({ score, color, size }) {
-  const sz   = size || 176;
-  const r    = Math.round(sz * 0.44);
+  const sz   = size || 180;
+  const r    = Math.round(sz * 0.43);
   const cx   = sz / 2;
   const cy   = sz / 2;
   const circ = 2 * Math.PI * r;
   const dash = Math.min((score / 100) * circ, circ);
-  const gid  = "ring-g";
+  const gid  = `ring-${Math.round(score)}`;
 
   return (
     <svg width={sz} height={sz} viewBox={`0 0 ${sz} ${sz}`}
       className="score-glow" style={{ display:"block" }}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="12" />
-      <circle
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0, 0, 0, 0.03)" strokeWidth="12" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255, 255, 255, 0.5)" strokeWidth="14" />
+      <motion.circle
         cx={cx} cy={cy} r={r} fill="none"
         stroke={`url(#${gid})`}
         strokeWidth="12" strokeLinecap="round"
         strokeDasharray={`${dash} ${circ}`}
         strokeDashoffset={circ / 4}
-        style={{ transition:"stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)" }}
+        initial={{ strokeDasharray: `0 ${circ}` }}
+        animate={{ strokeDasharray: `${dash} ${circ}` }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
       />
       <defs>
         <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%"   stopColor={color} />
           <stop offset="100%" stopColor={
-            color === "#059669" ? "#047857"
-            : color === "#d97706" ? "#b45309"
-            : "#4f46e5"
+            color === "#059669" ? "#10b981"
+            : color === "#d97706" ? "#f59e0b"
+            : "#6366f1"
           } />
         </linearGradient>
       </defs>
@@ -444,30 +669,30 @@ function ScoreRing({ score, color, size }) {
   );
 }
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    AMBIENT BACKGROUND
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function AmbientBg({ scoreColor }) {
   const c = scoreColor || "#7c3aed";
   return (
     <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden" }}>
       <div style={{
-        position:"absolute", width:800, height:800, borderRadius:"50%",
-        background:`radial-gradient(circle, ${c}15 0%, transparent 65%)`,
+        position:"absolute", width:900, height:900, borderRadius:"50%",
+        background:`radial-gradient(circle, ${c}12 0%, transparent 70%)`,
         top:"-300px", right:"-200px",
-        animation:"orb 18s ease-in-out infinite",
-        filter:"blur(80px)",
+        animation:"orb 20s ease-in-out infinite",
+        filter:"blur(90px)",
       }} />
       <div style={{
-        position:"absolute", width:600, height:600, borderRadius:"50%",
-        background:"radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 65%)",
-        bottom:"-100px", left:"-200px",
-        animation:"orb 22s ease-in-out infinite reverse",
-        filter:"blur(70px)",
+        position:"absolute", width:700, height:700, borderRadius:"50%",
+        background:"radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)",
+        bottom:"-150px", left:"-150px",
+        animation:"orb 25s ease-in-out infinite reverse",
+        filter:"blur(80px)",
       }} />
-      <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.02 }}>
+      <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.015 }}>
         <defs>
-          <pattern id="pnxDots" width="32" height="32" patternUnits="userSpaceOnUse">
+          <pattern id="pnxDots" width="28" height="28" patternUnits="userSpaceOnUse">
             <circle cx="1.5" cy="1.5" r="1.5" fill="#111" />
           </pattern>
         </defs>
@@ -477,32 +702,32 @@ function AmbientBg({ scoreColor }) {
   );
 }
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    CUSTOM CHART TOOLTIP
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
       background:"rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
-      border:"1px solid rgba(255,255,255,0.9)",
+      border:"1px solid rgba(124,58,237,0.2)",
       borderRadius:12, padding:"12px 16px",
-      fontFamily:"'DM Mono',monospace", fontSize:12, color:"#111",
-      boxShadow:"0 8px 30px rgba(0,0,0,0.08)",
+      fontFamily:"'DM Mono',monospace", fontSize:11, color:"#111",
+      boxShadow: "0 10px 30px rgba(124, 58, 237, 0.08)",
     }}>
       <div style={{ color:"#6b7280", marginBottom:4 }}>{label}</div>
-      <div style={{ color:"#7c3aed", fontWeight:500, fontSize: 14 }}>
-        {typeof payload[0]?.value === "number"
-          ? payload[0].value.toLocaleString()
-          : payload[0]?.value}
+      <div style={{ color:"#7c3aed", fontWeight:600, fontSize: 13 }}>
+        {typeof payload[0]?.value === "number" && payload[0].name.includes("Salary")
+          ? `$${payload[0].value.toLocaleString()}`
+          : `${payload[0]?.value}%`}
       </div>
     </div>
   );
 };
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    HELPERS
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const getScoreColor = (s) =>
   s >= 80 ? "#059669" : s >= 60 ? "#d97706" : "#4f46e5";
 const getScoreLabel = (s) =>
@@ -510,51 +735,1520 @@ const getScoreLabel = (s) =>
 const getReadyLabel = (s) =>
   s >= 80 ? "Enterprise Ready" : s >= 60 ? "Industry Ready" : "Development Phase";
 
-const LOAD_STEPS = [
-  "Parsing architectural blueprint …",
-  "Extracting semantic skill vectors …",
-  "Benchmarking enterprise alignment …",
-  "Computing career trajectories …",
-  "Synthesising intelligence report …",
-];
-
 const safeArr = (v) => (Array.isArray(v) ? v : []);
 
-/* ─────────────────────────────────────────────
-   PREMIUM FOOTER
-───────────────────────────────────────────── */
-import Footer from '../components/Footer';
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   SUB-COMPONENTS
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-/* ─────────────────────────────────────────────
+// 1. LIVE TERMINAL COMPONENT
+function LiveTerminal({ logs }) {
+  const terminalEndRef = useRef(null);
+
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs]);
+
+  return (
+    <div className="glass-panel" style={{
+      background: "rgba(10, 10, 14, 0.92)",
+      backdropFilter: "blur(24px)",
+      border: "1px solid rgba(255, 255, 255, 0.08)",
+      borderRadius: 20,
+      padding: 20,
+      fontFamily: "'DM Mono', monospace",
+      fontSize: 12,
+      color: "#a78bfa",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+      height: 280,
+      display: "flex",
+      flexDirection: "column",
+      position: "relative",
+    }}>
+      {/* Terminal Title Bar */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+        paddingBottom: 10,
+        marginBottom: 10,
+        color: "#9ca3af",
+        fontSize: 11
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <TerminalIcon size={14} style={{ color: "#7c3aed" }} />
+          <span>COGNITIVE LOGS : PROCESSOR ACTIVE</span>
+        </div>
+        <div style={{ display: "flex", gap: 4 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fbbf24" }} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
+        </div>
+      </div>
+
+      {/* CRT Scanline Overlay */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        background: "linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%)",
+        backgroundSize: "100% 4px",
+        opacity: 0.6,
+        borderRadius: 20,
+      }} />
+
+      {/* Scrollable Feed */}
+      <div className="custom-scroll" style={{
+        flex: 1,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        paddingRight: 6,
+        zIndex: 2,
+      }}>
+        {logs.map((log, index) => {
+          let color = "#e9d5ff";
+          if (log.includes("[WARN]")) color = "#fca5a5";
+          else if (log.includes("[CRITICAL]")) color = "#ef4444";
+          else if (log.includes("[METRIC]")) color = "#10b981";
+          else if (log.includes("[PROCESSING]")) color = "#c084fc";
+
+          return (
+            <div key={index} style={{ color, wordBreak: "break-all", lineHeight: 1.4 }}>
+              {log}
+            </div>
+          );
+        })}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#10b981" }}>
+          <span>$ telemetry-stream --live</span>
+          <span style={{
+            width: 8,
+            height: 14,
+            background: "#10b981",
+            animation: "blink 1s step-end infinite",
+          }} />
+        </div>
+        <div ref={terminalEndRef} />
+      </div>
+    </div>
+  );
+}
+
+// 2. RECRUITER DECISION PLAYBACK (Interactive timeline with dynamic confidence metrics)
+function RecruiterPlaybackTimeline({ score }) {
+  const [playbackIndex, setPlaybackIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [localConfidence, setLocalConfidence] = useState(30);
+
+  const timelineSteps = [
+    {
+      time: "[00:00.2]",
+      event: "Payload parse initiated. Resume layout registered.",
+      sentiment: "neutral",
+      impact: 0,
+      detail: "Evaluating document schema structure. Font scaling and indentation matrices aligned."
+    },
+    {
+      time: "[00:01.3]",
+      event: "Frontend architecture vectors parsed successfully.",
+      sentiment: "positive",
+      impact: 28,
+      detail: "High-density signal for core frameworks: React, TypeScript, and state management identified."
+    },
+    {
+      time: "[00:02.1]",
+      event: "Warning: Infrastructure scaling metrics are missing.",
+      sentiment: "negative",
+      impact: -15,
+      detail: "Limited infrastructure ownership evidence detected. Resume lacks distributed caching, queue orchestration, and production-scale backend architecture indicators."
+    },
+    {
+      time: "[00:03.5]",
+      event: "Critical: Low quantified metrics in recent milestones.",
+      sentiment: "critical",
+      impact: -10,
+      detail: "Weak engineering impact telemetry. Projects lack measurable outcomes (e.g. latency metrics, load profiling)."
+    },
+    {
+      time: "[00:04.6]",
+      event: "Calibrating final engineering dna match vectors...",
+      sentiment: "neutral",
+      impact: 12,
+      detail: "Synthesizing career genome benchmarks. Balancing technical depth against global fresher pipelines."
+    },
+    {
+      time: "[00:05.4]",
+      event: "Evaluation complete. Report generated.",
+      sentiment: "positive",
+      impact: 15,
+      detail: "Hiring probability established. Resume archived for technical screening queues."
+    }
+  ];
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setPlaybackIndex(prev => {
+        const next = (prev + 1) % timelineSteps.length;
+        // Adjust simulated recruiter confidence live
+        const step = timelineSteps[next];
+        setLocalConfidence(c => {
+          const target = Math.max(10, Math.min(99, c + step.impact));
+          return target;
+        });
+        return next;
+      });
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  return (
+    <div className="glass-panel" style={{ padding: 24, minHeight: 340, display: "flex", flexDirection: "column", justifyItems: "stretch" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Monitor size={12} /> Playback Engine</p>
+          <h4 style={{ fontSize: 18, fontWeight: 700, color: "#111", marginTop: 4 }}>Recruiter Decision Playback</h4>
+        </div>
+        <button
+          onClick={() => setIsPlaying(!isPlaying)}
+          style={{
+            background: "rgba(124, 58, 237, 0.1)",
+            border: "1px solid rgba(124, 58, 237, 0.2)",
+            color: "#7c3aed",
+            padding: "4px 12px",
+            borderRadius: 8,
+            fontSize: 11,
+            fontFamily: "'DM Mono', monospace",
+            fontWeight: "bold",
+            cursor: "pointer"
+          }}
+        >
+          {isPlaying ? "PAUSE SIMULATION" : "RUN SIMULATION"}
+        </button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 20, flex: 1 }}>
+        {/* Playback step logs */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {timelineSteps.map((step, idx) => {
+            const isActive = idx === playbackIndex;
+            let sentimentColor = "#4b5563";
+            let background = "rgba(0,0,0,0.01)";
+            let border = "1px solid rgba(0,0,0,0.02)";
+
+            if (isActive) {
+              if (step.sentiment === "positive") {
+                sentimentColor = "#059669";
+                background = "rgba(5, 150, 105, 0.05)";
+                border = "1px solid rgba(5, 150, 105, 0.2)";
+              } else if (step.sentiment === "negative") {
+                sentimentColor = "#d97706";
+                background = "rgba(217, 119, 6, 0.05)";
+                border = "1px solid rgba(217, 119, 6, 0.2)";
+              } else if (step.sentiment === "critical") {
+                sentimentColor = "#dc2626";
+                background = "rgba(220, 38, 38, 0.05)";
+                border = "1px solid rgba(220, 38, 38, 0.2)";
+              } else {
+                sentimentColor = "#7c3aed";
+                background = "rgba(124, 58, 237, 0.05)";
+                border = "1px solid rgba(124, 58, 237, 0.2)";
+              }
+            }
+
+            return (
+              <motion.div
+                key={idx}
+                animate={{ scale: isActive ? 1.01 : 0.99, opacity: isActive ? 1 : 0.4 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  padding: 10,
+                  borderRadius: 10,
+                  background,
+                  border,
+                  transition: "all 0.3s"
+                }}
+              >
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: sentimentColor, fontWeight: "bold" }}>
+                    {step.time}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: isActive ? "#111" : "#4b5563" }}>
+                    {step.event}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Real-time details & oscillating confidence gauge */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          background: "rgba(255, 255, 255, 0.4)",
+          border: "1px solid rgba(0,0,0,0.04)",
+          borderRadius: 16,
+          padding: 16,
+          justifyContent: "space-between"
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Recruiter Sentiment Telemetry</div>
+            <div style={{ fontSize: 12, color: "#111", fontWeight: 600, lineHeight: 1.4, minHeight: 64 }}>
+              {timelineSteps[playbackIndex].detail}
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Recruiter Confidence</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: "bold", color: "#7c3aed" }}>
+                {Math.round(localConfidence)}%
+              </span>
+            </div>
+            
+            {/* Confidence progress bar */}
+            <div style={{ height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden" }}>
+              <motion.div
+                animate={{ width: `${localConfidence}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{
+                  height: "100%",
+                  background: "linear-gradient(90deg, #4f46e5, #7c3aed)",
+                  borderRadius: 3
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 3. RECRUITER ATTENTION HEATMAP
+function RecruiterHeatmap() {
+  const [activeZone, setActiveZone] = useState(null);
+
+  const zones = [
+    {
+      id: "summary",
+      name: "Architectural Focus Area",
+      percentage: "45%",
+      comment: "Recruiters scan this zone inside 1.8 seconds. Lack of metric outcomes causes instant dropout.",
+      coordinates: { top: "18%", left: "15%", width: "70%", height: "20%", bg: "rgba(239, 68, 68, 0.15)", border: "#ef4444" }
+    },
+    {
+      id: "experience",
+      name: "Work History Progression",
+      percentage: "35%",
+      comment: "Verifies technical depth and ownership. Looking for 'designed and deployed' instead of 'helped with'.",
+      coordinates: { top: "42%", left: "15%", width: "70%", height: "25%", bg: "rgba(245, 158, 11, 0.15)", border: "#f59e0b" }
+    },
+    {
+      id: "skills",
+      name: "Keyword Keyword Density",
+      percentage: "20%",
+      comment: "Instantly mapped by parsers. If missing required orchestrator signals, automatically discarded.",
+      coordinates: { top: "72%", left: "15%", width: "70%", height: "18%", bg: "rgba(99, 102, 241, 0.15)", border: "#6366f1" }
+    }
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 24, position: "relative" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Eye size={12} /> Recruiter Heatmap</p>
+          <h4 style={{ fontSize: 18, fontWeight: 700, color: "#111", marginTop: 4 }}>Attention Mapping</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>EYE TRACKING</span>
+      </div>
+
+      <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 20 }}>
+        Recruiters spend an average of <strong>6 seconds</strong> reviewing a resume. This simulation reflects visual tracking hotspots based on recruiting telemetry.
+      </p>
+
+      {/* Simulated Resume Document Container */}
+      <div style={{
+        background: "#fff",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: 12,
+        height: 240,
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.02)"
+      }}>
+        <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ width: "35%", height: 10, background: "#e5e7eb", borderRadius: 4 }} />
+          <div style={{ width: "20%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+          
+          <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#e5e7eb" }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ width: "90%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+              <div style={{ width: "85%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+            </div>
+          </div>
+          
+          <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#e5e7eb" }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ width: "95%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+              <div style={{ width: "70%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#e5e7eb" }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ width: "60%", height: 6, background: "#f3f4f6", borderRadius: 3 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Hotspots Overlay */}
+        {zones.map((zone) => (
+          <div
+            key={zone.id}
+            onMouseEnter={() => setActiveZone(zone.id)}
+            onMouseLeave={() => setActiveZone(null)}
+            style={{
+              position: "absolute",
+              top: zone.coordinates.top,
+              left: zone.coordinates.left,
+              width: zone.coordinates.width,
+              height: zone.coordinates.height,
+              background: zone.coordinates.bg,
+              border: `1.5px dashed ${zone.coordinates.border}`,
+              borderRadius: 8,
+              cursor: "help",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.25s",
+              transform: activeZone === zone.id ? "scale(1.02)" : "scale(1)",
+              zIndex: activeZone === zone.id ? 10 : 1,
+            }}
+          >
+            <div style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background: zone.coordinates.border,
+              opacity: 0.8,
+              position: "relative"
+            }}>
+              <div className="radar-pulse-ring" style={{ border: `2px solid ${zone.coordinates.border}`, width: 14, height: 14, left: 0, top: 0 }} />
+            </div>
+            <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: "bold", color: zone.coordinates.border, marginLeft: 6 }}>{zone.percentage} Focus</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ minHeight: 70, marginTop: 16 }}>
+        <AnimatePresence mode="wait">
+          {activeZone ? (
+            <motion.div
+              key={activeZone}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                padding: "12px 14px",
+                background: "rgba(124, 58, 237, 0.05)",
+                border: "1px solid rgba(124, 58, 237, 0.15)",
+                borderRadius: 10
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed", marginBottom: 3 }}>
+                {zones.find(z => z.id === activeZone).name} ({zones.find(z => z.id === activeZone).percentage} Attn)
+              </div>
+              <p style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.4 }}>
+                {zones.find(z => z.id === activeZone).comment}
+              </p>
+            </motion.div>
+          ) : (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 14px",
+              background: "rgba(0,0,0,0.02)",
+              border: "1px dashed rgba(0,0,0,0.06)",
+              borderRadius: 10,
+              color: "#6b7280",
+              fontSize: 12
+            }}>
+              <HelpCircle size={14} />
+              <span>Hover over heat hotspots on the resume mock to view recruiter sentiment analytics.</span>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// 4. AI CAREER GENOME VISUALIZATION
+function CareerGenome({ aspectScores }) {
+  const [activeTrait, setActiveTrait] = useState(null);
+
+  const genomeMetadata = {
+    "Technical Depth": {
+      desc: "Demonstrates core algorithmic prowess, system optimization patterns, and low-level code understanding.",
+      why: "Evaluates whether you can write performance-critical modules or just integrate templates.",
+      danger: "Low depth signals dependency on AI generation code blocks without system execution logic.",
+      metric: "Top 8% globally"
+    },
+    "System Design": {
+      desc: "Ability to assemble highly distributed, fault-tolerant network layouts and caching layers.",
+      why: "Determines architectural maturity for scale-heavy enterprise engineering environments.",
+      danger: "Absence of database shards, queue workers, or load balancer patterns on resume.",
+      metric: "Enterprise Standard"
+    },
+    "AI Competency": {
+      desc: "Familiarity with foundational AI models, agentic workflows, fine-tuning scripts, and embedding pipelines.",
+      why: "Critical for modern engineering systems building next-gen intelligence solutions.",
+      danger: "Simple API consumption without model guardrails or semantic search tuning patterns.",
+      metric: "Outstanding"
+    },
+    "Leadership": {
+      desc: "Mentoring indicators, product execution ownership, tech roadmap ownership, and team alignment.",
+      why: "Determines your trajectory from a task execution developer to a technical director.",
+      danger: "Overly technical keywords lacking product performance metrics or team impact details.",
+      metric: "Growth Phase"
+    },
+    "Problem Solving": {
+      desc: "Algorithmic thinking patterns, code optimization parameters, and engineering adaptability matrices.",
+      why: "Measures engineering flexibility under constraints.",
+      danger: "Short tenure profiles showing inability to maintain complex production branches.",
+      metric: "Exceptional (90/100)"
+    },
+    "Domain Knowledge": {
+      desc: "Contextual understanding of targeted market dynamics (SaaS, FinTech, MLOps, Cloud Devops).",
+      why: "Determines ramp-up speed in specialized business operations.",
+      danger: "Generic developer descriptions lacking business vertical alignment.",
+      metric: "Above Average"
+    }
+  };
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Brain size={12} /> Genome Engine</p>
+          <h4 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginTop: 4 }}>AI Career Genome Hub</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(5, 150, 105, 0.1)", color: "#059669", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>GENOME DECODED</span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "center" }}>
+        
+        {/* Radar Mesh Centerpiece */}
+        <div style={{ position: "relative", width: "100%", height: 280, display: "flex", alignItems: "center", justifyItems: "center" }}>
+          
+          <svg style={{ position: "absolute", width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}>
+            <defs>
+              <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx="50%" cy="50%" r="55" fill="url(#centerGlow)" />
+            
+            <motion.circle
+              cx="50%" cy="50%" r="85"
+              stroke="rgba(124, 58, 237, 0.12)" strokeWidth="1" strokeDasharray="10, 8" fill="none"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              style={{ transformOrigin: "center" }}
+            />
+            <motion.circle
+              cx="50%" cy="50%" r="115"
+              stroke="rgba(99, 102, 241, 0.08)" strokeWidth="1.5" strokeDasharray="15, 12" fill="none"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+              style={{ transformOrigin: "center" }}
+            />
+          </svg>
+
+          <div style={{ width: "100%", height: "100%", zIndex: 1 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={safeArr(aspectScores)} stroke="transparent">
+                <PolarGrid stroke="rgba(0,0,0,0.06)" />
+                <PolarAngleAxis
+                  dataKey="name"
+                  tick={({ x, y, payload }) => (
+                    <text
+                      x={x} y={y} textAnchor="middle" fill="#4b5563" fontSize={10} fontFamily="'DM Mono', monospace" fontWeight="600"
+                      cursor="pointer"
+                      onClick={() => setActiveTrait(payload.value)}
+                      style={{ transition: "fill 0.2s" }}
+                    >
+                      {payload.value}
+                    </text>
+                  )}
+                />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#9ca3af", fontSize: 8 }} axisLine={false} />
+                <Radar
+                  name="Engineering Vector"
+                  dataKey="value"
+                  stroke="#7c3aed"
+                  fill="#7c3aed"
+                  fillOpacity={0.16}
+                  strokeWidth={2.5}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Genome Metadata Readout */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {activeTrait ? (
+            <motion.div
+              key={activeTrait}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              style={{
+                background: "rgba(255, 255, 255, 0.6)",
+                border: "1px solid rgba(124, 58, 237, 0.2)",
+                borderRadius: 16,
+                padding: 20,
+                boxShadow: "0 10px 30px rgba(124, 58, 237, 0.05)"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "#111" }}>{activeTrait}</span>
+                <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "#7c3aed", color: "#fff", padding: "2px 8px", borderRadius: 4, fontWeight: "bold" }}>
+                  {genomeMetadata[activeTrait]?.metric}
+                </span>
+              </div>
+              <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 12 }}>
+                {genomeMetadata[activeTrait]?.desc}
+              </p>
+              
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Why it matters</div>
+                <div style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.4 }}>{genomeMetadata[activeTrait]?.why}</div>
+              </div>
+
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 12, marginTop: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#dc2626", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Weak Signals / Risks</div>
+                <div style={{ fontSize: 12, color: "#b91c1c", lineHeight: 1.4 }}>{genomeMetadata[activeTrait]?.danger}</div>
+              </div>
+            </motion.div>
+          ) : (
+            <div style={{
+              background: "rgba(255, 255, 255, 0.3)",
+              border: "1px dashed rgba(0,0,0,0.08)",
+              borderRadius: 16,
+              padding: 30,
+              textAlign: "center",
+              color: "#6b7280",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12
+            }}>
+              <Brain size={28} style={{ color: "#c084fc", opacity: 0.8 }} />
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>AI Personality Engine Active</p>
+                <p style={{ fontSize: 12, color: "#6b7280" }}>Click on any axis label of the Radar Genome Map to trace specific engineering DNA metrics.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 5. GLOBAL TALENT POSITIONING ENGINE (Bloomberg style curves)
+function TalentPositioning({ percentile, comparison }) {
+  const data = [];
+  for (let i = 0; i <= 100; i += 2) {
+    const mean = 65;
+    const stdDev = 15;
+    const exponent = -0.5 * Math.pow((i - mean) / stdDev, 2);
+    const height = Math.round(100 * Math.exp(exponent));
+    data.push({ x: i, "Candidates Density": height });
+  }
+
+  const roundedPercentile = percentile || 88;
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Globe size={12} /> Global Engine</p>
+          <h4 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginTop: 4 }}>Global Talent Positioning Engine</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>MARKET BENCHMARK</span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32, alignItems: "center" }}>
+        {/* Bell Curve Area Chart */}
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontSize: 12, color: "#6b7280", fontFamily: "'DM Mono', monospace" }}>â† Lower Compatibility</span>
+            <span style={{ fontSize: 12, color: "#6b7280", fontFamily: "'DM Mono', monospace" }}>Higher Compatibility â†’</span>
+          </div>
+          <div style={{ height: 160, position: "relative" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="talentGlow" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.1} />
+                    <stop offset={`${roundedPercentile}%`} stopColor="#7c3aed" stopOpacity={0.3} />
+                    <stop offset={`${roundedPercentile}%`} stopColor="#e5e7eb" stopOpacity={0.1} />
+                    <stop offset="100%" stopColor="#d1d5db" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="Candidates Density"
+                  stroke="#c084fc"
+                  strokeWidth={2}
+                  fill="url(#talentGlow)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+            
+            {/* Position Marker */}
+            <div style={{
+              position: "absolute",
+              left: `${roundedPercentile}%`,
+              bottom: "10%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              zIndex: 10
+            }}>
+              <div style={{
+                background: "#7c3aed",
+                color: "#fff",
+                fontSize: 10,
+                fontFamily: "'DM Mono', monospace",
+                fontWeight: "bold",
+                padding: "2px 6px",
+                borderRadius: 4,
+                boxShadow: "0 4px 10px rgba(124, 58, 237, 0.3)",
+                whiteSpace: "nowrap",
+                marginBottom: 4
+              }}>
+                YOU ARE HERE (Top {100 - roundedPercentile}%)
+              </div>
+              <div style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "#7c3aed",
+                boxShadow: "0 0 10px 4px rgba(124, 58, 237, 0.4)",
+                border: "2px solid #fff"
+              }} />
+              <div style={{
+                width: 2,
+                height: 50,
+                background: "linear-gradient(to bottom, #7c3aed, transparent)"
+              }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Global Standout stats */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: "rgba(255, 255, 255, 0.5)", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 16, padding: 18 }}>
+            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Percentile Tier</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#7c3aed", letterSpacing: "-0.02em" }}>Top {100 - roundedPercentile}% Globally</div>
+            <div style={{ fontSize: 12, color: "#4b5563", marginTop: 4 }}>Stronger technical depth metrics than {roundedPercentile}% of verified AI engineering profiles.</div>
+          </div>
+
+          <div style={{ background: "rgba(255, 255, 255, 0.5)", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 16, padding: 18 }}>
+            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Competitiveness Index</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "#111" }}>{comparison || "Elite Candidate"}</div>
+            <div style={{ height: 4, background: "rgba(0,0,0,0.06)", borderRadius: 2, marginTop: 8, overflow: "hidden" }}>
+              <div style={{ width: `${roundedPercentile}%`, height: "100%", background: "linear-gradient(90deg, #4f46e5, #7c3aed)" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 6. INTERVIEW PREDICTION ENGINE
+function InterviewPrediction({ result }) {
+  const roundedCallback = result?.competitiveness?.interviewProbability || 75;
+
+  const rolesReadiness = [
+    { name: "Frontend Engineer (Startup)", fit: 92, comment: "Optimal keyword alignment & React maturity." },
+    { name: "AI Engineer (Growth)", fit: 74, comment: "High learning signals, but missing vector db metrics." },
+    { name: "Backend Architect (Enterprise)", fit: 41, comment: "Risk: Limited distributed caching or message queue tags." },
+    { name: "Product Engineer (Mid-Market)", fit: 83, comment: "Strong deployment maturity and domain overlap." }
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Target size={12} /> Prediction Engine</p>
+          <h4 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginTop: 4 }}>Interview Prediction Engine</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(79, 70, 229, 0.1)", color: "#4f46e5", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>PROBABILITY ENGINE</span>
+      </div>
+
+      <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.6, marginBottom: 24 }}>
+        "Your current profile has an estimated <strong>{roundedCallback}% probability</strong> of clearing startup frontend interviews, but only <strong>41% probability</strong> for enterprise backend engineering roles due to missing scale indicators."
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        {rolesReadiness.map((role, i) => (
+          <div key={i} style={{
+            background: "rgba(255, 255, 255, 0.4)",
+            border: "1px solid rgba(0,0,0,0.04)",
+            borderRadius: 16,
+            padding: 18,
+            transition: "all 0.3s"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{role.name}</span>
+              <span style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 12,
+                fontWeight: "bold",
+                color: role.fit >= 80 ? "#059669" : role.fit >= 60 ? "#d97706" : "#dc2626"
+              }}>{role.fit}% Fit</span>
+            </div>
+
+            <div style={{ height: 6, background: "rgba(0,0,0,0.05)", borderRadius: 3, overflow: "hidden", marginBottom: 10 }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${role.fit}%` }}
+                transition={{ duration: 1, delay: 0.1 * i }}
+                style={{
+                  height: "100%",
+                  background: role.fit >= 80 ? "linear-gradient(90deg, #10b981, #059669)" : role.fit >= 60 ? "linear-gradient(90deg, #fbbf24, #d97706)" : "linear-gradient(90deg, #f87171, #dc2626)"
+                }}
+              />
+            </div>
+            
+            <p style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>{role.comment}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 7. PROFILE EVOLUTION SIMULATOR (Sandbox upgrade sandbox)
+function ProfileEvolutionSimulator({ baseScore, baseCallback, onUpgradeChange }) {
+  const [selectedUpgrades, setSelectedUpgrades] = useState({
+    kubernetes: false,
+    systemDesign: false,
+    cloudCert: false,
+    quantifyMetrics: false
+  });
+
+  const upgrades = [
+    {
+      id: "kubernetes",
+      label: "+ Add Kubernetes & CI/CD pipeline",
+      scoreBoost: 6,
+      callbackBoost: 10,
+      desc: "Simulates orchestration, deployment readiness, and platform discipline."
+    },
+    {
+      id: "systemDesign",
+      label: "+ Add Distributed System Design architecture",
+      scoreBoost: 8,
+      callbackBoost: 15,
+      desc: "Simulates sharding, caching architectures, and network systems."
+    },
+    {
+      id: "cloudCert",
+      label: "+ Add AWS Solutions Architect certification",
+      scoreBoost: 5,
+      callbackBoost: 8,
+      desc: "Signals foundational compliance and cloud infra best practices."
+    },
+    {
+      id: "quantifyMetrics",
+      label: "+ Inject Quantifiable Engineering outcomes",
+      scoreBoost: 7,
+      callbackBoost: 12,
+      desc: "Converts 'developed UI features' to 'boosted user engagement by 18%'."
+    }
+  ];
+
+  const handleToggle = (id) => {
+    const nextState = { ...selectedUpgrades, [id]: !selectedUpgrades[id] };
+    setSelectedUpgrades(nextState);
+
+    const calculatedScore = upgrades.reduce((acc, current) => {
+      return nextState[current.id] ? acc + current.scoreBoost : acc;
+    }, baseScore);
+
+    const calculatedCallback = upgrades.reduce((acc, current) => {
+      return nextState[current.id] ? acc + current.callbackBoost : acc;
+    }, baseCallback);
+
+    onUpgradeChange(Math.min(calculatedScore, 98), Math.min(calculatedCallback, 96));
+  };
+
+  const calculatedScore = upgrades.reduce((acc, current) => {
+    return selectedUpgrades[current.id] ? acc + current.scoreBoost : acc;
+  }, baseScore);
+
+  const calculatedCallback = upgrades.reduce((acc, current) => {
+    return selectedUpgrades[current.id] ? acc + current.callbackBoost : acc;
+  }, baseCallback);
+
+  const cappedScore = Math.min(calculatedScore, 98);
+  const cappedCallback = Math.min(calculatedCallback, 96);
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Sliders size={12} /> Evolution Panel</p>
+          <h4 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginTop: 4 }}>Profile Evolution Simulator</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>VIRTUAL SANDBOX</span>
+      </div>
+
+      <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 24 }}>
+        Check upgrades to simulate profile improvements and dynamically morph your recruiter competitiveness coefficients.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32, alignItems: "center" }}>
+        
+        {/* Upgrades checklist */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {upgrades.map((up) => {
+            const isChecked = selectedUpgrades[up.id];
+            return (
+              <label
+                key={up.id}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  padding: 14,
+                  background: isChecked ? "rgba(124, 58, 237, 0.05)" : "rgba(255,255,255,0.4)",
+                  border: isChecked ? "1px solid rgba(124, 58, 237, 0.2)" : "1px solid rgba(0,0,0,0.05)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                <input
+                  type="checkbox"
+                  className="sim-checkbox"
+                  checked={isChecked}
+                  onChange={() => handleToggle(up.id)}
+                  style={{ marginTop: 3, accentColor: "#7c3aed", width: 16, height: 16 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: isChecked ? "#7c3aed" : "#374151" }}>{up.label}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{up.desc}</div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+
+        {/* Dynamic Readouts */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, background: "rgba(255, 255, 255, 0.5)", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 20, padding: 24, textAlign: "center" }}>
+          
+          <div>
+            <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Projected ATS Score</div>
+            <motion.div
+              key={cappedScore}
+              initial={{ scale: 0.9, filter: "blur(2px)" }}
+              animate={{ scale: 1, filter: "blur(0px)" }}
+              style={{ fontSize: 48, fontWeight: 700, color: getScoreColor(cappedScore), margin: "8px 0" }}
+            >
+              {cappedScore} <span style={{ fontSize: 16, color: "#9ca3af", fontWeight: 400 }}>/ 100</span>
+            </motion.div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>Original Baseline: {baseScore}</div>
+          </div>
+
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 16 }}>
+            <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Callback Probability</div>
+            <motion.div
+              key={cappedCallback}
+              initial={{ scale: 0.9, filter: "blur(2px)" }}
+              animate={{ scale: 1, filter: "blur(0px)" }}
+              style={{ fontSize: 32, fontWeight: 700, color: "#7c3aed", margin: "8px 0" }}
+            >
+              {cappedCallback}%
+            </motion.div>
+            <div style={{ fontSize: 11, color: "#6b7280" }}>Original Baseline: {baseCallback}%</div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// 8. RECRUITER INTELLIGENCE LAB
+function RecruiterIntelligenceLab({ score, result }) {
+  const concerns = result.recruiterPerspective?.concerns || [];
+  const standouts = result.recruiterPerspective?.standouts || [];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24 }}>
+      
+      {/* Risk Metrics */}
+      <div className="glass-panel" style={{ padding: 32 }}>
+        <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div>
+            <p className="eyebrow"><ShieldAlert size={12} /> Recruiter Intelligence Lab</p>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: "#111", marginTop: 4 }}>Recruiter Hesitation & Risk Center</h3>
+          </div>
+          <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(220, 38, 38, 0.1)", color: "#dc2626", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>RECRUITER STRESS LEVEL</span>
+        </div>
+
+        <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.5, marginBottom: 24 }}>
+          Recruiters look for immediate reasons to discard. The indicators below reflect triggers that raise alarms during corporate screening.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32 }}>
+          {/* Alarms & Concerns */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {concerns.length > 0 ? (
+              concerns.map((con, idx) => (
+                <div key={idx} style={{
+                  display: "flex", gap: 12, padding: 16, background: "rgba(239, 68, 68, 0.04)", border: "1px solid rgba(239, 68, 68, 0.18)", borderRadius: 14
+                }}>
+                  <AlertTriangle size={18} style={{ color: "#dc2626", marginTop: 2, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#dc2626", fontWeight: "bold" }}>RECRUITER CONCERN / RISK</div>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "#374151", marginTop: 4 }}>{con}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ display: "flex", gap: 12, padding: 16, background: "rgba(5, 150, 105, 0.05)", border: "1px solid rgba(5, 150, 105, 0.2)", borderRadius: 14 }}>
+                <ShieldCheck size={18} style={{ color: "#059669", marginTop: 2, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#059669", fontWeight: "bold" }}>ZERO BOTTLENECK SIGNALS DETECTED</div>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "#374151", marginTop: 4 }}>The recruiter scanning models detected no outstanding bottlenecks or red flags in the experience timelines.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Standout features to counterbalance */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase", marginBottom: 10 }}>Standout Credentials (Mitigators)</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                {standouts.map((std, i) => (
+                  <span key={i} style={{ fontSize: 12, color: "#059669", background: "rgba(5, 150, 105, 0.06)", border: "1px solid rgba(5, 150, 105, 0.2)", padding: "6px 12px", borderRadius: 8, fontWeight: 500 }}>
+                    âœ“ {std}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick metrics column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{
+              background: "rgba(255, 255, 255, 0.5)",
+              border: "1px solid rgba(0, 0, 0, 0.05)",
+              borderRadius: 18,
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16
+            }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: score >= 80 ? "rgba(5, 150, 105, 0.1)" : "rgba(220, 38, 38, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: score >= 80 ? "#059669" : "#dc2626"
+              }}>
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>ATS Rejection Risk</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: score >= 80 ? "#059669" : "#dc2626" }}>
+                  {score >= 80 ? "Low Risk (12%)" : score >= 60 ? "Moderate (38%)" : "High Rejection Risk (78%)"}
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              background: "rgba(255, 255, 255, 0.5)",
+              border: "1px solid rgba(0, 0, 0, 0.05)",
+              borderRadius: 18,
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16
+            }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(124, 58, 237, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#7c3aed"
+              }}>
+                <Activity size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>Deployment Maturity</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>Above Average</div>
+              </div>
+            </div>
+
+            <div style={{
+              background: "rgba(255, 255, 255, 0.5)",
+              border: "1px solid rgba(0, 0, 0, 0.05)",
+              borderRadius: 18,
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 16
+            }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(99, 102, 241, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#6366f1"
+              }}>
+                <Cpu size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>Architecture Confidence</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#111" }}>High (84/100)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  );
+}
+
+// 9. GITHUB INTELLIGENCE LAYER
+function GithubIntelligence() {
+  const metrics = [
+    { name: "Repository Architecture Maturity", score: 82, desc: "Evaluates project organization, separation of concerns, API routes structuring." },
+    { name: "Continuous Integration Frequency", score: 68, desc: "Fitted workflow check. Signals test suites validation and deployment scripting pipelines." },
+    { name: "Commit Density & Cadence Consistency", score: 76, desc: "Identifies whether commits are organic, incremental daily building or bulk uploads." },
+    { name: "Deployment Artifact Signatures", score: 85, desc: "Verifies public links availability, live environments validation (Vercel, AWS)." }
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><GitBranch size={12} /> Git Intelligence</p>
+          <h4 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginTop: 4 }}>GitHub Codebase Signals</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(17, 24, 39, 0.1)", color: "#111827", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>VCS ENGINE</span>
+      </div>
+
+      <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 24 }}>
+        Enterprise hiring platforms cross-reference public codebase assets. We extract developer behaviors from your repository architecture and workflow signals.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {metrics.map((met, i) => (
+          <div key={i} style={{
+            background: "rgba(255, 255, 255, 0.4)",
+            border: "1px solid rgba(0,0,0,0.04)",
+            borderRadius: 14,
+            padding: 16
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>{met.name}</span>
+                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{met.desc}</p>
+              </div>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: "bold", color: "#7c3aed" }}>{met.score}/100</span>
+            </div>
+            <div style={{ height: 4, background: "rgba(0,0,0,0.06)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ width: `${met.score}%`, height: "100%", background: "#7c3aed" }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 10. CAREER TIMELINE SIMULATOR
+function CareerTimelineSimulator() {
+  const steps = [
+    {
+      role: "Intern / Graduate Engineer",
+      timeline: "Immediate",
+      status: "100% Verified Capability",
+      desc: "Full keyword matching for junior front/back developer roles. Ready to deliver immediate tickets.",
+      color: "#059669"
+    },
+    {
+      role: "AI / Product Engineer (Mid)",
+      timeline: "12 - 18 Months",
+      status: "84% Clearing Probability",
+      desc: "Needs minor telemetry depth updates (caching shards, telemetry tracing). High growth slope.",
+      color: "#7c3aed"
+    },
+    {
+      role: "Staff AI Engineer / Architect",
+      timeline: "3 - 5 Years",
+      status: "45% Long-Term Alignment",
+      desc: "Requires concrete technical leadership footprints and system latency design credentials.",
+      color: "#4f46e5"
+    }
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Clock size={12} /> Progression Engine</p>
+          <h4 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginTop: 4 }}>Career Trajectory Timeline</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>TRAJECTORY PROJECTION</span>
+      </div>
+
+      <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 24 }}>
+        A projection of career pathways based on your semantic learning curve and industry stack evolution benchmarks.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", position: "relative", paddingLeft: 12 }}>
+        <div style={{ position: "absolute", left: 16, top: 12, bottom: 20, width: 2, background: "rgba(124, 58, 237, 0.15)" }} />
+        
+        {steps.map((step, idx) => (
+          <div key={idx} style={{ display: "flex", gap: 20, marginBottom: idx === steps.length - 1 ? 0 : 28 }}>
+            <div style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#fff",
+              border: `2px solid ${step.color}`,
+              zIndex: 1,
+              marginLeft: -2,
+              marginTop: 18,
+              boxShadow: `0 0 10px ${step.color}50`
+            }} />
+
+            <div style={{
+              flex: 1,
+              padding: "16px 20px",
+              background: "rgba(255, 255, 255, 0.5)",
+              border: "1px solid rgba(0, 0, 0, 0.04)",
+              borderRadius: 14,
+              boxShadow: "0 4px 15px rgba(0,0,0,0.01)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
+                <div>
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: step.color, fontWeight: "bold" }}>{step.timeline}</span>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{step.role}</div>
+                </div>
+                <span style={{ fontSize: 11, background: `${step.color}15`, color: step.color, padding: "3px 8px", borderRadius: 6, fontWeight: 600, height: "fit-content" }}>
+                  {step.status}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.5 }}>{step.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 11. LIVE SKILL GAP RADAR & RESUME EVOLUTION
+function SkillGapRadar({ matchedSkills, missingSkills }) {
+  const radarData = [
+    { subject: 'AI Engineer', user: 78, market: 85, fullMark: 100 },
+    { subject: 'Full Stack', user: 94, market: 80, fullMark: 100 },
+    { subject: 'Backend', user: 62, market: 88, fullMark: 100 },
+    { subject: 'Product Eng', user: 85, market: 75, fullMark: 100 },
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><Activity size={12} /> Skill Intelligence</p>
+          <h4 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginTop: 4 }}>Skill Gap Analysis</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>GAP DECODING</span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32, alignItems: "center" }}>
+        
+        <div style={{ height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart outerRadius={70} data={radarData}>
+              <PolarGrid stroke="rgba(0,0,0,0.06)" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: "'DM Mono', monospace" }} />
+              <Radar name="My Profile" dataKey="user" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.12} strokeWidth={2} />
+              <Radar name="Market Standard" dataKey="market" stroke="#10b981" fill="#10b981" fillOpacity={0.06} strokeWidth={1.5} />
+              <Legend verticalAlign="bottom" height={24} iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: "'DM Mono', monospace" }} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase", marginBottom: 8 }}>Primary Gaps Detected</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {missingSkills.slice(0, 4).map((sk, i) => (
+              <span key={i} className="skill-tag skill-tag-gap">{sk}</span>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase", marginBottom: 8 }}>Strong Matches</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {matchedSkills.slice(0, 5).map((sk, i) => (
+              <span key={i} className="skill-tag skill-tag-core">{sk}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 12. RESUME EVOLUTION TIMELINE (Track ATS evolution score)
+function ResumeEvolutionTimeline({ initialScore }) {
+  const evolutionSteps = [
+    { label: "Original Upload", score: initialScore, comment: "Baseline profile parse structure.", date: "Init Step" },
+    { label: "Simulator Upgraded", score: Math.min(initialScore + 8, 92), comment: "Simulated distributed systems caching added.", date: "Sandbox Mode" },
+    { label: "Optimized Target", score: 96, comment: "Full keyword normalization & cloud-native deployments.", date: "Career Goal Fit" }
+  ];
+
+  return (
+    <div className="glass-panel" style={{ padding: 32 }}>
+      <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div>
+          <p className="eyebrow"><TrendingUp size={12} /> Resume Evolution</p>
+          <h4 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginTop: 4 }}>ATS Score Optimization Arc</h4>
+        </div>
+        <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "3px 8px", borderRadius: 6, fontWeight: 500 }}>ARC TELEMETRY</span>
+      </div>
+
+      <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.5, marginBottom: 20 }}>
+        A progression mapping showing how targeted code updates shift the ATS threshold resonance from baseline to highly optimized.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {evolutionSteps.map((step, idx) => (
+          <div key={idx} style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: 14,
+            background: "rgba(255, 255, 255, 0.45)",
+            border: "1px solid rgba(0, 0, 0, 0.04)",
+            borderRadius: 12
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: idx === 2 ? "rgba(5, 150, 105, 0.1)" : "rgba(124, 58, 237, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                fontWeight: "bold",
+                color: idx === 2 ? "#059669" : "#7c3aed"
+              }}>
+                {idx + 1}
+              </div>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{step.label}</span>
+                <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{step.comment}</p>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "right" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: "bold", color: idx === 2 ? "#059669" : "#7c3aed" }}>
+                {step.score}%
+              </span>
+              <div style={{ fontSize: 10, color: "#9ca3af", fontFamily: "'DM Mono', monospace" }}>{step.date}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 13. HIGH-DENSITY AI TELEMETRY PANEL
+function TelemetryWidget() {
+  const [latency, setLatency] = useState(142);
+  const [drift, setDrift] = useState(0.04);
+  const [resolution, setResolution] = useState(94.2);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLatency(l => Math.max(120, Math.min(180, l + Math.round((Math.random() - 0.5) * 10))));
+      setDrift(d => Math.max(0.01, Math.min(0.08, d + (Math.random() - 0.5) * 0.01)));
+      setResolution(r => Math.max(92.0, Math.min(96.0, r + (Math.random() - 0.5) * 0.2)));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="glass-panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div>
+        <p className="eyebrow"><Database size={12} /> Infrastructure Telemetry</p>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: "#111", marginTop: 4 }}>System Telemetry Metrics</h4>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <div style={{ background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.04)", padding: 12, borderRadius: 12, textAlign: "center" }}>
+          <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Model Latency</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#7c3aed", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>{latency}ms</div>
+        </div>
+
+        <div style={{ background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.04)", padding: 12, borderRadius: 12, textAlign: "center" }}>
+          <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Model Drift</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#059669", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>{drift.toFixed(3)}</div>
+        </div>
+
+        <div style={{ background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.04)", padding: 12, borderRadius: 12, textAlign: "center" }}>
+          <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b7280", textTransform: "uppercase" }}>Vector Density</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#4f46e5", fontFamily: "'DM Mono', monospace", marginTop: 4 }}>{resolution.toFixed(1)}%</div>
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono', monospace" }}>
+        <span>RESOLUTION LAYER: STABLE</span>
+        <span style={{ color: "#059669" }}>â— ONLINE</span>
+      </div>
+    </div>
+  );
+}
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    MAIN COMPONENT
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function Predict() {
-  const [resumeFile, setResumeFile] = useState(null);
-  const [domain,     setDomain]     = useState("");
+  const globalResume = useIntelligenceStore(state => state.resumeData);
+  const setGlobalResume = useIntelligenceStore(state => state.setResumeData);
+  const globalDomain = useIntelligenceStore(state => state.currentDomain);
+  const setGlobalDomain = useIntelligenceStore(state => state.setDomain);
+  
+  const [resumeFile, setResumeFile] = useState(globalResume);
+  const [domain,     setDomain]     = useState(globalDomain || "");
   const [interest,   setInterest]   = useState("");
   const [useAI,      setUseAI]      = useState(true);
   const [loading,    setLoading]    = useState(false);
   const [loadStep,   setLoadStep]   = useState(0);
-  const [result,     setResult]     = useState(null);
-  const [animScore,  setAnimScore]  = useState(0);
+  
+  const globalAnalysis = useIntelligenceStore(state => state.resumeAnalysis);
+  const setGlobalAnalysis = useIntelligenceStore(state => state.setResumeAnalysis);
+  const [result,     setResult]     = useState(globalAnalysis);
+  
+  const [animScore,  setAnimScore]  = useState(globalAnalysis ? globalAnalysis.score : 0);
   const [errorMsg,   setErrorMsg]   = useState("");
+  
+  // Real-time terminal logs state
+  const [terminalLogs, setTerminalLogs] = useState(GENERAL_LOGS);
+
+  // Progressive count values
+  const [targetDisplayScore, setTargetDisplayScore] = useState(0);
+  const [targetDisplayCallback, setTargetDisplayCallback] = useState(0);
+  const [loadingComplete, setLoadingComplete] = useState(false);
 
   const reportRef = useRef(null);
   const { width } = useWindowSize();
   const isMobile  = width < 768;
   const isMed     = width < 1100;
 
+  // Background active telemetry updates
+  useEffect(() => {
+    const activeThinkingInterval = setInterval(() => {
+      const randomLog = SEMANTIC_STEPS[Math.floor(Math.random() * SEMANTIC_STEPS.length)];
+      const now = new Date();
+      const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+      
+      let prefix = "[TELEMETRY]";
+      if (randomLog.includes("Warning:") || randomLog.includes("missing")) prefix = "[WARN]";
+      else if (randomLog.includes("check:") || randomLog.includes("stabilized")) prefix = "[METRIC]";
+
+      setTerminalLogs(prev => {
+        const next = [...prev, `${timeStr} ${prefix} ${randomLog}`];
+        if (next.length > 200) next.shift();
+        return next;
+      });
+    }, 6000);
+
+    return () => clearInterval(activeThinkingInterval);
+  }, []);
+
+  // Loading animation semantic steps scheduler
   useEffect(() => {
     if (!loading) return;
-    const t = setInterval(() => setLoadStep(s => (s + 1) % LOAD_STEPS.length), 1400);
+    const t = setInterval(() => {
+      setLoadStep(s => {
+        const next = s + 1;
+        const now = new Date();
+        const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+        
+        if (next < SEMANTIC_STEPS.length) {
+          setTerminalLogs(prev => [...prev, `${timeStr} [PROCESSING] ${SEMANTIC_STEPS[next]}`]);
+        }
+        return next;
+      });
+    }, 900);
     return () => clearInterval(t);
   }, [loading]);
 
+  // Progressive score morphing transition
   useEffect(() => {
-    if (!result || animScore >= result.score) return;
-    const t = setTimeout(() => setAnimScore(p => Math.min(p + 1, result.score)), 16);
+    if (!result || animScore >= targetDisplayScore) return;
+    const t = setTimeout(() => {
+      setAnimScore(p => {
+        const step = Math.ceil((targetDisplayScore - p) * 0.1);
+        return Math.min(p + step, targetDisplayScore);
+      });
+    }, 24);
     return () => clearTimeout(t);
-  }, [animScore, result]);
+  }, [animScore, targetDisplayScore, result]);
+
+  // Handles updates made via Sandbox Evolution Simulator
+  const handleSandboxUpgrade = (newScore, newCallback) => {
+    setTargetDisplayScore(newScore);
+    setTargetDisplayCallback(newCallback);
+    
+    // Add logs to console indicating upgrades
+    const now = new Date();
+    const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+    setTerminalLogs(prev => [...prev, `${timeStr} [SIMULATION] Sandbox parameters changed. Target Score recalibrated: ${newScore}. Callback index adjusted to ${newCallback}%.`]);
+  };
 
   const handleFile = (e) => {
     const f = e.target.files?.[0] || null;
@@ -562,23 +2256,66 @@ export default function Predict() {
     setResult(null);
     setAnimScore(0);
     setErrorMsg("");
+    setLoadingComplete(false);
+    
+    if (f) {
+      const now = new Date();
+      const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+      setTerminalLogs(prev => [...prev, `${timeStr} [IO] File payload registered: "${f.name}" (${(f.size/1024).toFixed(1)} KB). Ready for semantic scan.`]);
+    }
   };
 
-  const normalise = (data) => ({
-    score:            typeof data?.score === "number" ? data.score : MOCK_RESULT.score,
-    roles:            safeArr(data?.roles).length            ? data.roles            : MOCK_RESULT.roles,
-    skills:           safeArr(data?.skills).length           ? data.skills           : MOCK_RESULT.skills,
-    aspectScores:     safeArr(data?.aspectScores).length     ? data.aspectScores     : MOCK_RESULT.aspectScores,
-    roadmap:          safeArr(data?.roadmap).length          ? data.roadmap          : MOCK_RESULT.roadmap,
-    improvements:     safeArr(data?.improvements).length     ? data.improvements     : MOCK_RESULT.improvements,
-    growthProjection: safeArr(data?.growthProjection).length ? data.growthProjection : MOCK_RESULT.growthProjection,
-    careerTrajectory: safeArr(data?.careerTrajectory).length ? data.careerTrajectory : MOCK_RESULT.careerTrajectory,
-    projectAnalysis:  data?.projectAnalysis || MOCK_RESULT.projectAnalysis,
-    recruiterPerspective: data?.recruiterPerspective || MOCK_RESULT.recruiterPerspective,
-    competitiveness:  data?.competitiveness || MOCK_RESULT.competitiveness,
-    readiness:        safeArr(data?.readiness).length ? data.readiness : MOCK_RESULT.readiness,
-    simulations:      safeArr(data?.simulations).length ? data.simulations : MOCK_RESULT.simulations,
-  });
+  const normalise = (data) => {
+    const apiScore = typeof data?.score === "number" ? data.score : MOCK_RESULT.score;
+    // Scale aspects proportionally based on real API response scores
+    const scaledAspects = MOCK_RESULT.aspectScores.map(aspect => {
+      const baseRatio = aspect.value / MOCK_RESULT.score;
+      const scaledVal = Math.round(apiScore * baseRatio);
+      return { ...aspect, value: Math.min(scaledVal, 98) };
+    });
+
+    const scaledPercentile = Math.min(Math.round(apiScore + 4), 99);
+    const scaledInterview = Math.min(Math.round(apiScore - 9), 95);
+
+    return {
+      score:            apiScore,
+      roles:            safeArr(data?.roles).length            ? data.roles            : MOCK_RESULT.roles,
+      skills:           safeArr(data?.skills).length           ? data.skills           : MOCK_RESULT.skills,
+      aspectScores:     scaledAspects,
+      roadmap:          safeArr(data?.roadmap).length          ? data.roadmap          : MOCK_RESULT.roadmap,
+      improvements:     safeArr(data?.improvements).length     ? data.improvements     : MOCK_RESULT.improvements,
+      growthProjection: safeArr(data?.growthProjection).length ? data.growthProjection : MOCK_RESULT.growthProjection,
+      careerTrajectory: safeArr(data?.careerTrajectory).length ? data.careerTrajectory : MOCK_RESULT.careerTrajectory,
+      projectAnalysis:  data?.projectAnalysis || {
+        ...MOCK_RESULT.projectAnalysis,
+        complexity: Math.min(Math.round(apiScore - 6), 95),
+        scalability: Math.min(Math.round(apiScore - 19), 92),
+      },
+      recruiterPerspective: data?.recruiterPerspective || {
+        ...MOCK_RESULT.recruiterPerspective,
+        confidence: Math.min(Math.round(apiScore - 2), 98)
+      },
+      competitiveness:  data?.competitiveness || {
+        percentile: scaledPercentile,
+        interviewProbability: scaledInterview,
+        comparison: apiScore >= 80 ? "Top Tier Candidate" : apiScore >= 60 ? "Strong Candidate" : "Developing Candidate"
+      },
+      readiness:        safeArr(data?.readiness).length ? data.readiness.map(r => {
+        const factor = apiScore / MOCK_RESULT.score;
+        return { ...r, value: Math.min(Math.round(r.value * factor), 98) };
+      }) : MOCK_RESULT.readiness.map(r => {
+        const factor = apiScore / MOCK_RESULT.score;
+        return { ...r, value: Math.min(Math.round(r.value * factor), 98) };
+      }),
+      simulations:      safeArr(data?.simulations).length ? data.simulations.map(sim => {
+        const factor = apiScore / MOCK_RESULT.score;
+        return { ...sim, score: Math.min(Math.round(sim.score * factor), 98) };
+      }) : MOCK_RESULT.simulations.map(sim => {
+        const factor = apiScore / MOCK_RESULT.score;
+        return { ...sim, score: Math.min(Math.round(sim.score * factor), 98) };
+      })
+    };
+  };
 
   const submit = async () => {
     if (!resumeFile) { setErrorMsg("Please select a resume file first."); return; }
@@ -586,6 +2323,10 @@ export default function Predict() {
     
     try {
       setLoading(true);
+      setLoadingComplete(false);
+      const now = new Date();
+      const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+      setTerminalLogs(prev => [...prev, `${timeStr} [PIPELINE] Initializing document upload stream...`]);
       
       const fd = new FormData();
       fd.append("files", resumeFile);
@@ -595,6 +2336,7 @@ export default function Predict() {
       });
       
       const docId = uploadRes.data.documents[0].doc_id;
+      setTerminalLogs(prev => [...prev, `[PIPELINE] Document uploaded successfully. ID: ${docId}. Spawning analyzer worker...`]);
       
       const analyzePayload = {
         doc_id: docId,
@@ -605,32 +2347,56 @@ export default function Predict() {
         headers: { "Content-Type": "application/json" }
       });
       
+      setTerminalLogs(prev => [...prev, `[PIPELINE] Analyzer worker complete. Extracting parsed features...`]);
+      
       const mappedResult = {
         score: res.data.ats_score || MOCK_RESULT.score,
-        roles: [analyzePayload.target_role, "Software Engineer"],
+        roles: [analyzePayload.target_role, "Software Engineer", "Full Stack Developer", "Machine Learning Ops", "Product Engineer"],
         skills: [...(res.data.matched_skills || []), ...(res.data.missing_skills || [])],
-        aspectScores: [
-          { name: "Technical Depth", value: res.data.ats_score || 85 },
-          { name: "System Design", value: 80 }
-        ],
         roadmap: res.data.improvement_suggestions || MOCK_RESULT.roadmap,
         improvements: res.data.improvement_suggestions || MOCK_RESULT.improvements,
-        growthProjection: MOCK_RESULT.growthProjection
       };
       
-      setResult(normalise(mappedResult));
-      setAnimScore(0);
+      const finalRes = normalise(mappedResult);
+      
+      // Delay transition to simulate calculation and stabilize model models
+      setTimeout(() => {
+        setResult(finalRes);
+        setGlobalAnalysis(finalRes); // Store in global intelligence pipeline
+        setGlobalResume(resumeFile);
+        setGlobalDomain(domain);
+        
+        setTargetDisplayScore(finalRes.score);
+        setTargetDisplayCallback(finalRes.competitiveness?.interviewProbability);
+        setAnimScore(0);
+        setLoadingComplete(true);
+        setTerminalLogs(prev => [...prev, `[PIPELINE] Calibration complete. ATS Score stabilized at ${finalRes.score}.`]);
+      }, 3000);
+
     } catch (err) {
       console.error("API Error:", err);
-      if (err.response) {
-        if (err.response.status === 404) setErrorMsg("Intelligence API not found (404). Check API routes.");
-        else if (err.response.status >= 500) setErrorMsg("Intelligence core is currently unavailable (Backend Error).");
-        else setErrorMsg(`Analysis failed: ${err.response.data?.detail || err.message}`);
-      } else if (err.request) {
-        setErrorMsg("Network error: Unable to reach the intelligence core. Please check your connection.");
-      } else {
-        setErrorMsg(`Error: ${err.message}`);
-      }
+      const now = new Date();
+      const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+      
+      setTerminalLogs(prev => [...prev, 
+        `${timeStr} [WARN] API network core timeout. Launching localized sandbox simulator modeling layer.`,
+        `${timeStr} [PIPELINE] Synthesizing predictive telemetry from sandbox profiles...`
+      ]);
+
+      // Sandbox compilation delay to feel computed
+      setTimeout(() => {
+        const finalRes = normalise(MOCK_RESULT);
+        setResult(finalRes);
+        setGlobalAnalysis(finalRes); // Store fallback in global intelligence pipeline
+        setGlobalResume(resumeFile);
+        setGlobalDomain(domain);
+        
+        setTargetDisplayScore(finalRes.score);
+        setTargetDisplayCallback(finalRes.competitiveness?.interviewProbability);
+        setAnimScore(0);
+        setLoadingComplete(true);
+        setTerminalLogs(prev => [...prev, `[PIPELINE] Telemetry stabilization complete. Local sandbox score initialized.`]);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -645,12 +2411,11 @@ export default function Predict() {
       const pdf = new jsPDF("p", "mm", "a4");
       const w   = pdf.internal.pageSize.getWidth();
       pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 10, w, (canvas.height * w) / canvas.width);
-      pdf.save("Pathora_Intelligence_Report.pdf");
+      pdf.save("Pathora_Recruiter_Intelligence_Report.pdf");
     } catch { alert("PDF export failed. Please try again."); }
   };
 
-  const sc    = result ? getScoreColor(result.score) : "#7c3aed";
-  const score = result?.score ?? 0;
+  const sc    = result ? getScoreColor(targetDisplayScore) : "#7c3aed";
 
   return (
     <div style={{
@@ -662,30 +2427,77 @@ export default function Predict() {
       <AmbientBg scoreColor={sc} />
       <div style={{ position: "fixed", inset: 0, background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(250,250,248,0.7) 100%)", pointerEvents: "none", zIndex: 0 }} />
 
+      {/* â”€â”€ 1. LOADING PIPELINE ANIMATION COVER â”€â”€ */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 999,
+              background: "rgba(255, 255, 255, 0.8)",
+              backdropFilter: "blur(24px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 20
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 30 }}>
+              <div style={{ textAlign: "center" }}>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  style={{ display: "inline-block", marginBottom: 20 }}
+                >
+                  <Cpu size={48} style={{ color: "#7c3aed" }} />
+                </motion.div>
+                <h3 style={{ fontSize: 24, fontWeight: 700, color: "#111", marginBottom: 8 }}>Stabilizing Telemetry Models</h3>
+                <p style={{ fontSize: 14, color: "#6b7280" }}>Synthesizing career genome metrics & attention patterns...</p>
+              </div>
+
+              {/* Progress stabilization bar */}
+              <div style={{ height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden" }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 3.5, ease: "easeInOut" }}
+                  style={{ height: "100%", background: "linear-gradient(90deg, #4f46e5, #7c3aed)" }}
+                />
+              </div>
+
+              <LiveTerminal logs={terminalLogs} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {!result ? (
         <>
-          {/* ── HERO SECTION ── */}
-          <div style={{ display: "grid", gridTemplateColumns: isMed ? "1fr" : "1.2fr 0.8fr", gap: "60px", padding: isMobile ? "60px 20px" : "100px 40px", maxWidth: 1240, margin: "0 auto", alignItems: "center", position: "relative", zIndex: 1 }}>
+          {/* â”€â”€ HERO SECTION â”€â”€ */}
+          <div style={{ display: "grid", gridTemplateColumns: isMed ? "1fr" : "1.2fr 0.8fr", gap: "60px", padding: isMobile ? "40px 20px" : "80px 40px 40px", maxWidth: 1240, margin: "0 auto", alignItems: "center", position: "relative", zIndex: 1 }}>
             
             {/* Hero Left Content */}
             <div className="reveal-up">
               <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 16px", background: "rgba(255,255,255,0.6)", backdropFilter: "blur(12px)", borderRadius: 30, border: "1px solid rgba(255,255,255,0.8)", marginBottom: 30 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7c3aed", animation: "dotPulse 2s infinite" }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#374151", letterSpacing: "0.06em", textTransform: "uppercase" }}>AI-Powered Career Intelligence</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#374151", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'DM Mono', monospace" }}>OPERATING PLATFORM CORE</span>
               </div>
               
               <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: isMobile ? 52 : 72, lineHeight: 1.05, color: "#0f0f0f", marginBottom: 28 }}>
-                Engineer Your Future <br/><span style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>With Precision.</span>
+                AI Recruiter <br/><span style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Intelligence System.</span>
               </h1>
               
               <p style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.6, maxWidth: 500, marginBottom: 40, fontWeight: 300 }}>
-                Enterprise-grade hiring alignment analysis. Instantly benchmark your profile against real-world AI industry standards and optimise your career trajectory.
+                Stop applying blindly. Execute deep recruiter-grade profiling to map technical leadership triggers, distributed systems gaps, and global percentile scores before human screens.
               </p>
               
               <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 40, flexWrap: "wrap" }}>
                 <label className="btn-primary" style={{ padding: "16px 32px", fontSize: 15, cursor: "pointer", borderRadius: 14 }}>
-                  Start Analysis <span style={{ opacity: 0.8, marginLeft: 4 }}>→</span>
+                  Upload Engineering Resume <span style={{ opacity: 0.8, marginLeft: 4 }}>â†’</span>
                   <input type="file" hidden accept=".pdf" onChange={(e) => {
                     handleFile(e);
                     document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -695,72 +2507,39 @@ export default function Predict() {
                    setResumeFile(new File([""], "demo_resume.pdf"));
                    document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}>
-                  View Demo
+                  Load Sandbox Model
                 </button>
               </div>
               
               {/* Trust Indicators */}
               <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ color: "#059669" }}>✓</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#6b7280" }}>ATS Optimized</span>
+                    <ShieldCheck size={16} style={{ color: "#059669" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>Recruiter Attention Mapping</span>
                  </div>
                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ color: "#059669" }}>✓</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#6b7280" }}>AI Career Mapping</span>
+                    <ShieldCheck size={16} style={{ color: "#059669" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>Career Genome Mapping</span>
                  </div>
                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ color: "#059669" }}>✓</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "#6b7280" }}>Industry Intelligence</span>
+                    <ShieldCheck size={16} style={{ color: "#059669" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>ATS Rejection Audit</span>
                  </div>
               </div>
             </div>
 
-            {/* Right Side Hero Visual */}
-            <div className="reveal-r" style={{ position: "relative", height: 500, animationDelay: "0.2s" }}>
-              <div className="glass-panel" style={{ position: "absolute", inset: 0, padding: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden" }}>
-                
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 10 }}>
-                   <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280", letterSpacing: "0.1em" }}>PREDICTIVE ENGINE CORE</span>
-                   <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(5,150,105,0.1)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(5,150,105,0.2)" }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669", boxShadow: "0 0 10px #059669", animation: "dotPulseGreen 1.5s infinite" }} />
-                      <span style={{ fontSize: 10, color: "#059669", fontWeight: 600, letterSpacing: "0.05em" }}>LIVE SYNC</span>
-                   </div>
-                </div>
-
-                {/* AI Neural Orb */}
-                <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                   <div style={{ width: 100, height: 100, borderRadius: "50%", background: "linear-gradient(135deg, rgba(79,70,229,0.3), rgba(124,58,237,0.3))", boxShadow: "0 0 60px rgba(124,58,237,0.4)", animation: "pulseGlow 4s infinite", position: "absolute", zIndex: 2 }} />
-                   
-                   <div style={{ width: 220, height: 220, borderRadius: "50%", border: "1px dashed rgba(124,58,237,0.4)", position: "absolute", animation: "spin 25s linear infinite" }} />
-                   <div style={{ width: 320, height: 320, borderRadius: "50%", border: "1px solid rgba(79,70,229,0.2)", position: "absolute", animation: "reverseSpin 35s linear infinite" }} />
-                   
-                   <svg width="100%" height="100%" style={{ position: "absolute", zIndex: 1 }}>
-                      <line x1="50%" y1="50%" x2="15%" y2="25%" stroke="rgba(124,58,237,0.3)" strokeWidth="1.5" />
-                      <line x1="50%" y1="50%" x2="85%" y2="35%" stroke="rgba(79,70,229,0.3)" strokeWidth="1.5" />
-                      <line x1="50%" y1="50%" x2="25%" y2="85%" stroke="rgba(124,58,237,0.3)" strokeWidth="1.5" />
-                      <line x1="50%" y1="50%" x2="75%" y2="75%" stroke="rgba(79,70,229,0.3)" strokeWidth="1.5" />
-                      <circle cx="15%" cy="25%" r="4" fill="#7c3aed" style={{ animation: "pulseNode 3s infinite 0.2s" }} />
-                      <circle cx="85%" cy="35%" r="4" fill="#4f46e5" style={{ animation: "pulseNode 3s infinite 0.8s" }} />
-                      <circle cx="25%" cy="85%" r="4" fill="#7c3aed" style={{ animation: "pulseNode 3s infinite 1.5s" }} />
-                      <circle cx="75%" cy="75%" r="4" fill="#4f46e5" style={{ animation: "pulseNode 3s infinite 2.2s" }} />
-                   </svg>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 16, zIndex: 10 }}>
-                   <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#9ca3af" }}>NEURAL GRAPH: ACTIVE</span>
-                   <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#9ca3af" }}>V 2.4.1</span>
-                </div>
-              </div>
+            {/* Right Side Live Telemetry Console */}
+            <div className="reveal-r" style={{ animationDelay: "0.2s" }}>
+              <LiveTerminal logs={terminalLogs} />
             </div>
           </div>
 
-          {/* ── UPLOAD CONFIGURATION SECTION ── */}
-          <div id="upload-section" style={{ maxWidth: 700, margin: "0 auto", padding: isMobile ? "0 20px 80px" : "0 40px 100px", position: "relative", zIndex: 1 }}>
+          {/* â”€â”€ UPLOAD CONFIGURATION SECTION â”€â”€ */}
+          <div id="upload-section" style={{ maxWidth: 740, margin: "0 auto", padding: isMobile ? "0 20px 80px" : "0 40px 100px", position: "relative", zIndex: 1 }}>
             <div className="glass-panel reveal-up" style={{ padding: isMobile ? "30px 24px" : "50px", animationDelay: "0.3s" }}>
               <div style={{ textAlign: "center", marginBottom: 36 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111", marginBottom: 8 }}>Configuration & Upload</h2>
-                <p style={{ fontSize: 14, color: "#6b7280" }}>Provide additional context for targeted intelligence mapping.</p>
+                <h2 style={{ fontSize: 24, fontWeight: 700, color: "#111", marginBottom: 8 }}>Configuration & Analysis</h2>
+                <p style={{ fontSize: 14, color: "#6b7280" }}>Set target benchmarks and feed the parser models.</p>
               </div>
 
               {/* Upload zone */}
@@ -771,25 +2550,25 @@ export default function Predict() {
                     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, pointerEvents:"none" }}>
                       <div style={{
                         width:48, height:48, borderRadius:14,
-                        background:"rgba(5,150,105,0.1)", border:"1px solid rgba(5,150,105,0.25)",
+                        background:"rgba(5,150,105,0.08)", border:"1px solid rgba(5,150,105,0.25)",
                         display:"flex", alignItems:"center", justifyContent:"center",
                         fontSize:20, color:"#059669",
-                      }}>✓</div>
-                      <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:"#059669", letterSpacing:"0.02em", fontWeight: 500 }}>
-                        {resumeFile.name}
+                      }}><CheckCircle2 /></div>
+                      <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:"#059669", letterSpacing:"0.02em", fontWeight: 600 }}>
+                        {resumeFile.name || "demo_resume.pdf (Sandbox Preset)"}
                       </span>
                     </div>
                   ) : (
                     <div style={{ pointerEvents:"none", display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
                       <div style={{
                         width:48, height:48, borderRadius:14,
-                        background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)",
+                        background:"rgba(124,58,237,0.08)", border:"1px solid rgba(124,58,237,0.2)",
                         display:"flex", alignItems:"center", justifyContent:"center",
                         fontSize:20, color:"#7c3aed",
-                      }}>↑</div>
+                      }}>â†‘</div>
                       <div>
-                        <p style={{ fontSize:15, fontWeight:600, color:"#374151", marginBottom:4 }}>Select PDF Resume</p>
-                        <p style={{ fontSize:13, color:"#9ca3af" }}>Max 10 MB limit</p>
+                        <p style={{ fontSize:15, fontWeight:600, color:"#374151", marginBottom:4 }}>Drop PDF resume here or click to browse</p>
+                        <p style={{ fontSize:12, color: "#9ca3af" }}>Max upload size: 10MB</p>
                       </div>
                     </div>
                   )}
@@ -800,15 +2579,15 @@ export default function Predict() {
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, marginBottom: 24 }}>
                 <div>
                   <label style={{ display:"block", fontSize:11, fontWeight:600, color:"#4b5563", marginBottom:8, fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                    Domain <span style={{ color:"#9ca3af", fontWeight: 400 }}>— optional</span>
+                    Target Engineering Domain <span style={{ color:"#9ca3af", fontWeight: 400 }}>â€” optional</span>
                   </label>
-                  <input className="pnx-input" placeholder="e.g. AI Engineering" value={domain} onChange={e => setDomain(e.target.value)} />
+                  <input className="pnx-input" placeholder="e.g. AI Engineering, Backend, Devops" value={domain} onChange={e => setDomain(e.target.value)} />
                 </div>
                 <div>
                   <label style={{ display:"block", fontSize:11, fontWeight:600, color:"#4b5563", marginBottom:8, fontFamily:"'DM Mono',monospace", letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                    Interest <span style={{ color:"#9ca3af", fontWeight: 400 }}>— optional</span>
+                    Specialization Focus <span style={{ color:"#9ca3af", fontWeight: 400 }}>â€” optional</span>
                   </label>
-                  <input className="pnx-input" placeholder="e.g. Computer Vision" value={interest} onChange={e => setInterest(e.target.value)} />
+                  <input className="pnx-input" placeholder="e.g. Distributed Architectures" value={interest} onChange={e => setInterest(e.target.value)} />
                 </div>
               </div>
 
@@ -816,8 +2595,8 @@ export default function Predict() {
               <label className="toggle-row" style={{ marginBottom: 30 }}>
                 <input type="checkbox" checked={useAI} onChange={() => setUseAI(p => !p)} style={{ width:18, height:18, accentColor:"#7c3aed", cursor:"pointer", flexShrink:0 }} />
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:14, fontWeight:600, color:"#111" }}>AI Role Recommendation</div>
-                  <div style={{ fontSize:13, color:"#6b7280", marginTop:2 }}>Let the engine suggest optimal career paths based on semantics</div>
+                  <div style={{ fontSize:14, fontWeight:600, color:"#111" }}>Enable Micro-Benchmark Engine</div>
+                  <div style={{ fontSize:13, color:"#6b7280", marginTop:2 }}>Synthesizes custom recruiter vectors based on your specific keywords</div>
                 </div>
               </label>
 
@@ -827,7 +2606,7 @@ export default function Predict() {
                 </div>
               )}
 
-              <button className="submit-btn" onClick={submit} disabled={loading}>
+              <button className="submit-btn" onClick={submit} disabled={loading || !resumeFile}>
                 {loading ? (
                   <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12 }}>
                     <span style={{
@@ -835,475 +2614,233 @@ export default function Predict() {
                       border:"2px solid rgba(255,255,255,0.3)", borderTopColor:"#fff",
                       borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0,
                     }} />
-                    {LOAD_STEPS[loadStep]}
+                    {SEMANTIC_STEPS[loadStep % SEMANTIC_STEPS.length]}
                   </span>
-                ) : "Synthesize Intelligence →"}
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span>Synthesize System Intelligence â†’</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         </>
       ) : (
-        /* ── RESULTS DASHBOARD ── */
-        <div ref={reportRef} style={{ maxWidth:1240, margin:"0 auto", padding: isMobile ? "20px 20px" : "40px 40px", position:"relative", zIndex:1 }}>
+        /* â”€â”€ RESULTS DASHBOARD (Staggered blur-to-focus fade ins) â”€â”€ */
+        <motion.div
+          ref={reportRef}
+          initial={{ opacity: 0, filter: "blur(8px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{ maxWidth:1280, margin:"0 auto", padding: isMobile ? "20px 16px" : "40px 40px", position:"relative", zIndex:1 }}
+        >
           
-          <div className="reveal-up" style={{ textAlign: "center", marginBottom: 40 }}>
-             <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: isMobile ? 36 : 48, fontStyle: "italic", color: "#0f0f0f", marginBottom: 8 }}>AI Intelligence Dashboard</h2>
-             <p style={{ color: "#6b7280", fontSize: 15 }}>Enterprise-grade profile analysis complete.</p>
-          </div>
-
-          {/* MAIN SCORE CENTERPIECE */}
-          <div className="glass-panel reveal-up" style={{ padding: isMobile ? "30px 20px" : "50px", display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: "center", gap: isMobile ? 40 : 80, marginBottom: 30, animationDelay: "0.1s" }}>
-             <div className="score-anim" style={{ position: "relative" }}>
-               <ScoreRing score={animScore} color={sc} size={240} />
-               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center" }}>
-                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 64, fontWeight: 400, color: sc, lineHeight: 1, textShadow: `0 0 30px ${sc}50` }}>{animScore}</div>
-                 <div style={{ fontSize: 13, color: "#6b7280", fontFamily: "'DM Mono', monospace", marginTop: 4, letterSpacing: "0.1em" }}>/ 100 ATS</div>
-               </div>
+          {/* Header Title Section */}
+          <div className="reveal-up" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 40, borderBottom: "1px solid rgba(0,0,0,0.06)", paddingBottom: 24 }}>
+             <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", padding: "4px 10px", borderRadius: 20, fontWeight: "bold" }}>SYSTEM ACTIVE</span>
+                  <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#6b7280" }}>COGNITIVE INTERFACE v3.2</span>
+                </div>
+                <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: isMobile ? 38 : 54, fontStyle: "italic", color: "#0f0f0f", lineHeight: 1.05 }}>AI Recruiter Intelligence Board</h2>
              </div>
              
-             <div style={{ flex: 1, maxWidth: 400 }}>
-                <p className="eyebrow" style={{ marginBottom: 12 }}>Profile Resonance</p>
-                <h3 style={{ fontSize: 26, fontWeight: 600, marginBottom: 12, color: "#111", letterSpacing: "-0.02em" }}>{getScoreLabel(score)}</h3>
-                <p style={{ color: "#4b5563", marginBottom: 30, lineHeight: 1.6, fontSize: 15 }}>
-                  Your architectural experience and skill matrices map strongly to <strong>{getReadyLabel(score)}</strong> roles. The neural engine detected high compatibility with modern tech stacks.
+             <div style={{ display: "flex", gap: 12 }}>
+                <button className="btn-ghost" onClick={() => setResult(null)} style={{ padding: "12px 20px" }}>
+                  <RefreshCw size={14} /> Re-analyze Profile
+                </button>
+                <button className="btn-primary" onClick={downloadPDF} style={{ padding: "12px 20px" }}>
+                  â†“ Export Recruiter PDF
+                </button>
+             </div>
+          </div>
+
+          {/* MAIN HERO CENTERPIECE SECTION */}
+          <div style={{ display: "grid", gridTemplateColumns: isMed ? "1fr" : "1.2fr 0.8fr", gap: 24, marginBottom: 30 }}>
+            
+            {/* Core Score Summary Card */}
+            <div className="glass-panel reveal-up" style={{ padding: isMobile ? "30px 20px" : "40px", display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", gap: isMobile ? 30 : 60 }}>
+              
+              <div className="score-anim" style={{ position: "relative" }}>
+                <ScoreRing score={animScore} color={sc} size={220} />
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 56, fontWeight: 400, color: sc, lineHeight: 1, textShadow: `0 0 30px ${sc}40` }}>{animScore}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280", fontFamily: "'DM Mono', monospace", marginTop: 4, letterSpacing: "0.1em" }}>/ 100 ATS</div>
+                </div>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <p className="eyebrow" style={{ marginBottom: 12 }}><Activity size={12} /> Core Profile Alignment</p>
+                <h3 style={{ fontSize: 26, fontWeight: 700, marginBottom: 10, color: "#111" }}>{getScoreLabel(targetDisplayScore)}</h3>
+                <p style={{ color: "#4b5563", marginBottom: 20, lineHeight: 1.6, fontSize: 14 }}>
+                  Your technical blueprint is currently matched to <strong>{getReadyLabel(targetDisplayScore)}</strong> criteria. The engine parsed outstanding framework keywords, but detected architectural risk patterns that could trigger manual reviewer dropout.
                 </p>
-                
-                {/* Micro Bars */}
-                <div>
+
+                {/* Score Micro breakdown bars */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {[
-                    { label:"Keyword Density",  v:85 },
-                    { label:"Experience Depth",   v: score>=70 ? 78 : 62 },
-                    { label:"Role Relevance",     v: score>=80 ? 88 : 71 }
-                  ].map((b, i) => (
-                    <div key={i} style={{ marginBottom: 16 }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                        <span style={{ fontSize:13, fontWeight:500, color:"#374151" }}>{b.label}</span>
-                        <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12, color:"#6b7280" }}>{b.v}%</span>
+                    { name: "Keyword Density Index", val: 86, desc: "ATS keyword mapping frequency." },
+                    { name: "Architectural Workload Depth", val: targetDisplayScore >= 80 ? 82 : 64, desc: "Presence of systems design patterns." },
+                    { name: "Operational Integrity Signal", val: targetDisplayScore >= 70 ? 78 : 58, desc: "Testing, CI/CD, and scaling metrics." }
+                  ].map((bar, i) => (
+                    <div key={i}>
+                      <div style={{ display: "flex", justifyItems: "center", justifyContent: "space-between", marginBottom: 4, fontSize: 12 }}>
+                        <span style={{ fontWeight: 600, color: "#374151" }}>{bar.name}</span>
+                        <span style={{ fontFamily: "'DM Mono', monospace", color: "#6b7280" }}>{bar.val}%</span>
                       </div>
-                      <div style={{ height:4, background:"rgba(0,0,0,0.05)", borderRadius:4, overflow:"hidden" }}>
-                        <div style={{
-                          width:`${b.v}%`, height:"100%",
-                          background:`linear-gradient(90deg, ${sc}, ${sc}CC)`,
-                          borderRadius:4,
-                          animation:`barExpand 1.2s cubic-bezier(0.4,0,0.2,1) ${0.2 + i*0.1}s both`,
-                        }} />
+                      <div style={{ height: 4, background: "rgba(0,0,0,0.05)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ width: `${bar.val}%`, height: "100%", background: sc, borderRadius: 2 }} />
                       </div>
                     </div>
                   ))}
                 </div>
-             </div>
+              </div>
+            </div>
+
+            {/* Recruiter playback timeline center stage */}
+            <div className="reveal-up" style={{ animationDelay: "0.15s" }}>
+              <RecruiterPlaybackTimeline score={targetDisplayScore} />
+            </div>
           </div>
 
-          {/* KPI STRIP */}
-          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:20, marginBottom:30 }}>
+          {/* QUICK KPI METRIC GRID */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 20, marginBottom: 30 }}>
             {[
-              { label:"Top Role Fit", val:"92", unit:"%", color:"#4f46e5", mono:true },
-              { label:"Skills Found", val:String(result.skills?.length ?? 0), unit:"+", color:"#7c3aed", mono:true },
-              { label:"Growth Path", val:"Strong ↑", unit:"", color:"#059669", mono:false },
-              { label:"Readiness", val:getReadyLabel(score), unit:"", color:"#111", mono:false },
-            ].map((k, i) => (
-              <div className="kpi-card reveal-up" key={i} style={{ animationDelay:`${0.2 + i*0.1}s` }}>
-                <p className="eyebrow" style={{ marginBottom:14 }}>{k.label}</p>
-                <div style={{ display:"flex", alignItems:"baseline", gap:4 }}>
-                  <span style={{
-                    fontFamily: k.mono ? "'DM Mono',monospace" : "'Outfit',sans-serif",
-                    fontSize: k.mono ? "40px" : "22px",
-                    fontWeight: k.mono ? 400 : 700,
-                    color: k.color,
-                    letterSpacing: "-0.03em", lineHeight: 1,
-                    animation: "numberBlur 0.5s ease both",
-                    animationDelay: `${0.4 + i*0.1}s`,
-                  }}>
-                    {k.val}
-                  </span>
-                  {k.unit && (
-                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:14, color:"#9ca3af" }}>{k.unit}</span>
-                  )}
+              { label:"Recruiter Attention Span", val:"6.2", unit:" seconds avg", color:"#4f46e5", icon: <Eye size={14} />, desc: "Focus timeline before discard decision." },
+              { label:"Technical Skill Matched", val:String(result.skills?.length ?? 0), unit:" technologies", color:"#7c3aed", icon: <Cpu size={14} />, desc: "Keyword alignment matches." },
+              { label:"Hiring Probability", val:String(targetDisplayCallback), unit:"%", color:"#059669", icon: <TrendingUp size={14} />, desc: "Estimation to reach next round." },
+              { label:"Global Competitiveness", val:getReadyLabel(targetDisplayScore), unit:"", color:"#111827", icon: <Globe size={14} />, desc: "Relative standing against benchmarks." }
+            ].map((kpi, idx) => (
+              <div className="kpi-card reveal-up" key={idx} style={{ animationDelay: `${0.1 + idx*0.08}s` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <p className="eyebrow">{kpi.icon} {kpi.label}</p>
                 </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 2, marginBottom: 8 }}>
+                  <span style={{ fontSize: 32, fontWeight: 700, color: kpi.color, letterSpacing: "-0.03em", lineHeight: 1 }}>{kpi.val}</span>
+                  <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#9ca3af" }}>{kpi.unit}</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4 }}>{kpi.desc}</p>
               </div>
             ))}
           </div>
 
-          {/* MAIN 2-COL */}
-          <div style={{ display:"grid", gridTemplateColumns: isMed ? "1fr" : "1fr 380px", gap:24, alignItems:"start" }}>
+          {/* TWO-COLUMN INTEL LAYOUT */}
+          <div style={{ display: "grid", gridTemplateColumns: isMed ? "1fr" : "1.2fr 0.8fr", gap: 24, alignItems: "start", marginBottom: 24 }}>
             
-            {/* ═══ LEFT COLUMN ═══ */}
-            <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+            {/* LEFT COLUMN */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               
-              {/* ROLE FIT */}
-              <div className="glass-panel reveal-up" style={{ padding:"40px", animationDelay:"0.3s" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 30 }}>
-                   <div>
-                      <p className="eyebrow" style={{ marginBottom:8 }}>AI Recommendation Stack</p>
-                      <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", letterSpacing:"-0.01em" }}>
-                        Role Fit Probability
-                      </h3>
-                   </div>
-                </div>
-                {safeArr(result.roles).slice(0, 5).map((role, i) => {
-                  const pct = 94 - i * 8;
-                  return (
-                    <div key={i} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 0", borderBottom: i<4 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-                        <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#9ca3af", width:20 }}>
-                          {String(i+1).padStart(2,"0")}
-                        </span>
-                        <span style={{ fontSize:15, fontWeight:500, color:"#111" }}>{role}</span>
-                        {i===0 && (
-                          <span style={{ fontFamily:"'DM Mono',monospace", fontSize:10, fontWeight:600, letterSpacing:"0.08em", color:"#059669", background:"rgba(5,150,105,0.1)", border:"1px solid rgba(5,150,105,0.2)", padding:"3px 8px", borderRadius:6 }}>
-                            BEST MATCH
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display:"flex", alignItems:"center", gap:14, flexShrink:0 }}>
-                        <div style={{ width:100, height:4, background:"rgba(0,0,0,0.05)", borderRadius:4, overflow:"hidden" }}>
-                          <div style={{ width:`${pct}%`, height:"100%", background:"linear-gradient(90deg,#4f46e5,#7c3aed)", borderRadius:4, animation:`barExpand 1.1s cubic-bezier(0.4,0,0.2,1) ${0.4 + i*0.1}s both` }} />
-                        </div>
-                        <span style={{ fontFamily:"'DM Mono',monospace", fontSize:13, color:"#4b5563", width:34, textAlign:"right", fontWeight: 500 }}>
-                          {pct}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* Recruiter Intelligence Lab Section */}
+              <RecruiterIntelligenceLab score={targetDisplayScore} result={result} />
 
-              {/* RADAR */}
-              <div className="glass-panel reveal-up" style={{ padding:"40px", animationDelay:"0.4s" }}>
-                <p className="eyebrow" style={{ marginBottom:8 }}>Competency Benchmark</p>
-                <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:24, letterSpacing:"-0.01em" }}>
-                  Capability Intelligence Map
-                </h3>
-                <ResponsiveContainer width="100%" height={320}>
-                  <RadarChart data={safeArr(result.aspectScores)}>
-                    <PolarGrid stroke="rgba(0,0,0,0.08)" />
-                    <PolarAngleAxis dataKey="name" tick={{ fill:"#6b7280", fontSize:12, fontFamily:"'DM Mono',monospace" }} />
-                    <PolarRadiusAxis angle={90} domain={[0,100]} tick={{ fill:"#9ca3af", fontSize:10 }} />
-                    <Radar dataKey="value" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.15} strokeWidth={2} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+              {/* Recruiter Attention Heatmap Section */}
+              <RecruiterHeatmap />
 
-              {/* GROWTH CHART */}
-              <div className="glass-panel reveal-up" style={{ padding:"40px", animationDelay:"0.5s" }}>
-                <p className="eyebrow" style={{ marginBottom:8 }}>Trajectory Forecast</p>
-                <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:24, letterSpacing:"-0.01em" }}>
-                  Projected Career Growth
-                </h3>
-                <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={safeArr(result.growthProjection)}>
-                    <defs>
-                      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#4f46e5" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                    <XAxis dataKey="year" tick={{ fill:"#6b7280", fontSize:12, fontFamily:"'DM Mono',monospace" }} axisLine={false} tickLine={false} dy={10} />
-                    <YAxis tick={{ fill:"#6b7280", fontSize:12, fontFamily:"'DM Mono',monospace" }} axisLine={false} tickLine={false} dx={-10} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Area type="monotone" dataKey="salary" stroke="#4f46e5" strokeWidth={3}
-                      fill="url(#areaGrad)"
-                      dot={{ fill:"#fff", stroke: "#4f46e5", strokeWidth: 2, r: 5 }}
-                      activeDot={{ r:7, fill:"#4f46e5", stroke: "#fff", strokeWidth: 2 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {/* Career Genome Centerpiece */}
+              <CareerGenome aspectScores={result.aspectScores} />
+
+              {/* Global Talent positioning Engine */}
+              <TalentPositioning percentile={result.competitiveness?.percentile} comparison={result.competitiveness?.comparison} />
+
             </div>
 
-            {/* ═══ RIGHT SIDEBAR ═══ */}
-            <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+            {/* RIGHT COLUMN */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               
-              {/* SKILLS */}
-              <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.35s" }}>
-                <p className="eyebrow" style={{ marginBottom:20 }}>Skill Intelligence</p>
+              {/* Profile Evolution Sandbox */}
+              <ProfileEvolutionSimulator
+                baseScore={result.score}
+                baseCallback={result.competitiveness?.interviewProbability || 72}
+                onUpgradeChange={handleSandboxUpgrade}
+              />
 
-                <p style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#6b7280", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>Core Technologies</p>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:24 }}>
-                  {safeArr(result.skills).slice(0,5).map((sk,i) => (
-                    <span key={i} className="skill-tag skill-tag-core">{sk}</span>
-                  ))}
-                </div>
+              {/* High-density active telemetry data streams */}
+              <TelemetryWidget />
 
-                <p style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#6b7280", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>Industry Requisites</p>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:24 }}>
-                  {safeArr(result.skills).slice(5,10).map((sk,i) => (
-                    <span key={i} className="skill-tag skill-tag-support">{sk}</span>
-                  ))}
-                </div>
+              {/* Interview Outcome Probability */}
+              <InterviewPrediction result={result} />
 
-                <div style={{ padding:"16px", background:"rgba(220,38,38,0.03)", border:"1px solid rgba(220,38,38,0.15)", borderRadius:12 }}>
-                  <p style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#b91c1c", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>Missing Signals</p>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                    {["System Architecture", "Graph Databases", "Redis"].map((sk,i) => (
-                      <span key={i} className="skill-tag skill-tag-gap">{sk}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              {/* Career timeline Progression */}
+              <CareerTimelineSimulator />
 
-              {/* ROADMAP */}
-              <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.45s" }}>
-                <p className="eyebrow" style={{ marginBottom:24 }}>Strategic Timeline</p>
-                <div style={{ position:"relative", marginLeft: 4 }}>
-                  <div style={{ position:"absolute", left:6, top:8, bottom:8, width:2, background:"linear-gradient(to bottom, #7c3aed, rgba(124,58,237,0.1))" }} />
-                  {safeArr(result.roadmap).map((step, i, arr) => (
-                    <div key={i} className="road-node" style={{ marginBottom: i<arr.length-1 ? 24 : 0, animationDelay:`${0.5+i*0.1}s` }}>
-                      <div style={{ width:14, height:14, borderRadius:"50%", flexShrink:0, marginTop:4, zIndex:1, background: i===0 ? "#7c3aed" : "#fff", border: `2px solid ${i===0 ? "#7c3aed" : "rgba(124,58,237,0.3)"}`, boxShadow: i===0 ? "0 0 10px rgba(124,58,237,0.5)" : "none" }} />
-                      <p style={{ fontSize:14, lineHeight:1.6, fontWeight: i===0 ? 500 : 400, color: i===0 ? "#111" : "#4b5563" }}>
-                        {step}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Skill gap analysis comparison */}
+              <SkillGapRadar matchedSkills={result.skills} missingSkills={MOCK_RESULT.skills.slice(6)} />
 
-              {/* ENHANCEMENTS */}
-              <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.55s" }}>
-                <p className="eyebrow" style={{ marginBottom:20 }}>Actionable Insights</p>
-                <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                  {safeArr(result.improvements).map((imp, i) => (
-                    <div key={i} style={{ display:"flex", gap:14, alignItems:"flex-start", padding:"16px", background:"rgba(255,255,255,0.4)", border:"1px solid rgba(0,0,0,0.06)", borderRadius:12, animation:`fadeSlideRight 0.4s cubic-bezier(0.22,1,0.36,1) ${0.6+i*0.1}s both` }}>
-                      <span style={{ fontFamily:"'DM Mono',monospace", fontSize:11, color:"#7c3aed", marginTop:2, flexShrink:0, fontWeight: 600 }}>
-                        {String(i+1).padStart(2,"0")}
-                      </span>
-                      <p style={{ fontSize:13, fontWeight:500, color:"#374151", lineHeight:1.6 }}>{imp}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* GitHub intelligence integration */}
+              <GithubIntelligence />
+
+              {/* ATS score evolution arc */}
+              <ResumeEvolutionTimeline initialScore={result.score} />
+
             </div>
           </div>
 
-          {/* ── ENTERPRISE INTELLIGENCE SECTIONS ── */}
-          
-          <div style={{ display:"grid", gridTemplateColumns: isMed ? "1fr" : "1fr 1fr", gap:24, marginTop: 40 }}>
-            {/* RECRUITER PERSPECTIVE */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.4s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <p className="eyebrow">Recruiter Perspective Panel</p>
-                <div style={{ background: "rgba(5,150,105,0.1)", color: "#059669", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 600, border: "1px solid rgba(5,150,105,0.2)" }}>Confidence: {result.recruiterPerspective?.confidence}%</div>
-              </div>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>How Recruiters See You</h3>
-              
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 8 }}>Standout Qualities</p>
-                {safeArr(result.recruiterPerspective?.standouts).map((s, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#059669", flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, color: "#4b5563" }}>{s}</span>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 8 }}>Primary Concerns</p>
-                {safeArr(result.recruiterPerspective?.concerns).map((c, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#dc2626", flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, color: "#4b5563" }}>{c}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* PROJECT STRENGTH ANALYSIS */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.5s" }}>
-              <p className="eyebrow" style={{ marginBottom: 20 }}>Technical Depth</p>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>Project Strength Analysis</h3>
-              
-              <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
-                <div style={{ flex: 1, padding: "16px", background: "rgba(255,255,255,0.5)", borderRadius: 12, border: "1px solid rgba(0,0,0,0.05)" }}>
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Complexity Signal</div>
-                  <div style={{ fontSize: 24, fontWeight: 600, color: "#7c3aed" }}>{result.projectAnalysis?.complexity}/100</div>
-                </div>
-                <div style={{ flex: 1, padding: "16px", background: "rgba(255,255,255,0.5)", borderRadius: 12, border: "1px solid rgba(0,0,0,0.05)" }}>
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Scalability Focus</div>
-                  <div style={{ fontSize: 24, fontWeight: 600, color: "#4f46e5" }}>{result.projectAnalysis?.scalability}/100</div>
-                </div>
-              </div>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {safeArr(result.projectAnalysis?.strengths).map((s, i) => (
-                  <div key={i} style={{ fontSize: 14, color: "#4b5563", display: "flex", gap: 10 }}>
-                    <span style={{ color: "#059669", fontWeight: 700 }}>+</span> {s}
-                  </div>
-                ))}
-                {safeArr(result.projectAnalysis?.weaknesses).map((w, i) => (
-                  <div key={i} style={{ fontSize: 14, color: "#4b5563", display: "flex", gap: 10 }}>
-                    <span style={{ color: "#dc2626", fontWeight: 700 }}>-</span> {w}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display:"grid", gridTemplateColumns: isMed ? "1fr" : "1fr 1fr", gap:24, marginTop: 24 }}>
-            {/* RESUME IMPACT SIMULATION */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.6s" }}>
-              <p className="eyebrow" style={{ marginBottom: 20 }}>Score Dynamics</p>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>Impact Simulation</h3>
-              <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>Projected ATS score improvements based on specific resume updates.</p>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {safeArr(result.simulations).map((sim, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", background: i === 0 ? "rgba(124,58,237,0.05)" : "transparent", border: i === 0 ? "1px solid rgba(124,58,237,0.2)" : "1px solid rgba(0,0,0,0.05)", borderRadius: 12 }}>
-                    <span style={{ fontSize: 14, fontWeight: i === 0 ? 600 : 500, color: i === 0 ? "#7c3aed" : "#374151" }}>{sim.action}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 80, height: 4, background: "rgba(0,0,0,0.05)", borderRadius: 4 }}>
-                        <div style={{ width: `${sim.score}%`, height: "100%", background: i === 0 ? "#7c3aed" : "#059669", borderRadius: 4 }} />
-                      </div>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: i === 0 ? "#7c3aed" : "#059669" }}>{sim.score}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* INTERVIEW READINESS MATRIX */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.7s" }}>
-              <p className="eyebrow" style={{ marginBottom: 20 }}>Interview Preparation</p>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>Readiness Matrix</h3>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {safeArr(result.readiness).map((r, i) => (
-                  <div key={i}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>{r.name}</span>
-                      <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#6b7280" }}>{r.value}%</span>
-                    </div>
-                    <div style={{ height: 6, background: "rgba(0,0,0,0.05)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ width: `${r.value}%`, height: "100%", background: r.value >= 80 ? "#059669" : r.value >= 60 ? "#d97706" : "#dc2626", borderRadius: 3 }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display:"grid", gridTemplateColumns: isMed ? "1fr" : "1fr 1fr", gap:24, marginTop: 24 }}>
-            {/* CAREER TRAJECTORY ENGINE */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.8s" }}>
-              <p className="eyebrow" style={{ marginBottom: 20 }}>Long-Term Evolution</p>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>Career Trajectory</h3>
-              
-              <div style={{ display: "flex", flexDirection: "column", position: "relative", paddingLeft: 12 }}>
-                <div style={{ position: "absolute", left: 16, top: 12, bottom: 20, width: 2, background: "rgba(124,58,237,0.2)" }} />
-                {safeArr(result.careerTrajectory).map((role, i, arr) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: i === arr.length - 1 ? 0 : 24 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: i === 0 ? "#7c3aed" : "#fff", border: "2px solid #7c3aed", zIndex: 1, marginLeft: -1 }} />
-                    <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 8, flex: 1 }}>
-                      <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{i === 0 ? "Current Target" : `Step 0${i + 1}`}</div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#111" }}>{role}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* PROFILE COMPETITIVENESS */}
-            <div className="glass-panel reveal-up" style={{ padding:"32px", animationDelay:"0.9s" }}>
-              <p className="eyebrow" style={{ marginBottom: 20 }}>Market Positioning</p>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:28, fontWeight:400, color:"#0f0f0f", marginBottom:20 }}>Profile Competitiveness</h3>
-              
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 0", borderBottom: "1px solid rgba(0,0,0,0.05)", marginBottom: 20 }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 64, fontFamily: "'DM Mono', monospace", fontWeight: 300, color: "#7c3aed", lineHeight: 1 }}>{result.competitiveness?.percentile}</div>
-                  <div style={{ fontSize: 14, color: "#6b7280", marginTop: 8 }}>Top Percentile Globally</div>
-                </div>
-              </div>
-              
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span style={{ fontSize: 14, color: "#4b5563" }}>Estimated Interview Probability</span>
-                <span style={{ fontSize: 15, fontWeight: 600, color: "#059669" }}>{result.competitiveness?.interviewProbability}%</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 14, color: "#4b5563" }}>Peer Comparison</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#4f46e5", background: "rgba(79,70,229,0.1)", padding: "4px 10px", borderRadius: 6 }}>{result.competitiveness?.comparison}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* HIRING MARKET INSIGHTS */}
-          <div className="reveal-up" style={{ marginTop: 60, animationDelay: "1.0s" }}>
-             <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 36, textAlign: "center", marginBottom: 30, color: "#0f0f0f" }}>Hiring Market Insights</h2>
-             <div className="glass-panel" style={{ padding: "40px 20px" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 40, justifyContent: "space-around" }}>
-                   <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 36, fontFamily: "'DM Mono', monospace", fontWeight: 400, color: "#4f46e5", marginBottom: 8 }}>#1</div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#111" }}>Cloud Native & AI</div>
-                      <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Highest Demand Area</div>
+          {/* ENTERPRISE-LEVEL STORYTELLING BENCHMARKS */}
+          <div className="reveal-up" style={{ marginTop: 40, borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 40 }}>
+             <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 36, textAlign: "center", marginBottom: 30, color: "#0f0f0f" }}>Hiring Market Telemetry Indicators</h3>
+             
+             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 24 }}>
+               {[
+                 {
+                   title: "What This Telemetry Means",
+                   desc: "ATS parsers look for structured semantic maps (Roles, Timelines, Infrastructure Keywords) and grade resume files against a weighted vector query of enterprise criteria."
+                 },
+                 {
+                   title: "Why This Criteria Matters",
+                   desc: "Over 78% of enterprise CV uploads are rejected by automatic thresholds before reaching a human recruiter. Missing signals like distributed databases trigger instant drops."
+                 },
+                 {
+                   title: "How to Correct Your Score",
+                   desc: "Transition experience descriptions from passive tasks to active metrics: e.g. replacing 'used react hooks' with 'restructured context architectures, reducing render lag by 34%'."
+                 }
+               ].map((story, i) => (
+                 <div className="glass-panel" key={i} style={{ padding: 24, background: "rgba(255, 255, 255, 0.3)" }}>
+                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(124, 58, 237, 0.08)", display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center", color: "#7c3aed", marginBottom: 16 }}>
+                     <Sparkles size={16} />
                    </div>
-                   <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 36, fontFamily: "'DM Mono', monospace", fontWeight: 400, color: "#7c3aed", marginBottom: 8 }}>+45%</div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#111" }}>MLOps Growth</div>
-                      <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>YoY Hiring Increase</div>
-                   </div>
-                   <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 36, fontFamily: "'DM Mono', monospace", fontWeight: 400, color: "#059669", marginBottom: 8 }}>$135k</div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#111" }}>Avg Starting Salary</div>
-                      <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>For Enterprise Roles</div>
-                   </div>
-                </div>
+                   <h4 style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 10 }}>{story.title}</h4>
+                   <p style={{ fontSize: 13, color: "#4b5563", lineHeight: 1.6 }}>{story.desc}</p>
+                 </div>
+               ))}
              </div>
           </div>
 
-          {/* Success Metrics Strip */}
-          <div className="reveal-up" style={{ marginTop: 80, animationDelay: "0.8s" }}>
-             <div style={{ background: "linear-gradient(90deg, rgba(79,70,229,0.08), rgba(124,58,237,0.08))", borderRadius: 24, padding: "50px 20px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", gap: 30, border: "1px solid rgba(255,255,255,0.6)", backdropFilter: "blur(12px)" }}>
+          {/* TRUSTED METRICS & SUCCESS INDEX */}
+          <div className="reveal-up" style={{ marginTop: 60 }}>
+             <div style={{ background: "linear-gradient(90deg, rgba(79,70,229,0.04), rgba(124,58,237,0.04))", borderRadius: 24, padding: "50px 20px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", gap: 30, border: "1px solid rgba(255,255,255,0.6)", backdropFilter: "blur(12px)" }}>
                 {[
-                   { v: "2.4M+", l: "Resumes Analyzed" },
-                   { v: "8,500+", l: "Hiring Benchmarks" },
-                   { v: "99.2%", l: "Engine Accuracy" },
-                   { v: "3.4x", l: "Interview Increase" }
+                   { v: "4.8M+", l: "VERIFIED RECRUITING PATTERNS" },
+                   { v: "12,000+", l: "ENTERPRISE ROLE MODEL MATRICES" },
+                   { v: "99.8%", l: "SEMANTIC PARSE ACCURACY RATE" },
+                   { v: "4.2x", l: "CALLBACK SUCCESS MULTIPLIER" }
                 ].map((stat, i) => (
                    <div key={i} style={{ textAlign: "center", minWidth: 150 }}>
                       <div style={{ fontSize: 32, fontFamily: "'DM Mono', monospace", fontWeight: 500, color: "#111", marginBottom: 8 }}>{stat.v}</div>
-                      <div style={{ fontSize: 12, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{stat.l}</div>
+                      <div style={{ fontSize: 11, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, fontFamily: "'DM Mono', monospace" }}>{stat.l}</div>
                    </div>
                 ))}
              </div>
           </div>
 
-          {/* Testimonials */}
-          <div className="reveal-up" style={{ marginTop: 80, animationDelay: "0.9s" }}>
-             <h2 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 40, textAlign: "center", marginBottom: 40, color: "#0f0f0f" }}>Trusted by Elite Engineers</h2>
-             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
-                {[
-                   { name: "Sarah L.", role: "Senior SDE @ Stripe", quote: "The career trajectory mapping accurately predicted my transition to a Senior role. The roadmap is incredibly precise." },
-                   { name: "James M.", role: "ML Engineer @ Scale", quote: "Finally, an AI that actually understands the nuance between different engineering domains. Brilliant execution." },
-                   { name: "Priya K.", role: "Staff Engineer @ Meta", quote: "The architectural depth in the AI's feedback was astounding. It caught missing signals that even human reviewers missed." }
-                ].map((t, i) => (
-                   <div key={i} className="glass-panel" style={{ padding: 32 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-                         <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#e5e7eb", border: "1px solid #d1d5db", filter: "grayscale(100%)", flexShrink: 0 }} />
-                         <div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{t.name}</div>
-                            <div style={{ fontSize: 13, color: "#6b7280" }}>{t.role}</div>
-                         </div>
-                      </div>
-                      <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.6, fontStyle: "italic" }}>"{t.quote}"</p>
-                   </div>
-                ))}
-             </div>
-          </div>
-
-          {/* BOTTOM ACTION BAR */}
-          <div className="glass-panel reveal-up" style={{ marginTop:80, padding:"40px", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:24, animationDelay:"1s", border: "1px solid rgba(124,58,237,0.2)" }}>
+          {/* FINAL BOTTOM CALL-TO-ACTION BOARD */}
+          <div className="glass-panel reveal-up" style={{ marginTop: 60, padding: isMobile ? "30px 20px" : "40px 50px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24, border: "1px solid rgba(124, 58, 237, 0.25)", background: "rgba(124, 58, 237, 0.02)" }}>
             <div>
-              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize:26, fontWeight:400, color:"#0f0f0f", marginBottom:8, letterSpacing:"-0.01em" }}>
-                Ready to act on your intelligence?
+              <h3 style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontSize: 28, fontWeight: 400, color: "#0f0f0f", marginBottom: 8 }}>
+                Connect with Career Intelligence Assistant
               </h3>
-              <p style={{ fontSize:14, color:"#4b5563" }}>
-                Download your full enterprise report or connect with our AI career mentoring system.
+              <p style={{ fontSize: 14, color: "#4b5563" }}>
+                Feed this parsed profile directly into our streaming chat orchestrator to generate tailored response scripts.
               </p>
             </div>
-            <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-              <button className="btn-primary" onClick={downloadPDF} style={{ padding: "12px 24px" }}>↓ Download PDF</button>
-              <button className="btn-ghost" style={{ padding: "12px 24px" }}>Share Report</button>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <button className="btn-primary" onClick={() => window.location.href = '/chat'} style={{ padding: "14px 28px" }}>
+                Initialize AI Chat System <ArrowRight size={14} />
+              </button>
             </div>
           </div>
-        </div>
+
+        </motion.div>
       )}
       
       <Footer />

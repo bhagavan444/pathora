@@ -1,27 +1,49 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Home.css";
 import { DOMAINS, ROADMAP_STEPS, CAREER_FEATURES, SUCCESS_STORIES, INDUSTRIES, COMPARISON } from "./HomeData";
 import { RevealSection, RevealDiv, AnimatedCounter, CinematicUniverseCore, TechMarquee } from "./HomeComponents";
 import Footer from '../components/Footer';
 import { motion } from "framer-motion";
+import { useIntelligenceStore } from '../store/intelligenceStore';
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const fileRef = useRef(null);
   const user = typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem("user_profile") || "null") : null;
-  const [selectedDomain, setSelectedDomain] = useState("Software Engineering");
-  const [selectedSkills, setSelectedSkills] = useState([]);
-  const [resume, setResume] = useState(null);
+  
+  const selectedDomain = useIntelligenceStore((state) => state.currentDomain);
+  const setSelectedDomain = useIntelligenceStore((state) => state.setDomain);
+  
+  const selectedSkills = useIntelligenceStore((state) => state.verifiedSkills);
+  const setSelectedSkills = useIntelligenceStore((state) => state.setVerifiedSkills);
+  const toggleVerifiedSkill = useIntelligenceStore((state) => state.toggleVerifiedSkill);
+  
+  const resume = useIntelligenceStore((state) => state.resumeData);
+  const setResumeState = useIntelligenceStore((state) => state.setResumeData);
+  
   const [careerScore, setCareerScore] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   useEffect(() => {
     let s = 0; if (resume) s += 35;
     s += Math.min(selectedSkills.length * 10, 35);
     if (user) s += 30; setCareerScore(s);
   }, [resume, selectedSkills, user]);
 
-  const toggleSkill = (skill) => setSelectedSkills(p => p.includes(skill) ? p.filter(s => s !== skill) : [...p, skill]);
+  useEffect(() => {
+    if (location.hash === "#roadmap") {
+      setTimeout(() => {
+        const el = document.getElementById("roadmap");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  }, [location.hash, location.pathname]);
+
+  const toggleSkill = (skill) => toggleVerifiedSkill(skill);
   const handleGetStarted = () => { if (user) { navigate("/predict"); } else { setShowLoginPrompt(true); setTimeout(() => navigate("/login"), 2500); } };
   const pct = Math.round((selectedSkills.length / DOMAINS[selectedDomain].length) * 100);
 
@@ -51,14 +73,14 @@ export default function Home() {
               Accelerate Your Engineering Career With <em>Precision.</em>
             </h1>
             <p className="hero-sub">
-              Pathora analyzes your profile to deliver personalized engineering roadmaps, precise skill analysis, and industry-aligned recommendations for your next role. Built exclusively for modern engineers.
+              Pathora uses Gemini AI to analyze your resume and deliver personalized engineering roadmaps, precise ATS scoring, and interactive career mentorship. Built exclusively for modern engineers.
             </p>
             <div className="hero-ctas">
               <button className="btn-glass-primary" onClick={handleGetStarted}>Analyze My Career Path</button>
               <button className="btn-glass-outline" onClick={() => navigate("/quiz")}>Explore Assessments</button>
             </div>
             <div className="trust-row">
-              {["Resume & ATS Analysis","Technical Growth Tracking","Personalized Roadmaps"].map(t => (
+              {["Gemini AI Chat","PDF Resume Parsing","Predictive Roadmaps"].map(t => (
                 <div key={t} className="trust-item">
                   <div className="trust-check">✓</div>
                   <span style={{ fontSize:13,color:"var(--tm)",fontWeight:500 }}>{t}</span>
@@ -87,9 +109,9 @@ export default function Home() {
             <h2 className="sec-title">The Intelligence Engine<span style={{ color:"var(--ts)" }}> For Modern Engineers</span></h2>
           </div>
           <div className="metrics-grid">
-            <AnimatedCounter end={1200} label="Career Predictions" suffix="+" />
-            <AnimatedCounter end={94} label="ML Accuracy Rate" suffix="%" />
-            <AnimatedCounter end={300} label="Interactive Quizzes" suffix="+" />
+            <AnimatedCounter end={6} label="Supported Career Domains" suffix="" />
+            <AnimatedCounter end={94} label="ATS Parsing Accuracy" suffix="%" />
+            <AnimatedCounter end={5} label="Roadmap Stages" suffix="" />
           </div>
         </div>
       </RevealSection>
@@ -104,7 +126,15 @@ export default function Home() {
           </div>
           <div className="readiness-bar"><div className="readiness-fill" style={{ width:`${careerScore}%` }} /></div>
           <div className="readiness-score">{careerScore}%</div>
-          <p style={{ textAlign:"center",fontSize:14,color:"var(--tm)" }}>Aligned with industry expectations for fresher-level roles</p>
+          <p style={{ textAlign:"center",fontSize:14,color:"var(--tm)" }}>
+            {careerScore === 0
+              ? "Upload your resume and select skills above to calculate your readiness score."
+              : careerScore < 35
+              ? "Early stage — upload your resume and mark skills to improve your score."
+              : careerScore < 65
+              ? "Building momentum — continue adding verified skills to strengthen your profile."
+              : "Strong foundation — head to the Predict page for your full ATS analysis."}
+          </p>
         </div>
       </RevealSection>
 
@@ -192,21 +222,31 @@ export default function Home() {
         <div style={{ maxWidth:1100,margin:"0 auto" }}>
           <div className="sec-head">
             <div className="sec-tag" style={{ color:"var(--success)" }}>AI Engine Core</div>
-            <h2 className="sec-title">Predictive Career Analysis</h2>
-            <p className="sec-desc" style={{ marginBottom: 40, marginTop: -10 }}>Upload your resume or academic profile to generate a personalized career trajectory.</p>
+            <h2 className="sec-title">AI Resume Analysis</h2>
+            <p className="sec-desc" style={{ marginBottom: 40, marginTop: -10 }}>Upload your resume in PDF format to generate an ATS match score and personalized roadmap powered by Gemini 2.5.</p>
           </div>
           <div className="resume-drop" onClick={() => fileRef.current?.click()}>
             <div style={{ width:60,height:60,borderRadius:"50%",background:"rgba(129,140,248,.1)",border:"1px solid rgba(129,140,248,.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28 }}>🧠</div>
             <h3 style={{ fontSize:20,fontWeight:600,color:"var(--tp)",marginBottom:8 }}>{resume ? resume.name : "Upload Academic Profile (PDF/JSON)"}</h3>
             <p style={{ fontSize:14,color:"var(--tm)" }}>Drop your file to let our ML models forecast your ideal career path</p>
           </div>
-          <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.json" onChange={e => setResume(e.target.files?.[0] || null)} />
+          <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.json" onChange={e => {
+            if(e.target.files?.[0]) {
+              setResumeState({ name: e.target.files[0].name, size: e.target.files[0].size });
+            } else {
+              setResumeState(null);
+            }
+          }} />
           {resume && (
             <div className="resume-results">
-              {[{label:"Prediction Confidence",value:"94%",color:"var(--success)"},{label:"Optimal Domain",value:selectedDomain.split(" ")[0],color:"var(--accent)"},{label:"Growth Trajectory",value:`${pct}%`,color:"var(--accent2)"}].map(({label,value,color}) => (
-                <div key={label} className="resume-card">
+              {[
+                {label:"Resume Detected",value:resume.name?.split(".")[0] || "Your Resume",color:"var(--tp)"},
+                {label:"File Ready",value:"✓ PDF Loaded",color:"var(--success)"},
+                {label:"Next Step",value:"Go to Predict →",color:"var(--accent)"}
+              ].map(({label,value,color}) => (
+                <div key={label} className="resume-card" onClick={() => label === "Next Step" && navigate("/predict")} style={{ cursor: label === "Next Step" ? "pointer" : "default" }}>
                   <div style={{ fontSize:13,color:"var(--tm)",fontWeight:600,marginBottom:8 }}>{label}</div>
-                  <div style={{ fontSize:28,fontWeight:700,color }}>{value}</div>
+                  <div style={{ fontSize:label === "Resume Detected" ? 16 : 24,fontWeight:700,color,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{value}</div>
                 </div>
               ))}
             </div>
@@ -215,11 +255,11 @@ export default function Home() {
       </RevealSection>
 
       {/* ═══ CAREER ROADMAP ═══ */}
-      <RevealSection className="sec">
+      <RevealSection className="sec" id="roadmap">
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--warning)" }}>Career Journey</div>
-            <h2 className="sec-title">The Emerging Engineer's Roadmap</h2>
+            <div className="sec-tag" style={{ color:"var(--warning)" }}>How It Works</div>
+            <h2 className="sec-title">From Resume to Roadmap<br/>in 5 Steps</h2>
           </div>
           <div className="roadmap-wrap">
             <div className="roadmap-line" />
@@ -275,8 +315,9 @@ export default function Home() {
         <div style={{ position:"absolute",top:"10%",right:"-5%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(103,232,249,.05) 0%,transparent 70%)",filter:"blur(60px)",pointerEvents:"none" }} />
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--success)" }}>Success Stories</div>
-            <h2 className="sec-title">Proven Industry Placements</h2>
+            <div className="sec-tag" style={{ color:"var(--success)" }}>Student Reviews</div>
+            <h2 className="sec-title">What Engineers Are Saying</h2>
+            <p className="sec-desc">Real feedback from students who used Pathora to identify skill gaps, improve their ATS scores, and land technical roles.</p>
           </div>
           <div className="stories-grid">
             {SUCCESS_STORIES.map((s, i) => (
@@ -309,8 +350,9 @@ export default function Home() {
       <RevealSection className="sec" style={{ borderTop:"1px solid rgba(0,0,0,.06)" }}>
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Industry Domains</div>
-            <h2 className="sec-title">Trending Technology Sectors</h2>
+            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Covered Domains</div>
+            <h2 className="sec-title">6 Engineering Tracks,<br/>Fully Mapped</h2>
+            <p className="sec-desc">Each domain contains a verified skill checklist. Select your track and the platform highlights your gaps and builds your roadmap accordingly.</p>
           </div>
           <div className="industries-grid">
             {INDUSTRIES.map((ind, i) => (
@@ -321,13 +363,15 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: i * 0.06 }}
                 key={ind.name} 
                 className="g industry-card"
+                onClick={() => navigate("/predict")}
+                style={{ cursor: "pointer" }}
               >
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16 }}>
                   <i className={ind.icon} style={{ fontSize:32,opacity:.8 }} />
                   <div style={{ padding:"4px 10px",borderRadius:8,background:"rgba(52,211,153,.1)",border:"1px solid rgba(52,211,153,.2)",fontSize:11,fontWeight:700,color:"var(--success)" }}>{ind.growth}</div>
                 </div>
                 <h4 style={{ fontSize:18,fontWeight:700,color:"var(--tp)",marginBottom:8 }}>{ind.name}</h4>
-                <p style={{ fontSize:13,color:"var(--tm)" }}>{ind.jobs} open positions</p>
+                <p style={{ fontSize:13,color:"var(--tm)" }}>{ind.jobs}</p>
               </motion.div>
             ))}
           </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
-import CinematicBackground from "./components/CinematicBackground.jsx";
+import BackgroundVideoLayer from "./components/BackgroundVideoLayer.jsx";
 
 // Pages (Notice the capital 'P' to match the actual folder name on your system/Git)
 import Home from "./Pages/Home.jsx";
@@ -34,27 +34,30 @@ function App() {
   };
 
   return (
-    <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", backgroundColor: "transparent" }}>
-      <CinematicBackground />
-      <div style={{ position: "relative", zIndex: 10 }}>
-        <Router>
-          <Navbar handleLogout={handleLogout} /> {/* Pass handleLogout to Navbar */}
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/predict" element={<Predict />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login handleLogin={() => { }} />} />
-            <Route path="/plans" element={<Plans />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </Router>
+    <Router>
+      {/* Video layer sits at z-index: -20, overlays at z-index: -10 */}
+      <BackgroundVideoLayer />
+
+      {/* Navbar rendered outside stacking context for true fixed/sticky behavior */}
+      <Navbar handleLogout={handleLogout} />
+
+      {/* Main UI wrapper — z-index: 10, transparent background */}
+      <div style={{ position: "relative", zIndex: 10, minHeight: "100vh", background: "transparent" }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/predict" element={<Predict />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login handleLogin={() => { }} />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/quiz" element={<Quiz />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
 }
 
