@@ -60,30 +60,75 @@ export function useResumeAnalysis() {
       });
       
       const rawRes = response.data;
-      console.log("REAL BACKEND PAYLOAD:", JSON.stringify(response.data, null, 2));
+      console.log("PRODUCTION BACKEND RESPONSE:", JSON.stringify(response.data, null, 2));
       
       if (!rawRes) throw new Error("Backend did not return final payload.");
-      
+
+      // === STRICT PRODUCTION NORMALIZATION ===
+      // Bridge between actual backend keys and what every frontend component reads.
+
+      // Roadmap: backend sends string[] but SkillGapAnalysis expects {phase, focus, skills}[]
+      const rawRoadmap = rawRes.roadmap || rawRes.recommendations || [];
+      const normalizedRoadmap = Array.isArray(rawRoadmap)
+        ? rawRoadmap.map((item, idx) => {
+            if (typeof item === "string") {
+              return { phase: `Phase ${idx + 1}`, focus: item, skills: [] };
+            }
+            return item; // already an object
+          })
+        : [];
+
       const normalizedData = {
-          // Keep all original fields so we don't break sub-components
+          // Spread all original backend fields first
           ...rawRes,
-          
-          // Normalized root properties for Predict.jsx top-level cards
-          atsScore: rawRes.ats_score || 0,
-          recruiterTrust: rawRes.recruiter_trust_score || rawRes.recruiter?.trust_score || rawRes.recruiter_metrics?.recruiter_trust_score || 0,
-          projectComplexity: rawRes.project_complexity_score || rawRes.metrics?.project_complexity || rawRes.project_metrics?.project_complexity_index || 0,
-          engineeringMaturity: rawRes.engineering_maturity_score || rawRes.maturity?.score || rawRes.maturity_metrics?.engineering_maturity_index || 0,
-          projectTier: rawRes.project_tier || rawRes.project_metrics?.complexity_tier?.split('(')[0]?.trim() || "Unknown",
-          engineeringLevel: rawRes.engineering_level || rawRes.maturity_metrics?.maturity_level?.split('/')[0]?.trim() || "Unknown",
-          marketPercentile: rawRes.benchmark_metrics?.percentile || rawRes.competitiveness?.percentile || 0,
-          marketComparison: rawRes.benchmark_metrics?.comparison || rawRes.competitiveness?.comparison || "Heuristic Benchmark",
+
+          // === Top-level KPI cards (Predict.jsx) ===
+          ats_score: rawRes.ats_score ?? 0,
+          recruiter_trust: rawRes.recruiter_trust ?? 0,
+          project_complexity: rawRes.project_complexity ?? 0,
+          engineering_maturity: rawRes.engineering_maturity ?? 0,
+          market_percentile: rawRes.market_percentile ?? 0,
+          project_tier: rawRes.project_tier ?? "Unknown",
+          engineering_level: rawRes.engineering_level ?? "Unknown",
+          market_comparison: rawRes.market_comparison ?? "Unknown",
+
+          // === DashboardMetrics reads result.competitiveness ===
+          competitiveness: {
+            percentile: rawRes.market_percentile ?? 0,
+            comparison: rawRes.market_comparison ?? "Unknown",
+            interviewProbability: rawRes.market_percentile ? Math.min(99, rawRes.market_percentile + 5) : 0
+          },
+
+          // === SkillGapAnalysis reads result.roadmap, result.matched_skills, result.missing_skills ===
+          roadmap: normalizedRoadmap,
+          matched_skills: rawRes.matched_skills || rawRes.skills || [],
+          missing_skills: rawRes.missing_skills || rawRes.weaknesses || [],
+
+          // === RecruiterInsights reads these nested objects ===
+          recruiter_metrics: rawRes.recruiter_metrics || {},
+          project_metrics: rawRes.project_metrics || {},
+          maturity_metrics: rawRes.maturity_metrics || {},
+          benchmark_metrics: rawRes.benchmark_metrics || {},
+          heatmap: rawRes.heatmap || {},
+
+          // === ATSOverview reads keyword_density ===
+          keyword_density: rawRes.keyword_density ?? 0,
+
+          // === CareerGenome reads aspect_scores ===
+          aspect_scores: rawRes.aspect_scores || [],
+
+          // === Telemetry ===
           telemetry: rawRes.telemetry || {},
-          strongMatches: rawRes.matched_skills || rawRes.strong_matches || [],
-          missingSkills: rawRes.missing_skills || [],
-          recruiterSummary: rawRes.improvement_suggestions || rawRes.recruiter_summary || []
+
+          // === Legacy aliases for any sub-components still using old names ===
+          strongMatches: rawRes.matched_skills || rawRes.skills || [],
+          missingSkills: rawRes.missing_skills || rawRes.weaknesses || [],
+          recruiterSummary: rawRes.recommendations || rawRes.improvement_suggestions || [],
+          improvement_suggestions: rawRes.improvement_suggestions || rawRes.recommendations || []
       };
-      
+
       const finalRes = normalizedData;
+      console.log("NORMALIZED RESULT:", JSON.stringify(finalRes, null, 2));
       
       // Update Real Intelligence Context
       setResult(finalRes);

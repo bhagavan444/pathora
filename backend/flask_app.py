@@ -686,7 +686,79 @@ def v1_upload_document():
         logger.error(f"[UPLOAD_STAGE] Unhandled upload route exception: {traceback.format_exc()}")
         return jsonify({"success": False, "stage": "upload_route", "message": "Internal Server Error during upload processing", "debug_id": "UPL_500", "traceback": traceback.format_exc()}), 500
 
-@app.route("/api/v1/resume/analyze/stream", methods=["POST"])
+def _run_resume_analysis_pipeline(doc_id, target_role):
+    import time
+    import traceback
+    
+    resume = ResumeVersion.query.get(doc_id)
+    if not resume:
+        raise ValueError(f"Resume not found for doc_id: {doc_id}")
+
+    resume_raw_text = resume.raw_text
+
+    # 1. Document Ingestion (Parsing)
+    sections = DocumentParser.parse_sections(resume_raw_text)
+    
+    # 2. Entity Extraction
+    extracted_skills = EntityExtractor.extract_skills(resume_raw_text)
+    metrics = EntityExtractor.extract_metrics(resume_raw_text)
+    verb_counts = EntityExtractor.count_action_verbs(resume_raw_text)
+    
+    # 2.5 Domain Routing
+    try:
+        domain_key = DomainRouter.route_domain(target_role)
+    except Exception:
+        domain_key = "generic"
+
+    # 3. Deterministic ATS Engine
+    ats_result = ATSScoringEngine.compute_score(sections, extracted_skills, metrics, verb_counts, domain_key)
+    
+    # 4. Phase 2: Engineering Credibility Engines
+    project_metrics = ProjectAnalyzer.compute_complexity(sections, extracted_skills, domain_key)
+    links = EntityExtractor.extract_links(resume_raw_text)
+    recruiter_metrics = TrustEngine.compute_trust(sections, metrics, links, domain_key)
+    maturity_metrics = MaturityEngine.compute_maturity(project_metrics.get("architecture_signals", []), project_metrics.get("project_complexity_index", 50), domain_key)
+    heatmap_metrics = HeatmapEngine.generate_heatmap(sections, metrics, verb_counts)
+    
+    # 5. Engineering Genome (Vectors)
+    genome_result = VectorCalculator.compute_vectors(extracted_skills)
+    skill_gap = RoadmapGenerator.generate_roadmap(extracted_skills, domain_key)
+    benchmark_metrics = BenchmarkEngine.compute_market_percentile(
+        domain_key, 
+        ats_result.get("ats_score", 50),
+        project_metrics.get("project_complexity_index", 50),
+        maturity_metrics.get("engineering_maturity_index", 50),
+        len(metrics)
+    )
+    recruiter_insights = {"concerns": [], "standouts": []}
+    
+    # Final Payload requested by user EXACTLY
+    final_payload = {
+        "ats_score": int(ats_result.get("ats_score", 0) or 0),
+        "recruiter_trust": int(recruiter_metrics.get("recruiter_trust_score", 0) or 0),
+        "project_complexity": int(project_metrics.get("project_complexity_index", 0) or 0),
+        "engineering_maturity": int(maturity_metrics.get("engineering_maturity_index", 0) or 0),
+        "market_percentile": int(benchmark_metrics.get("percentile", 0) if benchmark_metrics else 0),
+        "project_tier": str(project_metrics.get("complexity_tier", "Unknown") if project_metrics else "Unknown"),
+        "engineering_level": str(maturity_metrics.get("maturity_level", "Unknown") if maturity_metrics else "Unknown"),
+        "market_comparison": str(benchmark_metrics.get("comparison", "Unknown") if benchmark_metrics else "Unknown"),
+        "aspect_scores": genome_result.get("aspect_scores", []) if genome_result else [],
+        "skills": list(extracted_skills) if extracted_skills else [],
+        "strengths": list(recruiter_insights.get("standouts", [])) if recruiter_insights else [],
+        "weaknesses": list(recruiter_insights.get("concerns", [])) if recruiter_insights else [],
+        "recommendations": list(skill_gap.get("roadmap", [])) if skill_gap else [],
+        "telemetry": {
+            "pipeline_latency": "218ms",
+            "vectors_mapped": len(extracted_skills) if extracted_skills else 0,
+            "confidence": float(recruiter_metrics.get("confidence_score", 0.94) or 0.94)
+        }
+    }
+    
+    import json
+    print("FINAL PAYLOAD:", json.dumps(final_payload, indent=2))
+    return final_payload
+
+
 @app.route("/api/v1/resume/analyze", methods=["POST"])
 def v1_analyze_resume_sync():
     try:
@@ -697,116 +769,38 @@ def v1_analyze_resume_sync():
         if not doc_id:
             return jsonify({"error": "doc_id required"}), 400
 
-        resume = ResumeVersion.query.get(doc_id)
-        if not resume:
-            return jsonify({"error": "Resume not found"}), 404
-
-        resume.target_role = target_role
-        resume_id = str(resume.id)
-        resume_raw_text = resume.raw_text
-        db.session.commit()
-    except Exception as e:
-        logger.exception("[SETUP_ERROR] Route setup failed.")
-        return jsonify({"error": f"Setup failed: {str(e)}"}), 500
-
-    import time
-    import traceback
-    
-    try:
-        # 1. Document Ingestion (Parsing)
-        sections = DocumentParser.parse_sections(resume_raw_text)
-        
-        # 2. Entity Extraction
-        extracted_skills = EntityExtractor.extract_skills(resume_raw_text)
-        metrics = EntityExtractor.extract_metrics(resume_raw_text)
-        verb_counts = EntityExtractor.count_action_verbs(resume_raw_text)
-        
-        # 2.5 Domain Routing
-        try:
-            domain_key = DomainRouter.route_domain(target_role)
-        except Exception:
-            domain_key = "generic"
-
-        # 3. Deterministic ATS Engine
-        ats_result = ATSScoringEngine.compute_score(sections, extracted_skills, metrics, verb_counts, domain_key)
-        
-        # 4. Phase 2: Engineering Credibility Engines
-        project_metrics = ProjectAnalyzer.compute_complexity(sections, extracted_skills, domain_key)
-        links = EntityExtractor.extract_links(resume_raw_text)
-        recruiter_metrics = TrustEngine.compute_trust(sections, metrics, links, domain_key)
-        maturity_metrics = MaturityEngine.compute_maturity(project_metrics["architecture_signals"], project_metrics["project_complexity_index"], domain_key)
-        heatmap_metrics = HeatmapEngine.generate_heatmap(sections, metrics, verb_counts)
-        
-        # 5. Engineering Genome (Vectors)
-        genome_result = VectorCalculator.compute_vectors(extracted_skills)
-        skill_gap = RoadmapGenerator.generate_roadmap(extracted_skills, domain_key)
-        benchmark_metrics = BenchmarkEngine.compute_market_percentile(
-            domain_key, 
-            ats_result.get("ats_score", 50),
-            project_metrics.get("project_complexity_index", 50),
-            maturity_metrics.get("engineering_maturity_index", 50),
-            len(metrics)
-        )
-        recruiter_insights = {"concerns": [], "standouts": []}
-        
-        # 4. Semantic Embeddings
-        semantic_engine.store_resume_embeddings(resume_id, resume_raw_text)
-        
-        # Persist DB Records
-        for sk in extracted_skills:
-            db.session.add(ExtractedSkill(resume_id=resume_id, skill_name=sk, category="Extracted"))
-        for sk in skill_gap.get("missing_skills", []):
-            db.session.add(ExtractedSkill(resume_id=resume_id, skill_name=sk, category="Missing"))
-            
-        metric = AnalysisMetric(
-            resume_id=resume_id,
-            ats_score=ats_result.get("ats_score", 50),
-            keyword_density=ats_result.get("keyword_density", 0.0),
-            complexity_score=ats_result.get("complexity_score", 50),
-            recruiter_concerns=recruiter_insights.get("concerns", []),
-            standout_metrics=recruiter_insights.get("standouts", [])
-        )
-        db.session.add(metric)
-        db.session.commit()
-        
-        # Final Flat Payload requested by user
-        final_payload = {
-            "ats_score": int(ats_result.get("ats_score", 50) or 0),
-            "recruiter_trust": int(recruiter_metrics.get("recruiter_trust_score", 0) or 0),
-            "project_complexity": int(project_metrics.get("project_complexity_index", 0) or 0),
-            "engineering_maturity": int(maturity_metrics.get("engineering_maturity_index", 0) or 0),
-            "market_percentile": int(benchmark_metrics.get("percentile", 0) if benchmark_metrics else 0),
-            "project_tier": str(project_metrics.get("complexity_tier", "Unknown") if project_metrics else "Unknown"),
-            "engineering_level": str(maturity_metrics.get("maturity_level", "Unknown") if maturity_metrics else "Unknown"),
-            "market_comparison": str(benchmark_metrics.get("comparison", "Unknown") if benchmark_metrics else "Unknown"),
-            "aspect_scores": genome_result.get("aspect_scores", []) if genome_result else [],
-            "skills": list(extracted_skills) if extracted_skills else [],
-            "strengths": list(recruiter_insights.get("standouts", [])) if recruiter_insights else [],
-            "weaknesses": list(recruiter_insights.get("concerns", [])) if recruiter_insights else [],
-            "recommendations": list(skill_gap.get("roadmap", [])) if skill_gap else [],
-            
-            # Keep original fields for backward compatibility with other frontend components
-            "recruiter_trust_score": int(recruiter_metrics.get("recruiter_trust_score", 0) or 0),
-            "project_complexity_score": int(project_metrics.get("project_complexity_index", 0) or 0),
-            "engineering_maturity_score": int(maturity_metrics.get("engineering_maturity_index", 0) or 0),
-            "production_readiness": int(skill_gap.get("readiness_score", 0) if skill_gap else 0),
-            "keyword_density": float(ats_result.get("keyword_density", 0.0) or 0.0),
-            "telemetry": {
-                "pipeline_latency": "218ms",
-                "vectors_mapped": len(extracted_skills) if extracted_skills else 0,
-                "confidence": float(recruiter_metrics.get("confidence_score", 0.94) or 0.94)
-            },
-            "recruiter_metrics": recruiter_metrics or {},
-            "project_metrics": project_metrics or {},
-            "maturity_metrics": maturity_metrics or {},
-            "benchmark_metrics": benchmark_metrics or {},
-            "matched_skills": list(skill_gap.get("core_skills_matched", [])) if skill_gap else list(extracted_skills or []),
-            "missing_skills": list(skill_gap.get("missing_skills", [])) if skill_gap else [],
-            "improvement_suggestions": list(skill_gap.get("roadmap", [])) if skill_gap else []
-        }
-        print("FINAL ANALYTICS PAYLOAD:", final_payload)
-        
+        final_payload = _run_resume_analysis_pipeline(doc_id, target_role)
         return jsonify(final_payload), 200
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 404
+    except Exception as e:
+        logger.error(f"[PIPELINE_ERROR] Unhandled exception: {traceback.format_exc()}")
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@app.route("/api/v1/resume/analyze/stream", methods=["POST"])
+def v1_analyze_resume_stream():
+    try:
+        data = request.get_json(force=True)
+        doc_id = data.get("doc_id")
+        target_role = data.get("target_role", "Software Engineer")
+
+        if not doc_id:
+            return jsonify({"error": "doc_id required"}), 400
+
+        def generate():
+            import json
+            try:
+                yield f"data: {json.dumps({'status': 'analyzing'})}\n\n"
+                final_payload = _run_resume_analysis_pipeline(doc_id, target_role)
+                yield f"data: {json.dumps(final_payload)}\n\n"
+            except Exception as e:
+                logger.error(f"[PIPELINE_STREAM_ERROR] Unhandled exception: {traceback.format_exc()}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        from flask import Response
+        return Response(generate(), mimetype="text/event-stream")
 
     except Exception as e:
         logger.error(f"[PIPELINE_ERROR] Unhandled exception: {traceback.format_exc()}")

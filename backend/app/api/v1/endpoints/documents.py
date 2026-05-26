@@ -1,69 +1,92 @@
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List
 import uuid
-import mimetypes
+import io
 import logging
 
 logger = logging.getLogger("documents_endpoint")
 
-# Try to import process_document — gracefully handle if unavailable
-try:
-    from app.worker.tasks import process_document
-except Exception as e:
-    logger.warning(f"Document processing task import failed: {e}")
-    process_document = None
-
 router = APIRouter()
+
+# === IN-MEMORY RESUME STORE ===
+# Stores doc_id -> extracted resume text (no DB dependency needed for the prediction pipeline)
+_resume_store: dict[str, str] = {}
+
+def get_resume_text(doc_id: str) -> str | None:
+    return _resume_store.get(doc_id)
+
+def _extract_pdf_text(content: bytes) -> str:
+    """Extract text from PDF bytes using pdfplumber."""
+    import pdfplumber
+    text_parts = []
+    try:
+        with pdfplumber.open(io.BytesIO(content)) as pdf:
+            for page in pdf.pages:
+                t = page.extract_text()
+                if t:
+                    text_parts.append(t.strip())
+    except Exception as e:
+        logger.warning(f"pdfplumber extraction failed: {e}")
+    return "\n".join(text_parts)
 
 SUPPORTED_TYPES = [
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/csv",
-    "application/zip",
+    "text/plain",
     "text/markdown",
     "application/json",
-    "image/jpeg",
-    "image/png"
 ]
 
 @router.post("/upload")
-async def upload_document(
-    background_tasks: BackgroundTasks,
-    files: List[UploadFile] = File(...)
-):
+async def upload_document(files: List[UploadFile] = File(...)):
     """
-    Multi-file document upload and processing pipeline.
+    Upload one or more documents. Extracts text synchronously and stores
+    it in the in-memory resume store keyed by a generated doc_id.
+    Returns doc_ids the analyze endpoint can use immediately.
     """
     uploaded_docs = []
-    
+
     for file in files:
         if not file.filename:
             continue
-            
-        content_type = file.content_type
-        if content_type not in SUPPORTED_TYPES:
-            guess, _ = mimetypes.guess_type(file.filename)
-            if guess not in SUPPORTED_TYPES:
-                raise HTTPException(status_code=400, detail=f"Unsupported file type: {content_type}")
-                
-        doc_id = str(uuid.uuid4())
+
         content = await file.read()
-        
-        if process_document:
-            if hasattr(process_document, "delay"):
-                process_document.delay(doc_id, file.filename, content_type, content)
-            else:
-                background_tasks.add_task(process_document, doc_id, file.filename, content_type, content)
+        content_type = file.content_type or ""
+
+        # Infer type from extension if content_type is missing/octet-stream
+        if "pdf" in file.filename.lower() or "pdf" in content_type:
+            extracted_text = _extract_pdf_text(content)
+        elif "plain" in content_type or file.filename.endswith(".txt"):
+            try:
+                extracted_text = content.decode("utf-8", errors="ignore")
+            except Exception:
+                extracted_text = ""
         else:
-            logger.warning(f"Document processing unavailable for {file.filename}")
-        
+            # Attempt PDF extraction as fallback (many browsers send octet-stream for PDFs)
+            extracted_text = _extract_pdf_text(content)
+            if not extracted_text:
+                try:
+                    extracted_text = content.decode("utf-8", errors="ignore")
+                except Exception:
+                    extracted_text = ""
+
+        if not extracted_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not extract text from '{file.filename}'. File may be scanned, encrypted, or empty."
+            )
+
+        doc_id = str(uuid.uuid4())
+        _resume_store[doc_id] = extracted_text
+        logger.info(f"[UPLOAD] '{file.filename}' → doc_id={doc_id}, chars={len(extracted_text)}")
+
         uploaded_docs.append({
             "doc_id": doc_id,
             "filename": file.filename,
-            "status": "queued_for_processing"
+            "status": "ready",
+            "chars_extracted": len(extracted_text)
         })
-        
+
     return {
         "message": "Files received successfully.",
         "documents": uploaded_docs

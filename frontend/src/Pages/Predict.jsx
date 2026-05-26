@@ -54,32 +54,13 @@ function PredictOrchestrator() {
 
   const activeResult = result;
   
-  const recruiterTrust =
-    activeResult?.recruiterTrust ??
-    activeResult?.recruiter_trust ??
-    activeResult?.recruiter_trust_score ??
-    0;
-
-  const projectComplexity =
-    activeResult?.projectComplexity ??
-    activeResult?.project_complexity ??
-    0;
-
-  const engineeringMaturity =
-    activeResult?.engineeringMaturity ??
-    activeResult?.engineering_maturity ??
-    0;
-
-  const projectTier =
-    activeResult?.projectTier ??
-    activeResult?.project_tier ??
-    "Unknown";
-
-  const marketPercentile =
-    activeResult?.marketPercentile ??
-    activeResult?.market_percentile ??
-    0;
-
+  const recruiterTrust = activeResult?.recruiter_trust ?? 0;
+  const projectComplexity = activeResult?.project_complexity ?? 0;
+  const engineeringMaturity = activeResult?.engineering_maturity ?? 0;
+  const projectTier = activeResult?.project_tier ?? "Unknown";
+  const marketPercentile = activeResult?.market_percentile ?? 0;
+  const engineeringLevel = activeResult?.engineering_level ?? "Unknown";
+  
   if (activeResult) {
     console.log("ACTIVE RESULT:", activeResult);
   }
