@@ -46,18 +46,8 @@ def _run_analysis_pipeline(doc_id: str, target_role: str) -> dict:
     # ── STEP 0: Fetch resume text ───────────────────────────────────
     resume_raw_text = get_resume_text(doc_id)
 
-    # Fallback: try Flask DB if in-memory store doesn't have it
     if not resume_raw_text:
-        try:
-            from flask_app import app as flask_app_instance
-            from models import ResumeVersion
-            with flask_app_instance.app_context():
-                resume = ResumeVersion.query.get(doc_id)
-                if resume:
-                    resume_raw_text = resume.raw_text
-                    logger.info(f"[RESUME] Fetched from Flask DB: {doc_id}")
-        except Exception as db_err:
-            logger.warning(f"[RESUME] Flask DB fallback failed: {db_err}")
+        logger.warning(f"[RESUME] No text found in memory for {doc_id}")
 
     if not resume_raw_text:
         raise ValueError(f"Resume not found for doc_id: {doc_id}. Upload may have failed or expired.")
