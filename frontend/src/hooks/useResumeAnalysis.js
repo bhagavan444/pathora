@@ -3,7 +3,9 @@ import { uploadResumeDocument } from '../services/predictService';
 import { useIntelligenceStore } from '../store/intelligenceStore';
 import { useTelemetry } from '../context/TelemetryContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import API_BASE from '../config/api';
+
+const API_BASE_URL = API_BASE;
 
 export function useResumeAnalysis() {
   const [status, setStatus] = useState('idle'); // idle, uploading, parsing, analyzing, success, error
