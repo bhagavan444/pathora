@@ -3,9 +3,7 @@ import { uploadResumeDocument } from '../services/predictService';
 import { useIntelligenceStore } from '../store/intelligenceStore';
 import { useTelemetry } from '../context/TelemetryContext';
 
-import API_BASE from '../config/api';
-
-const API_BASE_URL = API_BASE;
+import apiClient from '../services/apiClient';
 
 export function useResumeAnalysis() {
   const [status, setStatus] = useState('idle'); // idle, uploading, parsing, analyzing, success, error
@@ -54,73 +52,14 @@ export function useResumeAnalysis() {
       addLog(`Document uploaded successfully. ID: ${docId}. Starting Backend Engines...`, "PIPELINE");
       
       setStatus('analyzing');
+      addLog(`Connecting to Intelligence Engine at ${apiClient.defaults.baseURL}/api/v1/resume/analyze...`, "PIPELINE");
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/resume/analyze/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ doc_id: docId, target_role: domain || "General Tech Role" })
+      const response = await apiClient.post("/api/v1/resume/analyze", {
+        doc_id: docId,
+        target_role: domain || "General Tech Role"
       });
       
-      if (!response.ok) {
-          if (response.status === 404) {
-              throw new Error(`[API_ROUTE_NOT_FOUND] POST /api/v1/resume/analyze/stream returned 404. Ensure your frontend is talking to the local backend (http://localhost:5000) and not a stale production endpoint.`);
-          }
-          if (response.status === 504) {
-              throw new Error(`[TIMEOUT] The intelligence engine is processing heavily and the connection timed out. If you are on a free tier, please try again in a moment.`);
-          }
-          let errData;
-          try { errData = await response.json(); } catch(e) {}
-          const errMsg = errData?.error || errData?.message || `HTTP Error ${response.status}`;
-          throw new Error(`[SETUP_FAILED] ${errMsg}`);
-      }
-      
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      
-      let done = false;
-      let finalRes = null;
-      let accumulatedLatency = 0;
-      
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n\n');
-          for (const line of lines) {
-            const cleanLine = line.trim();
-            if (cleanLine.startsWith('data: ')) {
-              const dataStr = cleanLine.substring(6);
-              if (dataStr === '[DONE]') break;
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.event === 'telemetry') {
-                  addLog(data.log, "BACKEND");
-                  if (data.metric && data.metric.duration) {
-                     accumulatedLatency += data.metric.duration;
-                     setRealTimeMetrics({
-                       latency: accumulatedLatency,
-                       drift: 0.012, // Standard heuristic for now
-                       resolution: 98.4
-                     });
-                  }
-                } else if (data.event === 'complete') {
-                  finalRes = data.payload;
-                } else if (data.event === 'error') {
-                  addLog(`[PIPELINE_ERROR] Stage: ${data.payload?.stage} | ${data.payload?.message}`, "ERROR");
-                  throw new Error(`[${data.payload?.stage?.toUpperCase() || 'BACKEND'}] ${data.payload?.message || 'Pipeline crashed'}`);
-                }
-              } catch (e) {
-                // Throw explicit backend errors immediately, otherwise ignore partial chunk parse errors
-                if (e.message.includes("[PIPELINE_ERROR]") || e.message.includes("[")) {
-                    throw e;
-                }
-              }
-            }
-          }
-        }
-      }
+      const finalRes = response.data;
       
       if (!finalRes) throw new Error("Backend did not return final payload.");
       

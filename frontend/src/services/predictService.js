@@ -1,13 +1,4 @@
-import axios from 'axios';
-import API_BASE from '../config/api';
-
-const API_BASE_URL = API_BASE;
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 120000, // 2 minutes (safeguard for cold starts & heavy PDFs)
-  withCredentials: true
-});
+import apiClient from './apiClient';
 
 export const safeArr = (v) => (Array.isArray(v) ? v : []);
 

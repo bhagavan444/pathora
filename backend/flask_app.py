@@ -42,7 +42,12 @@ from core.roadmap.roadmap_generator import RoadmapGenerator
 # ---------------- App Setup ----------------
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "https://carrer-intelligence.vercel.app"], supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": [
+  "http://localhost:5173", 
+  "http://127.0.0.1:5173", 
+  "http://localhost:3000", 
+  "https://carrer-intelligence.vercel.app"
+]}}, supports_credentials=True)
 
 db.init_app(app)
 migrate.init_app(app, db)
