@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./Home.css";
 import { DOMAINS, ROADMAP_STEPS, CAREER_FEATURES, SUCCESS_STORIES, INDUSTRIES, COMPARISON } from "./HomeData";
-import { RevealSection, RevealDiv, AnimatedCounter, CinematicUniverseCore, TechMarquee } from "./HomeComponents";
-import Footer from '../components/Footer';
-import { motion } from "framer-motion";
+import { RevealSection, RevealDiv, AnimatedCounter, BackendLiveTerminal, TechMarquee, LiquidGlassFooter } from "./HomeComponents";
+import { motion, AnimatePresence } from "framer-motion";
+import ExecutionPipelineOverlay from "./ExecutionPipelineOverlay";
 import { useIntelligenceStore } from '../store/intelligenceStore';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
@@ -21,7 +21,8 @@ export default function Home() {
     return unsubscribe;
   }, []);
   
-  const selectedDomain = useIntelligenceStore((state) => state.currentDomain);
+  const rawDomain = useIntelligenceStore((state) => state.currentDomain);
+  const selectedDomain = DOMAINS[rawDomain] ? rawDomain : "Software Engineering";
   const setSelectedDomain = useIntelligenceStore((state) => state.setDomain);
   
   const selectedSkills = useIntelligenceStore((state) => state.verifiedSkills);
@@ -33,6 +34,7 @@ export default function Home() {
   
   const [careerScore, setCareerScore] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showPipelineOverlay, setShowPipelineOverlay] = useState(false);
 
   useEffect(() => {
     let s = 0; if (resume) s += 35;
@@ -65,7 +67,7 @@ export default function Home() {
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           transition={{ duration: 2 }}
-          style={{ position:"absolute",top:"8%",left:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(129,140,248,.08) 0%,transparent 60%)",pointerEvents:"none", transform: "translateZ(0)" }} 
+          style={{ position:"absolute",top:"8%",left:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(129,140,248,.04) 0%,transparent 60%)",filter:"blur(80px)",pointerEvents:"none", transform: "translateZ(0)" }} 
         />
         <div className="hero-grid">
           <motion.div 
@@ -74,26 +76,27 @@ export default function Home() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="hero-badge">
-              <span className="hero-badge-tag">AI-POWERED</span>
-              <span style={{ fontSize:12,color:"rgba(0,0,0,0.6)",fontWeight:600 }}>Career Intelligence Platform</span>
+              <span className="hero-badge-tag">DETERMINISTIC EVALUATION</span>
+              <span style={{ fontSize:12,color:"var(--ts)",fontWeight:600 }}>Infrastructure Platform</span>
             </div>
             <h1 className="hero-h1">
-              Accelerate Your Engineering Career With <em>Precision.</em>
+              Engineering Intelligence <em>Infrastructure.</em>
             </h1>
-            <p className="hero-sub">
-              Pathora uses Gemini AI to analyze your resume and deliver personalized engineering roadmaps, precise ATS scoring, and interactive career mentorship. Built exclusively for modern engineers.
+            <p className="hero-sub" style={{ color: "var(--ts)" }}>
+              Deterministic pipeline for analyzing technical maturity, surfacing deployment signals, and benchmarking production readiness. Built for serious engineering evaluation.
             </p>
             <div className="hero-ctas">
-              <button className="btn-glass-primary" onClick={handleGetStarted}>Analyze My Career Path</button>
-              <button className="btn-glass-outline" onClick={() => navigate("/quiz")}>Explore Assessments</button>
+              <button className="btn-glass-primary" onClick={handleGetStarted}>Analyze Technical Profile</button>
+              <button className="btn-glass-outline" onClick={() => setShowPipelineOverlay(true)}>
+                View Evaluation Pipeline
+                <span className="cta-arrow">→</span>
+              </button>
             </div>
-            <div className="trust-row">
-              {["Gemini AI Chat","PDF Resume Parsing","Predictive Roadmaps"].map(t => (
-                <div key={t} className="trust-item">
-                  <div className="trust-check">✓</div>
-                  <span style={{ fontSize:13,color:"var(--tm)",fontWeight:500 }}>{t}</span>
-                </div>
-              ))}
+            
+            <div className="hero-meta-row">
+              <div className="meta-item"><div className="meta-dot pulse-green"></div> 42ms deterministic scoring</div>
+              <div className="meta-item"><div className="meta-dot"></div> 99.98% pipeline stability</div>
+              <div className="meta-item"><div className="meta-dot pulse-purple"></div> recruiter heuristic engine active</div>
             </div>
           </motion.div>
           <motion.div 
@@ -101,7 +104,7 @@ export default function Home() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           >
-            <CinematicUniverseCore />
+            <BackendLiveTerminal />
           </motion.div>
         </div>
       </section>
@@ -113,13 +116,13 @@ export default function Home() {
       <RevealSection className="sec">
         <div className="sec-inner" style={{ textAlign:"center" }}>
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent)" }}>Proven Performance</div>
-            <h2 className="sec-title">The Intelligence Engine<span style={{ color:"var(--ts)" }}> For Modern Engineers</span></h2>
+            <div className="sec-tag" style={{ color:"var(--accent)" }}>Telemetry Stream</div>
+            <h2 className="sec-title">Infrastructure-Grade Analysis</h2>
           </div>
           <div className="metrics-grid">
-            <AnimatedCounter end={6} label="Supported Career Domains" suffix="" />
-            <AnimatedCounter end={94} label="ATS Parsing Accuracy" suffix="%" />
-            <AnimatedCounter end={5} label="Roadmap Stages" suffix="" />
+            <AnimatedCounter end={420} label="Vectors Analyzed" suffix="+" />
+            <AnimatedCounter end={99} label="Deterministic Accuracy" suffix="%" />
+            <AnimatedCounter end={5} label="Evaluation Dimensions" suffix="" />
           </div>
         </div>
       </RevealSection>
@@ -128,20 +131,20 @@ export default function Home() {
       <RevealSection className="sec" style={{ borderTop:"1px solid rgba(0,0,0,.06)" }}>
         <div className="readiness-wrap">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent2)" }}>Your Trajectory</div>
-            <h2 className="sec-title">Career Readiness Dashboard</h2>
-            <p className="sec-desc">Real-time assessment of your technical skills, personalized growth trajectory, and industry alignment.</p>
+            <div className="sec-tag" style={{ color:"var(--accent2)" }}>Maturity Engine</div>
+            <h2 className="sec-title">Engineering Maturity Evaluation</h2>
+            <p className="sec-desc" style={{ color: "var(--ts)" }}>Quantifiable measurement of technical depth, operational exposure, and production readiness.</p>
           </div>
           <div className="readiness-bar"><div className="readiness-fill" style={{ width:`${careerScore}%` }} /></div>
           <div className="readiness-score">{careerScore}%</div>
           <p style={{ textAlign:"center",fontSize:14,color:"var(--tm)" }}>
             {careerScore === 0
-              ? "Upload your resume and select skills above to calculate your readiness score."
+              ? "Upload technical profile and select verified skills to calculate maturity score."
               : careerScore < 35
-              ? "Early stage — upload your resume and mark skills to improve your score."
+              ? "Baseline stage — upload profile and map architecture to increase signal."
               : careerScore < 65
-              ? "Building momentum — continue adding verified skills to strengthen your profile."
-              : "Strong foundation — head to the Predict page for your full ATS analysis."}
+              ? "Scaling stage — continue mapping verified tools to strengthen production readiness."
+              : "Production ready — proceed to dashboard for deterministic evaluation output."}
           </p>
         </div>
       </RevealSection>
@@ -150,9 +153,9 @@ export default function Home() {
       <RevealSection className="sec">
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Interactive Assessment</div>
-            <h2 className="sec-title">Skill Gap Analysis</h2>
-            <p className="sec-desc">Select your target engineering domain to test your baseline knowledge and identify the critical technical skills missing from your portfolio.</p>
+            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Trajectory Engine</div>
+            <h2 className="sec-title">Infrastructure Gap Analysis</h2>
+            <p className="sec-desc" style={{ color: "var(--ts)" }}>Extracts current deployment patterns and cross-references against deterministic domain baselines to expose missing tooling.</p>
           </div>
           <div className="sim-box">
             <div style={{ marginBottom:32 }}>
@@ -229,14 +232,14 @@ export default function Home() {
       <RevealSection className="sec" style={{ borderTop:"1px solid rgba(0,0,0,.06)" }}>
         <div style={{ maxWidth:1100,margin:"0 auto" }}>
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--success)" }}>AI Engine Core</div>
-            <h2 className="sec-title">AI Resume Analysis</h2>
-            <p className="sec-desc" style={{ marginBottom: 40, marginTop: -10 }}>Upload your resume in PDF format to generate an ATS match score and personalized roadmap powered by Gemini 2.5.</p>
+            <div className="sec-tag" style={{ color:"var(--success)" }}>Ingestion System</div>
+            <h2 className="sec-title">Technical Profile Parsing</h2>
+            <p className="sec-desc" style={{ marginBottom: 40, marginTop: -10, color: "var(--ts)" }}>Upload raw profile data to extract verifiable deployment metrics, toolchains, and project architecture.</p>
           </div>
           <div className="resume-drop" onClick={() => fileRef.current?.click()}>
-            <div style={{ width:60,height:60,borderRadius:"50%",background:"rgba(129,140,248,.1)",border:"1px solid rgba(129,140,248,.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28 }}>🧠</div>
-            <h3 style={{ fontSize:20,fontWeight:600,color:"var(--tp)",marginBottom:8 }}>{resume ? resume.name : "Upload Academic Profile (PDF/JSON)"}</h3>
-            <p style={{ fontSize:14,color:"var(--tm)" }}>Drop your file to let our ML models forecast your ideal career path</p>
+            <div style={{ width:60,height:60,borderRadius:"50%",background:"rgba(129,140,248,.1)",border:"1px solid rgba(129,140,248,.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28 }}>⚙️</div>
+            <h3 style={{ fontSize:20,fontWeight:600,color:"var(--tp)",marginBottom:8 }}>{resume ? resume.name : "Ingest Technical Profile (PDF)"}</h3>
+            <p style={{ fontSize:14,color:"var(--tm)" }}>Drop file to initiate deterministic evaluation pipeline</p>
           </div>
           <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.json" onChange={e => {
             if(e.target.files?.[0]) {
@@ -266,8 +269,8 @@ export default function Home() {
       <RevealSection className="sec" id="roadmap">
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--warning)" }}>How It Works</div>
-            <h2 className="sec-title">From Resume to Roadmap<br/>in 5 Steps</h2>
+            <div className="sec-tag" style={{ color:"var(--warning)" }}>System Architecture</div>
+            <h2 className="sec-title">Deterministic Evaluation Pipeline</h2>
           </div>
           <div className="roadmap-wrap">
             <div className="roadmap-line" />
@@ -295,9 +298,9 @@ export default function Home() {
       <RevealSection className="sec" style={{ borderTop:"1px solid rgba(0,0,0,.06)" }}>
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent)" }}>The Core Platform</div>
-            <h2 className="sec-title">The Complete Career<br/>Intelligence Platform</h2>
-            <p className="sec-desc">From initial career discovery to your final technical placement, we provide comprehensive end-to-end guidance powered by our advanced AI core.</p>
+            <div className="sec-tag" style={{ color:"var(--accent)" }}>Platform Architecture</div>
+            <h2 className="sec-title">Enterprise-Grade<br/>Engineering Intelligence</h2>
+            <p className="sec-desc" style={{ color: "var(--ts)" }}>From raw data ingestion to deterministic capability scoring, our infrastructure delivers recruiter-grade signals.</p>
           </div>
           <div className="features-grid">
             {CAREER_FEATURES.map((f, i) => (
@@ -318,49 +321,13 @@ export default function Home() {
         </div>
       </RevealSection>
 
-      {/* ═══ SUCCESS STORIES ═══ */}
-      <RevealSection className="sec" style={{ overflow:"hidden" }}>
-        <div style={{ position:"absolute",top:"10%",right:"-5%",width:"40vw",height:"40vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(103,232,249,.05) 0%,transparent 60%)",pointerEvents:"none", transform: "translateZ(0)" }} />
-        <div className="sec-inner">
-          <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--success)" }}>Student Reviews</div>
-            <h2 className="sec-title">What Engineers Are Saying</h2>
-            <p className="sec-desc">Real feedback from students who used Pathora to identify skill gaps, improve their ATS scores, and land technical roles.</p>
-          </div>
-          <div className="stories-grid">
-            {SUCCESS_STORIES.map((s, i) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                key={s.name} 
-                className="g story-card"
-              >
-                <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:20 }}>
-                  <div className="story-avatar">{s.initials}</div>
-                  <div>
-                    <h4 style={{ fontSize:17,fontWeight:700,color:"var(--tp)",marginBottom:4 }}>{s.name}</h4>
-                    <p style={{ fontSize:13,color:"var(--tm)" }}>{s.role}</p>
-                  </div>
-                </div>
-                <div style={{ display:"flex",gap:4,marginBottom:16 }}>
-                  {[...Array(s.rating)].map((_,i) => <span key={i} style={{ color:"var(--warning)",fontSize:16 }}>⭐</span>)}
-                </div>
-                <p style={{ fontSize:14,color:"var(--ts)",lineHeight:1.7,fontStyle:"italic" }}>"{s.story}"</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </RevealSection>
-
       {/* ═══ INDUSTRIES ═══ */}
       <RevealSection className="sec" style={{ borderTop:"1px solid rgba(0,0,0,.06)" }}>
         <div className="sec-inner">
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Covered Domains</div>
-            <h2 className="sec-title">6 Engineering Tracks,<br/>Fully Mapped</h2>
-            <p className="sec-desc">Each domain contains a verified skill checklist. Select your track and the platform highlights your gaps and builds your roadmap accordingly.</p>
+            <div className="sec-tag" style={{ color:"var(--accent3)" }}>Evaluation Bounds</div>
+            <h2 className="sec-title">Supported Engineering Architectures</h2>
+            <p className="sec-desc" style={{ color: "var(--ts)" }}>Deterministic models are strictly bounded to 6 domains to ensure zero hallucination in capability evaluation.</p>
           </div>
           <div className="industries-grid">
             {INDUSTRIES.map((ind, i) => (
@@ -390,14 +357,14 @@ export default function Home() {
       <RevealSection className="sec">
         <div style={{ maxWidth:1000,margin:"0 auto" }}>
           <div className="sec-head">
-            <div className="sec-tag" style={{ color:"var(--accent2)" }}>The Evolution</div>
-            <h2 className="sec-title">Pathora vs<br/>Traditional Platforms</h2>
+            <div className="sec-tag" style={{ color:"var(--accent2)" }}>System Design</div>
+            <h2 className="sec-title">Why Deterministic Evaluation Matters</h2>
           </div>
           <div className="compare-table">
             <div className="compare-header">
               <div style={{ fontSize:13,fontWeight:700,color:"var(--tm)",textTransform:"uppercase",letterSpacing:".08em" }}>Feature</div>
-              <div style={{ fontSize:13,fontWeight:700,color:"var(--tm)",textTransform:"uppercase",letterSpacing:".08em",textAlign:"center" }}>Traditional</div>
-              <div style={{ fontSize:13,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".08em",textAlign:"center" }}>Pathora</div>
+              <div style={{ fontSize:13,fontWeight:700,color:"var(--tm)",textTransform:"uppercase",letterSpacing:".08em",textAlign:"center" }}>Traditional AI Tools</div>
+              <div style={{ fontSize:13,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".08em",textAlign:"center" }}>Pathora Deterministic Engine</div>
             </div>
             {COMPARISON.map((row, i) => (
               <div key={row.feature} className="compare-row" style={{ borderBottom:i<COMPARISON.length-1?"1px solid var(--gbr)":"none" }}>
@@ -419,19 +386,19 @@ export default function Home() {
           <div style={{ fontSize:12,fontFamily:"var(--mono)",fontWeight:700,letterSpacing:".16em",color:"var(--tm)",marginBottom:20,textTransform:"uppercase",display:"flex",alignItems:"center",justifyContent:"center",gap:12 }}>
             <div style={{ width:24,height:1,background:"rgba(0,0,0,.2)" }} /> Ready to Start <div style={{ width:24,height:1,background:"rgba(0,0,0,.2)" }} />
           </div>
-          <h2 style={{ fontFamily:"var(--display)",fontSize:"clamp(36px,5vw,64px)",fontWeight:400,fontStyle:"italic",color:"var(--tp)",marginBottom:20,lineHeight:1.12 }}>
-            Accelerate Your Engineering<br/>
-            <span style={{ background:"linear-gradient(120deg,#818cf8,#a78bfa,#818cf8)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"gradShift 4s ease infinite" }}>Career</span> Today
+          <h2 style={{ fontFamily:"var(--sans)",fontSize:"clamp(36px,5vw,64px)",fontWeight:700,color:"var(--tp)",marginBottom:20,lineHeight:1.12 }}>
+            Initiate Deterministic<br/>
+            <span style={{ background:"linear-gradient(120deg,#818cf8,#a78bfa,#818cf8)",backgroundSize:"200% auto",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"gradShift 4s ease infinite" }}>Evaluation</span>
           </h2>
           <p style={{ fontSize:17,color:"var(--ts)",maxWidth:560,margin:"0 auto 40px",lineHeight:1.7 }}>
-            Join the network of aspiring engineers using our intelligence platform to excel in the tech industry.
+            Deploy your technical profile to the infrastructure engine and extract actionable deployment signals.
           </p>
-          <button className="cta-btn" onClick={handleGetStarted}>Launch Your Career Path</button>
+          <button className="cta-btn" onClick={handleGetStarted} style={{ padding: "18px 42px", background: "linear-gradient(135deg, var(--accent), var(--accent2))", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", fontWeight: "600", fontSize: "16px", cursor: "pointer", boxShadow: "0 8px 32px rgba(129, 140, 248, 0.3)" }}>Initiate Pipeline</button>
         </div>
       </RevealSection>
 
       {/* ═══ FOOTER ═══ */}
-      <Footer />
+      <LiquidGlassFooter />
 
       {/* ═══ LOGIN PROMPT ═══ */}
       {showLoginPrompt && (
@@ -444,6 +411,13 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* ═══ PIPELINE OVERLAY ═══ */}
+      <AnimatePresence>
+        {showPipelineOverlay && (
+          <ExecutionPipelineOverlay onClose={() => setShowPipelineOverlay(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

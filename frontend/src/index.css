@@ -37,10 +37,18 @@ html {
 }
 
 /* Force hardware acceleration on common heavy UI elements */
-.glass-effect, .glass-panel, .pnx-nav-container {
+.glass-effect, .glass-panel, .pnx-nav-container, .eval-wrap, .terminal-widget {
   transform: translateZ(0);
   backface-visibility: hidden;
-  perspective: 1000;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Reusable 144Hz performance class */
+.hardware-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 /* Navbar spacing fix */

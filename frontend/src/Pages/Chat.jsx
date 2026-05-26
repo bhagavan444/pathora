@@ -331,7 +331,7 @@ function renderContent(raw = "", isStreaming = false) {
 }
 
 // ─── CODE BLOCK ──────────────────────────────────────────────────────────────
-function CodeBlock({ lang, code }) {
+const CodeBlock = React.memo(function CodeBlock({ lang, code }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(code);
@@ -385,10 +385,10 @@ function CodeBlock({ lang, code }) {
       </SyntaxHighlighter>
     </div>
   );
-}
+});
 
 // ─── TYPING DOTS ─────────────────────────────────────────────────────────────
-function TypingDots() {
+const TypingDots = React.memo(function TypingDots() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 0" }}>
       {[0, 1, 2].map((i) => (
@@ -396,10 +396,10 @@ function TypingDots() {
       ))}
     </div>
   );
-}
+});
 
 // ─── SKELETON LOADER ──────────────────────────────────────────────────────────
-function SkeletonLoader() {
+const SkeletonLoader = React.memo(function SkeletonLoader() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "4px" }}>
       <div className="shimmer-line" style={{ width: "80%" }} />
@@ -407,10 +407,10 @@ function SkeletonLoader() {
       <div className="shimmer-line" style={{ width: "70%" }} />
     </div>
   );
-}
+});
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
-function Toast({ toasts, dismiss }) {
+const Toast = React.memo(function Toast({ toasts, dismiss }) {
   return (
     <div style={{ position: "fixed", top: "68px", right: "16px", zIndex: 9999, display: "flex", flexDirection: "column", gap: "6px" }}>
       <AnimatePresence>
@@ -442,10 +442,10 @@ function Toast({ toasts, dismiss }) {
       </AnimatePresence>
     </div>
   );
-}
+});
 
 // ─── FILE CARD ────────────────────────────────────────────────────────────────
-function FileCard({ file, onRemove, analyzing }) {
+const FileCard = React.memo(function FileCard({ file, onRemove, analyzing }) {
   const ext = file.name.split(".").pop().toUpperCase();
   const isImage = file.type.startsWith("image/");
   const extColors = {
@@ -524,7 +524,7 @@ function useAnimatedPlaceholder() {
 }
 
 // ─── AVATAR ───────────────────────────────────────────────────────────────────
-function Avatar({ isUser, isStreaming }) {
+const Avatar = React.memo(function Avatar({ isUser, isStreaming }) {
   return (
     <div style={{
       width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
@@ -560,10 +560,10 @@ function Avatar({ isUser, isStreaming }) {
       )}
     </div>
   );
-}
+});
 
 // ─── MESSAGE REACTIONS ────────────────────────────────────────────────────────
-function MessageReactions({ onReact, reactions }) {
+const MessageReactions = React.memo(function MessageReactions({ onReact, reactions }) {
   return (
     <div style={{ display: "flex", gap: "4px" }}>
       {[
@@ -584,7 +584,7 @@ function MessageReactions({ onReact, reactions }) {
       ))}
     </div>
   );
-}
+});
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function ChatUI() {

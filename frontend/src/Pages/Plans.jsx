@@ -1,623 +1,603 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Footer from '../components/Footer';
-import "./Plans.css";
+import { RevealSection, LiquidGlassFooter } from "./HomeComponents";
+import { Check, Terminal, Cpu, Activity, Zap, Server, X, ArrowRight, Lock, Shield } from "lucide-react";
+import "./Home.css";
 
-/**
- * ================================
- * ENTERPRISE PRICING – Plans.jsx
- * ================================
- * Futuristic 2026 AI SaaS Monetization Platform
- * Cinematic Liquid Glass Design System
- */
-
-const BASE_PLANS = [
+const PLANS = [
   {
-    id: "free",
-    name: "Essential",
-    monthly: 0,
-    yearly: 0,
+    name: "Explorer",
+    desc: "Baseline deterministic infrastructure for evaluating engineering profiles.",
+    monthly: "Free",
+    annual: "Free",
+    cta: "Launch Evaluation Node",
+    secondaryLinks: [{ label: "View Compute Limits", to: "#explorer-limits" }],
+    features: [
+      "5 evaluations / month",
+      "Limited vector mapping",
+      "Basic recruiter engine",
+      "Standard telemetry access"
+    ],
+    telemetry: [
+      { label: "Compute Quota", value: 20, color: "var(--tm)", active: false },
+      { label: "Recruiter Engine", value: 10, color: "var(--tm)", active: false }
+    ],
+    statusLabel: "BASELINE NODE",
+    color: "var(--tp)",
     badge: null,
-    short: "Fundamental AI career intelligence to get started.",
+    cardClass: "card-infrastructure"
+  },
+  {
+    name: "Engineer",
+    desc: "Advanced capability scoring and genome tracking for professional engineers.",
+    monthly: "$12/mo",
+    annual: "$10/mo",
+    cta: "Upgrade Infrastructure",
+    secondaryLinks: [
+      { label: "Compare Engine Access", to: "/docs" },
+      { label: "Preview Recruiter Intelligence", to: "/docs" }
+    ],
     features: [
-      "Unlimited basic conversations",
-      "Standard AI responses",
-      "Secure & private processing",
-      "Mobile & desktop access",
+      "100 evaluations / month",
+      "Advanced genome mapping",
+      "Recruiter trust engine enabled",
+      "Export system active",
+      "Roadmap DAG access"
     ],
-    disabledFeatures: [
-      "Neural ATS resume analysis",
-      "Predictive career mapping",
-      "Priority API access",
+    telemetry: [
+      { label: "Priority Routing", value: 60, color: "var(--accent)", active: true },
+      { label: "Sim Depth: Med", value: 55, color: "var(--accent)", active: true }
     ],
-    cta: "Start Free",
-    featured: false,
+    statusLabel: "PRODUCTION NODE",
+    color: "var(--accent)",
+    badge: "MOST DEPLOYED • Engineering Standard Tier",
+    cardClass: "card-infrastructure card-cinematic-active"
   },
   {
-    id: "pro",
-    name: "Intelligence Pro",
-    monthly: 19,
-    yearly: 180,
-    badge: "Most Popular",
-    short: "Advanced neural intelligence for serious career acceleration.",
+    name: "Architect",
+    desc: "Complete evaluation ecosystem with advanced orchestration compute.",
+    monthly: "$29/mo",
+    annual: "$24/mo",
+    cta: "Deploy Intelligence Layer",
+    secondaryLinks: [
+      { label: "View Orchestration Capabilities", to: "/docs" },
+      { label: "Explore Infrastructure APIs", to: "/docs" }
+    ],
     features: [
-      "Latest Generation AI models",
-      "Neural ATS resume analysis",
-      "Predictive career mapping",
-      "Saved conversation history",
-      "Document Q&A (PDF, DOC)",
-      "Priority response times",
+      "Unlimited evaluations",
+      "Architecture sophistication engine",
+      "Production readiness engine",
+      "Orchestration analytics",
+      "Advanced telemetry exports"
     ],
-    disabledFeatures: ["Dedicated team API", "Custom model fine-tuning"],
-    cta: "Start 7-Day Trial",
-    featured: true,
+    telemetry: [
+      { label: "Distributed Access", value: 90, color: "#818cf8", active: true },
+      { label: "Orch Priority: High", value: 85, color: "#818cf8", active: true }
+    ],
+    statusLabel: "ADVANCED CLUSTER",
+    color: "var(--accent2)",
+    badge: "INFRASTRUCTURE READY • Advanced Orchestration Access",
+    cardClass: "card-infrastructure card-shimmer"
   },
   {
-    id: "enterprise",
-    name: "Enterprise Core",
-    monthly: 49,
-    yearly: 470,
-    badge: "Maximum Power",
-    short: "For teams, agencies, and power users demanding scale.",
+    name: "Enterprise Infrastructure",
+    desc: "Distributed intelligence pipelines for teams and recruitment organizations.",
+    monthly: "Custom",
+    annual: "Custom",
+    cta: "Contact Infrastructure Team",
+    secondaryLinks: [
+      { label: "Request Enterprise Demo", to: "#enterprise-demo" },
+      { label: "View Organization Capabilities", to: "/docs" }
+    ],
     features: [
-      "Everything in Intelligence Pro",
-      "Dedicated team API access",
-      "Custom model fine-tuning",
-      "Bulk resume processing",
-      "Advanced analytics dashboard",
-      "24/7 dedicated support",
+      "Distributed recruiter pipelines",
+      "Batch evaluation orchestration",
+      "Dedicated infrastructure nodes",
+      "Candidate telemetry pipelines",
+      "SLA-backed orchestration"
     ],
-    disabledFeatures: [],
-    cta: "Upgrade to Core",
-    featured: false,
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Sarah Jenkins",
-    role: "Senior Data Scientist @ TechFlow",
-    text: "Pathora's ATS analysis is indistinguishable from magic. It identified keyword gaps that my human reviewers missed, landing me three interviews in a week.",
-    initials: "SJ"
-  },
-  {
-    name: "Marcus Chen",
-    role: "Product Manager",
-    text: "The predictive career mapping feature is worth 10x the subscription price. It's like having a FAANG executive as your personal career mentor.",
-    initials: "MC"
-  },
-  {
-    name: "Elena Rostova",
-    role: "Lead Designer",
-    text: "As a designer, I'm extremely critical of UI. Pathora feels like an OS from 2030. Flawless execution and genuinely powerful AI.",
-    initials: "ER"
-  },
-];
-
-const FAQ_DATA = [
-  {
-    q: "How does the AI ATS analysis work?",
-    a: "Our neural engine scans your resume against millions of successful job applications in your target industry, identifying missing keywords, structural flaws, and impact metrics with 98% accuracy."
-  },
-  {
-    q: "Can I switch between monthly and yearly billing?",
-    a: "Absolutely. You can upgrade to yearly billing at any time from your dashboard to lock in the 20% savings. Your existing monthly credit will be prorated."
-  },
-  {
-    q: "Is my resume and career data kept private?",
-    a: "We employ military-grade encryption and strict zero-retention policies for non-subscribers. Your data is never used to train global models without explicit opt-in."
-  },
-  {
-    q: "Do you offer API access for staffing agencies?",
-    a: "Yes, our Enterprise Core plan includes high-throughput API access for bulk resume processing and candidate matching."
+    telemetry: [
+      { label: "Dedicated Nodes", value: 100, color: "var(--success)", active: true },
+      { label: "SLA Coverage", value: 100, color: "var(--success)", active: true }
+    ],
+    statusLabel: "DEDICATED CLUSTER",
+    color: "var(--success)",
+    badge: null,
+    cardClass: "card-infrastructure"
   }
 ];
 
-const FloatingCursor = ({ variant }) => {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMove = (e) => setPos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", handleMove);
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, []);
-
-  return (
-    <div
-      className={`floating-cursor ${variant === 'hover' ? 'hover' : ''}`}
-      style={{ left: pos.x, top: pos.y }}
-    />
-  );
-};
+const TIER_ORDER = ["Explorer", "Engineer", "Architect", "Enterprise Infrastructure"];
 
 export default function Plans() {
   const navigate = useNavigate();
+  const [isAnnual, setIsAnnual] = useState(true);
+  const [activeTier, setActiveTier] = useState(null);
+  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+  const [showExplorerModal, setShowExplorerModal] = useState(false);
+  const [enterpriseSubmitted, setEnterpriseSubmitted] = useState(false);
 
-  const [billing, setBilling] = useState("monthly");
-  const [promo, setPromo] = useState("");
-  const [promoApplied, setPromoApplied] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [cursorVariant, setCursorVariant] = useState("default");
-  
-  // Checkout State
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  // AI Estimator State
-  const [aiUsage, setAiUsage] = useState(50);
-  
-  // Testimonials State
-  const [testIndex, setTestIndex] = useState(0);
-  
-  // FAQ State
-  const [openFaq, setOpenFaq] = useState(0);
-
-  // Auto-play testimonials
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTestIndex((prev) => (prev + 1) % TESTIMONIALS.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    window.scrollTo(0, 0);
+    const stored = localStorage.getItem("pathora_tier");
+    if (stored) setActiveTier(stored);
   }, []);
 
-  const handleCursorEnter = () => setCursorVariant("hover");
-  const handleCursorLeave = () => setCursorVariant("default");
-
-  const price = (plan) => {
-    const base = billing === "monthly" ? plan.monthly : plan.yearly;
-    if (promoApplied === "PATHORA2026") return Math.round(base * 0.8);
-    return base;
-  };
-
-  const applyPromo = () => {
-    if (promo.toUpperCase().trim() === "PATHORA2026") {
-      setPromoApplied("PATHORA2026");
+  const handlePlanCTA = (plan, i) => {
+    if (i === 0) {
+      // Explorer — show evaluation modal
+      setShowExplorerModal(true);
+    } else if (i === 3) {
+      // Enterprise — open consultation modal
+      setShowEnterpriseModal(true);
     } else {
-      alert("Invalid promotional code.");
+      // Engineer / Architect — route to checkout
+      navigate(`/checkout?tier=${plan.name}&annual=${isAnnual}`);
     }
   };
 
-  const recommendedPlan = useMemo(() => {
-    if (aiUsage < 20) return BASE_PLANS[0];
-    if (aiUsage < 80) return BASE_PLANS[1];
-    return BASE_PLANS[2];
-  }, [aiUsage]);
-
-  const handleSelectPlan = (plan) => {
-    if (plan.id === "free") {
-      navigate("/");
-    } else {
-      setSelectedPlan(plan);
-      setShowModal(true);
-    }
+  const handleLaunchExplorer = () => {
+    localStorage.setItem("pathora_tier", "Explorer");
+    localStorage.setItem("pathora_subscription", JSON.stringify({ tier: "Explorer", status: "active", billing: "free", activatedAt: new Date().toISOString() }));
+    localStorage.setItem("pathora_api_token", `pnx_eval_${Math.random().toString(36).substring(2,15)}`);
+    navigate("/subscription");
   };
 
-  const handleCheckout = (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    
-    // Simulate processing payment
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert(`Successfully processed ${paymentMethod} payment for ${selectedPlan?.name}!`);
-      setShowModal(false);
-      
-      // Reset form states
-      setPaymentMethod("card");
-    }, 2000);
+  const isCurrentPlan = (planName) => activeTier === planName;
+  const isDowngrade = (planName) => {
+    if (!activeTier) return false;
+    return TIER_ORDER.indexOf(planName) < TIER_ORDER.indexOf(activeTier);
   };
 
   return (
-    <div className="plans-wrapper">
-      <FloatingCursor variant={cursorVariant} />
-      
-      <div className="plans-container">
-        
-        {/* HERO SECTION */}
-        <header className="plans-header">
-          <h1 className="plans-title">
-            Unlock <em>Neural Intelligence</em>
+    <div className="home-wrap">
+      <div className="grid-bg" />
+
+      {/* Floating Telemetry Environment */}
+      <div style={{ position: "absolute", top: 120, left: "5%", zIndex: 0, opacity: 0.7 }}>
+        <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(255,255,255,0.4)", backdropFilter: "blur(12px)", borderRadius: 12, border: "1px solid rgba(0,0,0,0.04)" }}>
+          <Activity size={12} color="var(--accent)" />
+          <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--tm)", fontWeight: 600 }}>LATENCY: 14ms</span>
+        </motion.div>
+      </div>
+      <div style={{ position: "absolute", top: 180, right: "8%", zIndex: 0, opacity: 0.7 }}>
+        <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(255,255,255,0.4)", backdropFilter: "blur(12px)", borderRadius: 12, border: "1px solid rgba(0,0,0,0.04)" }}>
+          <Server size={12} color="var(--success)" />
+          <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--tm)", fontWeight: 600 }}>ORCHESTRATION: ONLINE</span>
+        </motion.div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="hero-sec" style={{ paddingTop: "140px", paddingBottom: "60px", minHeight: "auto", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ duration: 2 }}
+          style={{ position:"absolute",top:"10%",left:"50%",transform:"translateX(-50%)",width:"60vw",height:"60vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(129,140,248,.08) 0%,transparent 60%)", filter: "blur(60px)", pointerEvents:"none", zIndex: 0 }} 
+        />
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: "relative", zIndex: 1, maxWidth: 800 }}
+        >
+          <div className="hero-badge" style={{ margin: "0 auto 24px" }}>
+            <span className="hero-badge-tag">COMPUTE ACCESS TIERS</span>
+          </div>
+          <h1 className="hero-h1" style={{ maxWidth: "100%", margin: "0 auto 24px", letterSpacing: "-0.04em" }}>
+            Evaluation Infrastructure <em>Access.</em>
           </h1>
-          <p className="plans-subtitle">
-            Scale your career trajectory with our advanced AI processing models. Choose the computing tier that matches your ambition.
+          <p className="hero-sub" style={{ margin: "0 auto 40px", maxWidth: 600 }}>
+            Deploy deterministic engineering intelligence to evaluate, track, and benchmark technical maturity. Scale from individual profiling to enterprise orchestration.
           </p>
-        </header>
 
-        {/* AI USAGE ESTIMATOR */}
-        <section className="ai-estimator">
-          <div className="estimator-header">
-            <div className="estimator-title">
-              <div className="estimator-icon">AI</div>
-              Compute Requirements
-            </div>
-            <span style={{color: 'var(--text-tertiary)', fontSize: '14px'}}>Adjust to find your ideal plan</span>
-          </div>
-          
-          <div className="estimator-slider-container">
-            <input 
-              type="range" 
-              className="estimator-slider" 
-              min="0" 
-              max="100" 
-              value={aiUsage}
-              onChange={(e) => setAiUsage(parseInt(e.target.value))}
-              onMouseEnter={handleCursorEnter}
-              onMouseLeave={handleCursorLeave}
-              style={{
-                background: `linear-gradient(to right, var(--primary-accent) ${aiUsage}%, rgba(0,0,0,0.1) ${aiUsage}%)`
-              }}
-            />
-          </div>
-          
-          <div className="estimator-metrics">
-            <div className="metric">
-              <div className="metric-value">{aiUsage * 10}</div>
-              <div className="metric-label">Queries / Month</div>
-            </div>
-            <div className="metric">
-              <div className="metric-value">{Math.round(aiUsage / 5)}</div>
-              <div className="metric-label">Resumes Analyzed</div>
-            </div>
-            <div className="metric">
-              <div className="metric-value">{aiUsage > 75 ? 'v4.5' : 'v3.5'}</div>
-              <div className="metric-label">Model Tier</div>
-            </div>
-          </div>
-          
-          <div className="ai-recommendation">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
-            Pathora AI recommends the <strong>{recommendedPlan.name}</strong> plan for this workload.
-          </div>
-        </section>
-
-        {/* BILLING TOGGLE & PROMO */}
-        <div className="billing-toggle-wrapper">
-          <div className="billing-toggle">
-            <div 
-              className="toggle-slider" 
-              style={{
-                width: '50%',
-                transform: billing === 'monthly' ? 'translateX(0)' : 'translateX(100%)'
-              }}
-            />
-            <button 
-              className={`toggle-btn ${billing === 'monthly' ? 'active' : ''}`}
-              onClick={() => setBilling('monthly')}
-              onMouseEnter={handleCursorEnter}
-              onMouseLeave={handleCursorLeave}
-            >
-              Monthly
-            </button>
-            <button 
-              className={`toggle-btn ${billing === 'yearly' ? 'active' : ''}`}
-              onClick={() => setBilling('yearly')}
-              onMouseEnter={handleCursorEnter}
-              onMouseLeave={handleCursorLeave}
-            >
-              Annually <span className="save-badge">Save 20%</span>
-            </button>
-          </div>
-          
-          <div className="promo-container">
-            <input 
-              type="text" 
-              className="promo-input" 
-              placeholder="Enter Promo Code"
-              value={promo}
-              onChange={(e) => setPromo(e.target.value)}
-            />
-            <button 
-              className="promo-btn" 
-              onClick={applyPromo}
-              onMouseEnter={handleCursorEnter}
-              onMouseLeave={handleCursorLeave}
-            >
-              Apply
-            </button>
-          </div>
-          {promoApplied && (
-             <div style={{color: 'var(--success)', marginTop: 12, fontSize: 14, fontWeight: 600}}>
-               Promo code {promoApplied} applied!
-             </div>
-          )}
-        </div>
-
-        {/* PLANS GRID */}
-        <div className="plans-grid">
-          {BASE_PLANS.map((plan) => (
-            <div 
-              key={plan.id} 
-              className={`plan-card ${plan.featured ? 'featured' : ''}`}
-              style={{
-                transform: recommendedPlan.id === plan.id ? 'scale(1.02)' : 'none',
-                borderColor: recommendedPlan.id === plan.id ? 'var(--primary-accent)' : 'var(--glass-border)'
-              }}
-            >
-              {plan.badge && <div className="plan-badge">{plan.badge}</div>}
-              
-              <div className="plan-header">
-                <h3 className="plan-name">{plan.name}</h3>
-                <p className="plan-desc">{plan.short}</p>
-              </div>
-              
-              <div className="plan-price-wrapper">
-                <span className="currency">$</span>
-                <span className="amount">{price(plan)}</span>
-                <span className="period">/ {billing === 'monthly' ? 'mo' : 'yr'}</span>
-              </div>
-              
-              {billing === 'yearly' && plan.monthly > 0 && (
-                <div className="savings-label">
-                  Billed ${(price(plan)).toLocaleString()} annually
-                </div>
-              )}
-              
-              <ul className="plan-features">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="feature-item">
-                    <svg className="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    {f}
-                  </li>
-                ))}
-                {plan.disabledFeatures.map((f, i) => (
-                  <li key={`d-${i}`} className="feature-item disabled">
-                    <svg className="x-icon" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              
+          {/* Billing Toggle */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 40 }}>
+            <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 100, padding: 4, position: "relative" }}>
+              <div 
+                style={{ position: "absolute", top: 4, bottom: 4, left: isAnnual ? "50%" : 4, width: "calc(50% - 4px)", background: "#fff", borderRadius: 100, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)", zIndex: 0 }}
+              />
               <button 
-                className={`plan-cta ${plan.featured ? 'cta-primary' : 'cta-secondary'}`}
-                onClick={() => handleSelectPlan(plan)}
-                onMouseEnter={handleCursorEnter}
-                onMouseLeave={handleCursorLeave}
+                onClick={() => setIsAnnual(false)}
+                style={{ position: "relative", zIndex: 1, width: 120, padding: "8px 0", background: "transparent", border: "none", fontSize: 13, fontWeight: 600, fontFamily: "var(--sans)", color: !isAnnual ? "var(--tp)" : "var(--tm)", cursor: "pointer", transition: "color 0.4s" }}
               >
-                {plan.cta}
+                Monthly
+              </button>
+              <button 
+                onClick={() => setIsAnnual(true)}
+                style={{ position: "relative", zIndex: 1, width: 120, padding: "8px 0", background: "transparent", border: "none", fontSize: 13, fontWeight: 600, fontFamily: "var(--sans)", color: isAnnual ? "var(--tp)" : "var(--tm)", cursor: "pointer", transition: "color 0.4s" }}
+              >
+                Annually
               </button>
             </div>
-          ))}
-        </div>
+            <AnimatePresence mode="wait">
+              {isAnnual && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ fontSize: 12, fontFamily: "var(--mono)", color: "var(--accent)", fontWeight: 600 }}>
+                  2 months infrastructure credit included
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      </section>
 
-        {/* FEATURE COMPARISON */}
-        <section className="comparison-section">
-          <h2 className="comparison-title">Comprehensive Analysis</h2>
-          <div className="comparison-table-wrapper">
-            <div className="compare-row compare-header">
-              <div>Core Capabilities</div>
-              <div style={{textAlign: 'center'}}>Essential</div>
-              <div style={{textAlign: 'center', color: 'var(--primary-accent)'}}>Intelligence Pro</div>
-              <div style={{textAlign: 'center'}}>Enterprise Core</div>
-            </div>
-            
-            {[
-              { label: "AI Model Generation", val1: "Standard (v3.5)", val2: "Advanced (v4.0)", val3: "Custom Fine-tuned" },
-              { label: "Resume ATS Parsing", val1: "Basic", val2: "Deep Neural Scan", val3: "Batch Processing" },
-              { label: "Career Trajectory Mapping", val1: "-", val2: "Included", val3: "Advanced + Industry Trends" },
-              { label: "API Rate Limit", val1: "10 / day", val2: "500 / day", val3: "Unlimited" },
-              { label: "Support Level", val1: "Community", val2: "Priority Email", val3: "24/7 Dedicated Agent" },
-            ].map((row, i) => (
-              <div className="compare-row" key={i}>
-                <div className="compare-feature">
-                  {row.label}
-                  <svg className="compare-info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
-                  </svg>
-                </div>
-                <div className="compare-value" data-label="Essential">{row.val1}</div>
-                <div className="compare-value highlight" data-label="Pro">{row.val2}</div>
-                <div className="compare-value" data-label="Enterprise">{row.val3}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ENTERPRISE CTA */}
-        <section className="enterprise-section">
-          <div className="enterprise-content">
-            <h2>Deploy Intelligence at Scale</h2>
-            <p>
-              Require custom model fine-tuning, bulk candidate processing, or deep integration into your existing HR systems? Partner with our engineers to build a bespoke intelligence layer.
-            </p>
-            <div className="enterprise-metrics">
-              <div className="ent-metric">
-                <h4>99.99%</h4>
-                <span>API Uptime SLA</span>
-              </div>
-              <div className="ent-metric">
-                <h4>&lt;50ms</h4>
-                <span>Inference Latency</span>
-              </div>
-            </div>
-            <button 
-              className="enterprise-cta-btn"
-              onMouseEnter={handleCursorEnter}
-              onMouseLeave={handleCursorLeave}
-              onClick={() => window.location.href = "mailto:enterprise@pathora.ai"}
-            >
-              Contact Enterprise Engineering
-            </button>
-          </div>
-          <div style={{display: 'flex', justifyContent: 'center'}}>
-             {/* Abstract tech illustration */}
-             <div style={{width: 300, height: 300, position: 'relative'}}>
-                <div style={{position: 'absolute', inset: 20, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderTopColor: 'var(--primary-accent3)', animation: 'spin 10s linear infinite'}} />
-                <div style={{position: 'absolute', inset: 40, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderRightColor: 'var(--primary-accent)', animation: 'spin 15s linear infinite reverse'}} />
-                <div style={{position: 'absolute', inset: 60, border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', borderBottomColor: 'var(--primary-accent2)', animation: 'spin 20s linear infinite'}} />
-                <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
-             </div>
-          </div>
-        </section>
-
-        {/* TESTIMONIALS */}
-        <section className="testimonials-section">
-          <h2 className="testimonials-title">Trusted by Industry Leaders</h2>
-          <div className="testimonials-carousel">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className={`testimonial-card ${i === testIndex ? 'active' : (i < testIndex ? 'prev' : '')}`}>
-                <p className="testimonial-text">"{t.text}"</p>
-                <div className="testimonial-author">
-                  <div className="author-avatar">{t.initials}</div>
-                  <div className="author-info">
-                    <div className="author-name">{t.name}</div>
-                    <div className="author-role">{t.role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="carousel-dots">
-            {TESTIMONIALS.map((_, i) => (
-              <div 
-                key={i} 
-                className={`dot ${i === testIndex ? 'active' : ''}`}
-                onClick={() => setTestIndex(i)}
-                onMouseEnter={handleCursorEnter}
-                onMouseLeave={handleCursorLeave}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="faq-section">
-          <h2 className="faq-title">System Inquiries</h2>
-          <div className="faq-list">
-            {FAQ_DATA.map((faq, i) => (
-              <div key={i} className="faq-item">
-                <div 
-                  className="faq-q"
-                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                  onMouseEnter={handleCursorEnter}
-                  onMouseLeave={handleCursorLeave}
-                >
-                  {faq.q}
-                  <svg className={`faq-icon ${openFaq === i ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-                {openFaq === i && (
-                  <div className="faq-a">
-                    {faq.a}
+      {/* Pricing Cards */}
+      <RevealSection className="sec" style={{ paddingTop: 0 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+            {PLANS.map((plan, i) => {
+              const isCurrent = isCurrentPlan(plan.name);
+              const isLower = isDowngrade(plan.name);
+              const isShimmer = i === 2; // Architect
+              return (
+              <motion.div 
+                key={plan.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
+                className={plan.cardClass}
+                style={{
+                  opacity: isLower ? 0.6 : 1,
+                  pointerEvents: isCurrent ? "none" : "auto"
+                }}
+              >
+                {plan.badge && (
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: plan.color, color: "#fff", fontSize: 9, fontWeight: 700, padding: "6px 16px", textTransform: "uppercase", letterSpacing: ".1em", textAlign: "center" }}>
+                    {plan.badge}
                   </div>
                 )}
-              </div>
-            ))}
+                
+                {isCurrent && (
+                  <div style={{ position: "absolute", top: plan.badge ? 28 : 16, right: 16, display: "flex", alignItems: "center", gap: 6, background: isShimmer ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.1)", padding: "4px 10px", borderRadius: 100 }}>
+                    <div className="pulse-green" style={{ width: 6, height: 6, borderRadius: "50%" }} />
+                    <span style={{ fontSize: 10, fontFamily: "var(--mono)", fontWeight: 700, color: "#10b981", textTransform: "uppercase", letterSpacing: ".05em" }}>Deployed</span>
+                  </div>
+                )}
+
+                {i === 2 && !isCurrent && (
+                   <div style={{ position: "absolute", top: plan.badge ? 28 : 16, right: 16, display: "flex", alignItems: "center", gap: 6, background: "rgba(129, 140, 248, 0.15)", padding: "4px 10px", borderRadius: 100, border: "1px solid rgba(129, 140, 248, 0.3)" }}>
+                   <div className="pulse-purple" style={{ width: 6, height: 6, borderRadius: "50%" }} />
+                   <span style={{ fontSize: 10, fontFamily: "var(--mono)", fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".05em" }}>Ready</span>
+                 </div>
+                )}
+                
+                <div style={{ marginTop: plan.badge ? 24 : 0, display: "flex", flexDirection: "column", height: "100%" }}>
+                  <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: isShimmer ? "rgba(255,255,255,0.6)" : "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 12, fontWeight: 600 }}>
+                    {plan.statusLabel}
+                  </div>
+                  <div style={{ fontSize: 36, fontFamily: "var(--sans)", fontWeight: 700, color: isShimmer ? "#fff" : "var(--tp)", marginBottom: 12, letterSpacing: "-0.04em" }}>
+                    {isAnnual ? plan.annual : plan.monthly}
+                  </div>
+                  <div style={{ fontSize: 13, color: isShimmer ? "rgba(255,255,255,0.7)" : "var(--ts)", lineHeight: 1.6, marginBottom: 24, minHeight: 42 }}>
+                    {plan.desc}
+                  </div>
+                  
+                  {/* Telemetry Visuals */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32, padding: "16px", background: isShimmer ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.02)", borderRadius: 12, border: `1px solid ${isShimmer ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.04)"}` }}>
+                    {plan.telemetry.map((t, tIdx) => (
+                      <div key={tIdx}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--mono)", color: isShimmer ? "rgba(255,255,255,0.8)" : "var(--ts)", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>
+                          <span>{t.label}</span>
+                          <span className={t.active ? "telemetry-pulse-animate" : ""}>{t.value}%</span>
+                        </div>
+                        <div className="telemetry-bar-wrap">
+                          <div className="telemetry-bar-fill" style={{ width: `${t.value}%`, background: t.color, color: t.color }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40, flex: 1 }}>
+                    {plan.features.map((f, fIdx) => {
+                      const locked = isLower || (activeTier === "Explorer" && i > 0 && fIdx > 1);
+                      return (
+                        <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 12, opacity: locked ? 0.4 : 1 }}>
+                          <div style={{ width: 16, height: 16, borderRadius: "50%", background: locked ? (isShimmer ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)") : (isShimmer ? "rgba(255,255,255,0.15)" : "rgba(129, 140, 248, 0.1)"), color: locked ? (isShimmer ? "rgba(255,255,255,0.4)" : "var(--tm)") : (isShimmer ? "#fff" : "var(--accent)"), display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
+                            {locked ? <Lock size={8} strokeWidth={3} /> : <Check size={10} strokeWidth={3} />}
+                          </div>
+                          <span style={{ fontSize: 13, color: isShimmer ? "#fff" : "var(--tp)", fontWeight: 500 }}>{f}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {plan.secondaryLinks.map((link, lIdx) => (
+                      <a key={lIdx} href={link.to} onClick={(e) => { e.preventDefault(); if(link.to === "#enterprise-demo") setShowEnterpriseModal(true); }} className="link-reveal" style={{ alignSelf: "flex-start" }}>
+                        <span>{link.label}</span>
+                        <ArrowRight size={12} className="link-arrow" />
+                      </a>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    className={i === 2 || i === 1 ? "btn-glass-primary" : "btn-glass-outline"} 
+                    style={{ width: "100%", justifyContent: "center", opacity: isCurrent ? 0.5 : 1, marginTop: 24, border: isShimmer ? "1px solid rgba(255,255,255,0.2)" : undefined }}
+                    onClick={() => handlePlanCTA(plan, i)}
+                  >
+                    {isCurrent ? "Deployed Layer" : plan.cta}
+                    {!(i === 2 || i === 1) && <ArrowRight size={14} className="cta-arrow" />}
+                  </button>
+                </div>
+              </motion.div>
+              );
+            })}
           </div>
-        </section>
-      </div>
-      
-      <Footer />
+        </div>
+      </RevealSection>
 
-      {/* CHECKOUT MODAL */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowModal(false)}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
-            
-            <div className="modal-header">
-              <h3>Secure Checkout</h3>
-              <p className="modal-price">
-                Subscribe to <strong>{selectedPlan?.name}</strong> for ${price(selectedPlan)} / {billing === 'monthly' ? 'mo' : 'yr'}
-              </p>
+      {/* Why Upgrade Section */}
+      <RevealSection className="sec" style={{ paddingTop: 0 }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+          <div style={{ background: "rgba(255,255,255,0.5)", backdropFilter: "blur(24px)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 24, padding: 32, position: "relative", overflow: "hidden" }}>
+            <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 700, marginBottom: 16 }}>Explorer Tier</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {["5 evaluations / month", "Basic recruiter scan", "No API access", "CSV exports only", "7-day telemetry retention"].map(f => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--tm)" }} />
+                  <span style={{ fontSize: 13, color: "var(--ts)" }}>{f}</span>
+                </div>
+              ))}
             </div>
-            
-            <form className="modal-form" onSubmit={handleCheckout}>
-              <div className="payment-methods">
-                <div 
-                  className={`payment-method ${paymentMethod === 'card' ? 'active' : ''}`}
-                  onClick={() => setPaymentMethod('card')}
-                  onMouseEnter={handleCursorEnter}
-                  onMouseLeave={handleCursorLeave}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                    <line x1="2" y1="10" x2="22" y2="10"></line>
-                  </svg>
-                  Card
+          </div>
+          <div style={{ background: "linear-gradient(135deg, rgba(129,140,248,0.06), rgba(99,102,241,0.03))", backdropFilter: "blur(24px)", border: "1px solid rgba(129,140,248,0.15)", borderRadius: 24, padding: 32, position: "relative", overflow: "hidden" }}>
+            <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 700, marginBottom: 16 }}>Architect Tier</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {["Unlimited evaluations", "Elite recruiter trust mapping", "REST API + webhook integrations", "Orchestration depth scoring", "1-year telemetry retention"].map(f => (
+                <div key={f} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)" }} />
+                  <span style={{ fontSize: 13, color: "var(--tp)", fontWeight: 500 }}>{f}</span>
                 </div>
-                <div 
-                  className={`payment-method ${paymentMethod === 'paypal' ? 'active' : ''}`}
-                  onClick={() => setPaymentMethod('paypal')}
-                  onMouseEnter={handleCursorEnter}
-                  onMouseLeave={handleCursorLeave}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M7 11V7a5 5 0 0110 0v4"></path>
-                    <path d="M7 11v8h10v-8H7z"></path>
-                  </svg>
-                  PayPal
-                </div>
-                <div 
-                  className={`payment-method ${paymentMethod === 'applepay' ? 'active' : ''}`}
-                  onClick={() => setPaymentMethod('applepay')}
-                  onMouseEnter={handleCursorEnter}
-                  onMouseLeave={handleCursorLeave}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.843 14.86c-.526.257-1.397.643-2.186.643-.883 0-1.782-.41-2.457-1.127-.676.717-1.575 1.127-2.458 1.127-.79 0-1.66-.386-2.186-.643-.68-.33-1.077-1.082-1.077-1.848v-.812c0-.528.23-1.018.618-1.353.486-.418 1.126-.645 1.796-.645.748 0 1.488.29 2.067.828.58-.537 1.32-.828 2.068-.828.67 0 1.31.227 1.795.645.39.335.62.825.62 1.353v.812c0 .766-.398 1.517-1.078 1.848zm-1.89-6.388c-.62.457-1.442.71-2.285.71s-1.665-.253-2.285-.71c-.742-.547-1.185-1.427-1.185-2.352 0-.916.43-1.782 1.157-2.327C10.024 5.3 10.96 5 11.954 5c.995 0 1.93.3 2.6.893.727.545 1.157 1.41 1.157 2.327 0 .925-.443 1.805-1.185 2.352z"/>
-                  </svg>
-                  Pay
-                </div>
-              </div>
+              ))}
+            </div>
+            <button className="btn-glass-primary" style={{ marginTop: 24, width: "100%", justifyContent: "center" }} onClick={() => navigate(`/checkout?tier=Architect&annual=${isAnnual}`)}>
+              Upgrade to Architect <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      </RevealSection>
 
-              {paymentMethod === 'card' && (
-                <>
-                  <div className="modal-input-group">
-                    <label>Email Address</label>
-                    <input type="email" className="modal-input" placeholder="elon@spacex.com" required />
-                  </div>
-                  <div className="modal-input-group">
-                    <label>Card Information</label>
-                    <input type="text" className="modal-input" placeholder="**** **** **** 4242" required />
-                  </div>
-                </>
-              )}
-              
-              {paymentMethod === 'paypal' && (
-                <div className="payment-redirect-msg">
-                  <p>You will be redirected to PayPal to complete your purchase securely.</p>
-                </div>
-              )}
-
-              {paymentMethod === 'applepay' && (
-                <div className="payment-redirect-msg">
-                  <p>Complete payment using your Apple device.</p>
-                </div>
-              )}
-
-              <button 
-                type="submit" 
-                className={`modal-submit ${isProcessing ? 'processing' : ''}`}
-                onMouseEnter={handleCursorEnter}
-                onMouseLeave={handleCursorLeave}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : 'Initialize Subscription'}
-              </button>
-            </form>
-            
-            <div className="modal-trust">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0110 0v4"></path>
-              </svg>
-              Secured by 256-bit Stripe Neural Encryption
+      {/* Enterprise Architecture scale */}
+      <RevealSection className="sec" style={{ paddingTop: 0 }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(24px)", borderRadius: 32, border: "1px solid rgba(0,0,0,0.06)", padding: "60px 40px", textAlign: "center", boxShadow: "0 12px 40px rgba(0,0,0,0.03)" }}>
+          <h2 style={{ fontSize: 28, fontFamily: "var(--display)", fontWeight: 400, color: "var(--tp)", marginBottom: 16 }}>Built for Scalable Engineering Intelligence</h2>
+          <p style={{ fontSize: 15, color: "var(--ts)", maxWidth: 600, margin: "0 auto 40px", lineHeight: 1.6 }}>
+            Trusted by top universities, hiring teams, and engineering bootcamps to evaluate talent securely and deterministically at scale.
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 40 }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "var(--tp)", fontFamily: "var(--sans)", letterSpacing: "-0.04em" }}>5,000+</div>
+              <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em", marginTop: 4 }}>Evaluations Processed</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--sans)", letterSpacing: "-0.04em" }}>99.98%</div>
+              <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em", marginTop: 4 }}>Infrastructure Uptime</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: "var(--success)", fontFamily: "var(--sans)", letterSpacing: "-0.04em" }}>1,200+</div>
+              <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em", marginTop: 4 }}>Engineering Vectors</div>
             </div>
           </div>
         </div>
-      )}
+      </RevealSection>
+
+      {/* Developer API Section */}
+      <RevealSection className="sec" style={{ paddingTop: 0 }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
+          <div>
+            <div className="sec-tag" style={{ color: "var(--accent2)" }}>Developer Infrastructure</div>
+            <h2 className="sec-title" style={{ fontSize: 32, marginBottom: 20 }}>Orchestrate pipelines via REST.</h2>
+            <p className="sec-desc" style={{ fontSize: 15, marginBottom: 32 }}>
+              Integrate the Pathora genome engine directly into your existing infrastructure. Access raw telemetry, trigger deterministic evaluations, and extract vector mappings with our enterprise SDK.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}><Terminal size={14} color="var(--accent)"/><span style={{ fontSize: 14, color: "var(--ts)", fontWeight: 500 }}>POST /v1/evaluate</span></div>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}><Activity size={14} color="var(--accent)"/><span style={{ fontSize: 14, color: "var(--ts)", fontWeight: 500 }}>GET /v1/telemetry</span></div>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}><Zap size={14} color="var(--accent)"/><span style={{ fontSize: 14, color: "var(--ts)", fontWeight: 500 }}>POST /v1/recruiter/simulate</span></div>
+            </div>
+            <button className="btn-glass-outline" style={{ marginTop: 40 }} onClick={() => navigate("/docs")}>View API Documentation</button>
+          </div>
+          <div style={{ background: "#0a0a0c", borderRadius: 24, padding: 32, boxShadow: "0 24px 64px rgba(0,0,0,0.15)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f56" }} />
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ffbd2e" }} />
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#27c93f" }} />
+            </div>
+            <pre style={{ margin: 0, fontFamily: "var(--mono)", fontSize: 13, color: "#a1a1aa", lineHeight: 1.6, overflowX: "auto" }}>
+              <span style={{ color: "#818cf8" }}>POST</span> /v1/evaluate{"\n"}
+              <span style={{ color: "#34d399" }}>Authorization:</span> Bearer pnx_live_...{"\n"}
+              <span style={{ color: "#34d399" }}>Content-Type:</span> application/json{"\n\n"}
+              {"{\n"}
+              {"  "}<span style={{ color: "#f472b6" }}>"profile_id"</span>: <span style={{ color: "#fcd34d" }}>"usr_942x8v"</span>,{"\n"}
+              {"  "}<span style={{ color: "#f472b6" }}>"engine"</span>: <span style={{ color: "#fcd34d" }}>"recruiter_trust_v2"</span>,{"\n"}
+              {"  "}<span style={{ color: "#f472b6" }}>"orchestration_depth"</span>: <span style={{ color: "#fcd34d" }}>"architect"</span>,{"\n"}
+              {"  "}<span style={{ color: "#f472b6" }}>"return_telemetry"</span>: <span style={{ color: "#818cf8" }}>true</span>{"\n"}
+              {"}"}
+            </pre>
+          </div>
+        </div>
+      </RevealSection>
+
+      {/* Comparison Table */}
+      <RevealSection className="sec" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div className="sec-head" style={{ textAlign: "center" }}>
+            <div className="sec-tag" style={{ color: "var(--accent3)" }}>Telemetry Matrices</div>
+            <h2 className="sec-title">Architectural Capability Matrix</h2>
+          </div>
+          
+          <div className="compare-table" style={{ background: "rgba(255,255,255,0.65)", backdropFilter: "blur(24px)", borderRadius: 24, padding: "24px 40px", boxShadow: "0 12px 40px rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="compare-header" style={{ gridTemplateColumns: "2.5fr 1fr 1fr 1fr 1fr", borderBottom: "1px solid rgba(0,0,0,0.08)", paddingBottom: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em" }}>Feature Vector</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--tm)", textTransform: "uppercase", letterSpacing: ".1em", textAlign: "center" }}>Explorer</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".1em", textAlign: "center" }}>Engineer</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent2)", textTransform: "uppercase", letterSpacing: ".1em", textAlign: "center" }}>Architect</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--success)", textTransform: "uppercase", letterSpacing: ".1em", textAlign: "center" }}>Enterprise</div>
+            </div>
+            {[
+              { f: "Deterministic Parsing", e: "Basic", en: "Advanced", a: "Full", ent: "Custom Model" },
+              { f: "Heatmap Intelligence", e: "-", en: "Standard", a: "Advanced", ent: "Custom" },
+              { f: "Recruiter Trust Depth", e: "Basic", en: "Simulation", a: "Elite Mapping", ent: "Dedicated Logic" },
+              { f: "Architecture Complexity Engine", e: "-", en: "✓", a: "✓", ent: "✓" },
+              { f: "Genome Analysis Depth", e: "Limited", en: "Full Vector", a: "Continuous", ent: "Batch Pipelines" },
+              { f: "SSE Telemetry Access", e: "-", en: "Standard", a: "Premium", ent: "Priority SLA" },
+              { f: "Production Readiness Scoring", e: "-", en: "-", a: "✓", ent: "✓" },
+              { f: "API Access", e: "-", en: "-", a: "Standard Rate", ent: "High Throughput" },
+              { f: "Export Infrastructure", e: "CSV", en: "JSON / PDF", a: "Webhook Integration", ent: "Direct S3 Pipeline" },
+            ].map((row, i) => (
+              <div key={row.f} className="compare-row" style={{ gridTemplateColumns: "2.5fr 1fr 1fr 1fr 1fr", borderBottom: i < 8 ? "1px dashed rgba(0,0,0,0.05)" : "none", padding: "16px 0", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.015)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--tp)" }}>{row.f}</div>
+                <div style={{ fontSize: 13, color: "var(--ts)", textAlign: "center", fontFamily: "var(--mono)" }}>{row.e}</div>
+                <div style={{ fontSize: 13, color: "var(--accent)", textAlign: "center", fontWeight: 600, fontFamily: "var(--mono)" }}>{row.en}</div>
+                <div style={{ fontSize: 13, color: "var(--accent2)", textAlign: "center", fontWeight: 600, fontFamily: "var(--mono)" }}>{row.a}</div>
+                <div style={{ fontSize: 13, color: "var(--success)", textAlign: "center", fontWeight: 600, fontFamily: "var(--mono)" }}>{row.ent}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </RevealSection>
+
+      <LiquidGlassFooter />
+
+      {/* Explorer Evaluation Node Modal */}
+      <AnimatePresence>
+        {showExplorerModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(10, 10, 12, 0.6)", backdropFilter: "blur(12px)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+            onClick={() => setShowExplorerModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{ width: "100%", maxWidth: 440, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(32px)", borderRadius: 24, padding: 40, border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 24px 64px rgba(0,0,0,0.12)", position: "relative" }}
+            >
+              <button onClick={() => setShowExplorerModal(false)} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "var(--ts)" }}>
+                <X size={20} />
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(0, 0, 0, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Terminal size={20} color="var(--tp)" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 600, color: "var(--tp)" }}>Evaluation Node</div>
+                  <div style={{ fontSize: 12, color: "var(--ts)" }}>Explorer Compute Quota</div>
+                </div>
+              </div>
+
+              <p style={{ fontSize: 14, color: "var(--ts)", lineHeight: 1.6, marginBottom: 24 }}>
+                You are provisioning a baseline evaluation node. This infrastructure provides limited access to the recruiter engine and 5 evaluations per month.
+              </p>
+
+              <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: 12, padding: 16, border: "1px solid rgba(0,0,0,0.04)", marginBottom: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontFamily: "var(--mono)", color: "var(--tm)", marginBottom: 12 }}>
+                  <span>Compute</span>
+                  <span>5 Evals</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontFamily: "var(--mono)", color: "var(--tm)", marginBottom: 12 }}>
+                  <span>Vectors</span>
+                  <span>Limited Map</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontFamily: "var(--mono)", color: "var(--tm)" }}>
+                  <span>Telemetry</span>
+                  <span>Standard</span>
+                </div>
+              </div>
+
+              <button onClick={handleLaunchExplorer} style={{ width: "100%", padding: "14px", background: "#0f0f0f", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, fontFamily: "var(--sans)", cursor: "pointer" }}>
+                Acknowledge & Launch Node
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Enterprise Consultation Modal */}
+      <AnimatePresence>
+        {showEnterpriseModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(10, 10, 12, 0.8)", backdropFilter: "blur(20px)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+            onClick={() => { setShowEnterpriseModal(false); setEnterpriseSubmitted(false); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{ width: "100%", maxWidth: 580, background: "rgba(20, 20, 24, 0.95)", backdropFilter: "blur(32px)", borderRadius: 24, padding: 40, border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 40px 100px rgba(0,0,0,0.5)", position: "relative" }}
+            >
+              <button onClick={() => { setShowEnterpriseModal(false); setEnterpriseSubmitted(false); }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)" }}>
+                <X size={20} />
+              </button>
+
+              {!enterpriseSubmitted ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(52, 211, 153, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(52, 211, 153, 0.3)" }}>
+                      <Shield size={20} color="var(--success)" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 600, color: "#fff" }}>Infrastructure Consultation</div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Enterprise orchestration assessment</div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={(e) => { e.preventDefault(); setEnterpriseSubmitted(true); }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <input required type="text" placeholder="Organization Name" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none" }} />
+                      <input required type="number" placeholder="Organization Size" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none" }} />
+                    </div>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <input required type="number" placeholder="Recruiter Seats" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none" }} />
+                      <input required type="number" placeholder="Evaluations / Month" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none" }} />
+                    </div>
+
+                    <select style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none", appearance: "none" }}>
+                      <option value="" disabled selected hidden>Orchestration Requirements</option>
+                      <option style={{color:"black"}}>Batch Processing APIs</option>
+                      <option style={{color:"black"}}>Distributed Inference Nodes</option>
+                      <option style={{color:"black"}}>Dedicated Infrastructure Cluster</option>
+                    </select>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <select style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none", appearance: "none" }}>
+                        <option value="" disabled selected hidden>Telemetry Retention</option>
+                        <option style={{color:"black"}}>1 Year Standard</option>
+                        <option style={{color:"black"}}>3 Years Compliance</option>
+                        <option style={{color:"black"}}>Infinite Enterprise</option>
+                      </select>
+                      <select style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 14, fontFamily: "var(--sans)", color: "#fff", outline: "none", appearance: "none" }}>
+                        <option value="" disabled selected hidden>Infra Scaling Needs</option>
+                        <option style={{color:"black"}}>Predictable / Steady</option>
+                        <option style={{color:"black"}}>High Elasticity</option>
+                        <option style={{color:"black"}}>Global Multi-region</option>
+                      </select>
+                    </div>
+
+                    <button type="submit" style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg, var(--success), #059669)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, fontFamily: "var(--sans)", cursor: "pointer", marginTop: 12, boxShadow: "0 8px 20px rgba(52, 211, 153, 0.2)" }}>
+                      Initialize Architecture Review
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: "center", padding: "30px 0" }}>
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(52, 211, 153, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", border: "1px solid rgba(52, 211, 153, 0.3)" }}>
+                    <Check size={32} color="#10b981" />
+                  </div>
+                  <h3 style={{ fontSize: 24, fontWeight: 600, color: "#fff", marginBottom: 12 }}>Consultation Queued</h3>
+                  <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, maxWidth: 400, margin: "0 auto" }}>
+                    The Enterprise infrastructure team has received your evaluation metrics. You will receive an architecture proposal within 24 hours.
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

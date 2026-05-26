@@ -123,63 +123,37 @@ export const DOMAINS = {
 };
 
 export const ROADMAP_STEPS = [
-  { step: "Upload Your Resume", desc: "Submit your PDF resume. Our FastAPI backend parses it instantly using PyPDF2 and extracts every skill, project, and experience entry." },
-  { step: "ATS Score Calculation", desc: "The backend scores your resume 0–100 across Formatting, Keywords, Experience, and Education against real recruiter standards." },
-  { step: "Skill Gap Detection", desc: "Gemini 2.5 Flash identifies which critical skills are missing from your domain target and ranks them by hiring frequency." },
-  { step: "Career Roadmap Generation", desc: "A personalized, step-by-step learning plan is generated based on your actual score, domain, and detected skill gaps." },
-  { step: "AI Career Mentor Chat", desc: "Your resume context is passed to the Gemini assistant so every answer it gives is personalized to your specific profile." },
+  { step: "Resume Upload", desc: "Submit technical profile. The ingestion engine parses architecture, extracting skills, deployment history, and project density." },
+  { step: "Parsing Engine", desc: "Deterministic parsing validates keyword density, formatting structures, and infrastructure exposure against production requirements." },
+  { step: "Heuristic Analysis", desc: "System cross-references extracted metrics against domain baselines to surface critical skill gaps and tooling deficiencies." },
+  { step: "Vector Mapping", desc: "Engineering capabilities are plotted across 5 dimensions, generating a precise readiness radar and maturity score." },
+  { step: "Evaluation Output", desc: "A finalized deterministic recruiter dashboard is generated, exposing production readiness and alignment metrics." },
 ];
 
 export const CAREER_FEATURES = [
   {
-    icon: "📄", title: "ATS Resume Scoring",
-    desc: "Upload your PDF resume and receive a real ATS score (0–100) with breakdown across Formatting, Keywords, Experience, and Education — the same signals top recruiters use.",
+    icon: "📊", title: "Engineering Evaluation Board",
+    desc: "A live deterministic dashboard tracking technical profile readiness across 5 engineering dimensions. Updates continuously as infrastructure signals are detected.",
     color: "#818cf8"
   },
   {
-    icon: "🤖", title: "Gemini 2.5 Flash AI Assistant",
-    desc: "Chat in real-time with a career AI that already knows your ATS score, target domain, and skill gaps. Every answer is personalized — not generic advice.",
+    icon: "⚙️", title: "Skill Gap Trajectory Engine",
+    desc: "Extracts technical signals from your architecture and cross-references them with domain baselines to surface critical gaps in deployment and scaling tools.",
     color: "#a78bfa"
   },
   {
-    icon: "🧠", title: "Skill Gap Identification",
-    desc: "The backend extracts every technical skill from your resume and cross-references it with your target domain to surface exactly what is missing from your profile.",
+    icon: "🛡️", title: "Recruiter Trust Analysis",
+    desc: "Evaluates deployment evidence, structured outcomes, and quantifiable metrics to generate a deterministic recruiter trust index for automated screening.",
     color: "#67e8f9"
   },
   {
-    icon: "🗺️", title: "Personalized Career Roadmap",
-    desc: "Based on your actual skill gaps and target role, we generate a step-by-step learning roadmap — ordered by hiring priority, not generic curricula.",
+    icon: "🏗️", title: "Production Readiness Evaluation",
+    desc: "Analyzes CI/CD exposure, testing methodologies, and scalable systems experience to benchmark your operational engineering maturity.",
     color: "#34d399"
-  },
-  {
-    icon: "📊", title: "Career Readiness Dashboard",
-    desc: "A live radar chart shows your technical profile across 5 engineering dimensions. Your score updates every time you re-upload, tracking real growth over time.",
-    color: "#fbbf24"
-  },
-  {
-    icon: "🎯", title: "Interview Probability Estimation",
-    desc: "Based on your ATS score and skill density, the platform estimates your interview shortlisting probability for your target role — giving you a concrete benchmark to beat.",
-    color: "#f87171"
   }
 ];
 
-export const SUCCESS_STORIES = [
-  {
-    name: "Arjun Nair", role: "Final Year CSE — Targeting SDE roles", initials: "AN",
-    story: "I uploaded my resume and got an ATS score of 61. The platform showed me I was missing System Design and TypeScript keywords. Fixed both in two weeks and my interview callbacks actually increased.",
-    rating: 5
-  },
-  {
-    name: "Sneha Reddy", role: "B.Tech IT — Transitioning to Data Science", initials: "SR",
-    story: "The skill gap analysis told me exactly which tools (Pandas, Scikit-learn, SQL) were missing from my profile for a data analyst role. The AI assistant helped me build a 30-day learning plan around them.",
-    rating: 5
-  },
-  {
-    name: "Karthik Menon", role: "3rd Year — Preparing for Campus Placements", initials: "KM",
-    story: "My resume was scoring 48. After following the roadmap Pathora generated, I brought it to 79 in one month. The interview probability estimate kept me focused on what actually mattered.",
-    rating: 5
-  }
-];
+export const SUCCESS_STORIES = [];
 
 export const INDUSTRIES = [
   { name: "Software Engineering", jobs: "18 Skills Tracked", growth: "+22% Demand", icon: "devicon-react-original colored" },
@@ -191,16 +165,32 @@ export const INDUSTRIES = [
 ];
 
 export const COMPARISON = [
-  { feature: "Resume Analysis", traditional: "Generic keyword checklist", pathora: "ATS Score 0–100 with aspect breakdown" },
-  { feature: "Career Advice", traditional: "Static blog articles", pathora: "Gemini AI chat with your resume context" },
-  { feature: "Skill Assessment", traditional: "Multiple choice quiz", pathora: "Automatic extraction from your actual resume" },
-  { feature: "Roadmap Generation", traditional: "One-size-fits-all curriculum", pathora: "Gap-driven plan based on your score" },
-  { feature: "Interview Readiness", traditional: "Gut feeling", pathora: "Probability estimate from ATS signal analysis" },
+  { feature: "Scoring Engine", traditional: "Opaque scoring systems", pathora: "Explainable heuristics" },
+  { feature: "Output Consistency", traditional: "Inconsistent outputs", pathora: "Repeatable outputs" },
+  { feature: "Career Strategy", traditional: "Hallucinated recommendations", pathora: "Infrastructure-aware benchmarking" },
+  { feature: "Target Focus", traditional: "Generic career advice", pathora: "Recruiter-oriented evaluation" },
+  { feature: "Profile Analysis", traditional: "Basic keyword matching", pathora: "Engineering maturity analysis" },
 ];
 
 export const FOOTER_COLS = {
-  "Platform": ["Career Analysis", "Skill Intelligence", "Resume Insights", "Roadmap Generation", "ATS Scoring"],
-  "Domains": ["Software Engineering", "Data Science", "AI & ML", "Cloud & DevOps", "Cybersecurity"],
-  "Resources": ["Documentation", "Career Guide", "Blog", "Case Studies", "API Access"],
-  "Company": ["About", "Careers", "Contact", "Privacy Policy", "Terms of Service"],
+  "Platform": [
+    { name: "Platform Overview", path: "/platform" },
+    { name: "Evaluation Plans", path: "/plans" },
+    { name: "Assessments", path: "/assessments" },
+    { name: "Intelligence Copilot", path: "/assistant" }
+  ],
+  "Resources": [
+    { name: "Documentation", path: "/docs" },
+    { name: "Knowledge Base", path: "/resources" },
+    { name: "Research", path: "/research" }
+  ],
+  "Company": [
+    { name: "About Pathora", path: "/about" },
+    { name: "Careers", path: "/careers" },
+    { name: "Contact Node", path: "/contact" }
+  ],
+  "Legal": [
+    { name: "Privacy Policy", path: "/privacy" },
+    { name: "Terms of Service", path: "/terms" }
+  ]
 };

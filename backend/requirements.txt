@@ -25,6 +25,12 @@ passlib[bcrypt]>=1.7.4
 flask>=3.0.0
 flask-cors>=4.0.0
 
+# PostgreSQL & ORM Integrations
+SQLAlchemy>=2.0.25
+Flask-SQLAlchemy>=3.1.1
+Flask-Migrate>=4.0.5
+psycopg2-binary>=2.9.9
+
 # Optional: Monitoring (gracefully skipped if missing)
 # prometheus-fastapi-instrumentator>=6.1.0
 
@@ -41,3 +47,11 @@ flask-cors>=4.0.0
 # Optional: Additional AI providers
 # openai>=1.10.0
 # anthropic>=0.18.1
+
+# Semantic Engine (Phase 2)
+sentence-transformers>=2.2.2
+numpy>=1.24.0
+
+# Document Ingestion & Deterministic Analysis
+spacy>=3.7.2
+python-docx>=1.1.0

@@ -1,15 +1,26 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { User, Bell, Lock, Shield, Eye, Database } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, Database, Shield, Settings2, Code, 
+  Terminal, Activity, Zap, CheckCircle2, Copy 
+} from 'lucide-react';
 import Footer from '../components/Footer';
+import { auth } from '../firebase';
+import './Settings.css';
 
 export default function Settings() {
+  const [activeTab, setActiveTab] = useState('identity');
+  const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
+  
+  // Data states
+  const [profile, setProfile] = useState({ engineering_role: '', career_target: '', primary_stack: '' });
+  const [preferences, setPreferences] = useState({ recruiter_strictness: 'moderate', ats_analysis_mode: 'standard', profile_visibility: false });
+  const [tokens, setTokens] = useState([]);
+  
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
 
   const itemVariants = {
@@ -18,183 +29,353 @@ export default function Settings() {
   };
 
   const menuItems = [
-    { id: 'profile', label: 'Profile Information', icon: User, active: true },
-    { id: 'security', label: 'Security & Access', icon: Lock, active: false },
-    { id: 'notifications', label: 'Notifications', icon: Bell, active: false },
-    { id: 'privacy', label: 'Privacy & Data', icon: Shield, active: false },
-    { id: 'appearance', label: 'Appearance', icon: Eye, active: false },
-    { id: 'billing', label: 'Billing & Plans', icon: Database, active: false },
+    { id: 'identity', label: 'Engineering Identity', icon: User },
+    { id: 'preferences', label: 'Intelligence Preferences', icon: Settings2 },
+    { id: 'infrastructure', label: 'Infrastructure Access', icon: Database },
+    { id: 'api_tokens', label: 'API & Tokens', icon: Code },
+    { id: 'security', label: 'Security Operations', icon: Shield },
   ];
 
+  const getToken = async () => {
+    if (auth?.currentUser) {
+      // For development, if Firebase isn't returning a valid token, we send UID
+      return auth.currentUser.uid;
+    }
+    return "test_uid"; // Fallback for local testing if not logged in
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
+    try {
+      const token = await getToken();
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      if (activeTab === 'identity') {
+        const res = await fetch('/api/settings/profile', { headers });
+        if (res.ok) setProfile(await res.json());
+      } else if (activeTab === 'preferences') {
+        const res = await fetch('/api/settings/preferences', { headers });
+        if (res.ok) setPreferences(await res.json());
+      } else if (activeTab === 'api_tokens') {
+        const res = await fetch('/api/settings/tokens', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setTokens(data.tokens || []);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch settings", e);
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    setSaveStatus(`[POSTGRESQL] Persisting ${activeTab} state...`);
+    
+    try {
+      const token = await getToken();
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      let endpoint = '';
+      let payload = {};
+      
+      if (activeTab === 'identity') {
+        endpoint = '/api/settings/profile';
+        payload = profile;
+      } else if (activeTab === 'preferences') {
+        endpoint = '/api/settings/preferences';
+        payload = preferences;
+      }
+      
+      if (endpoint) {
+        await fetch(endpoint, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(payload)
+        });
+      }
+      
+      setTimeout(() => {
+        setSaveStatus('[SYNC] Infrastructure state committed.');
+        setTimeout(() => setSaveStatus(''), 2000);
+        setLoading(false);
+      }, 800);
+      
+    } catch (e) {
+      console.error(e);
+      setSaveStatus('[ERROR] Telemetry sync failed.');
+      setLoading(false);
+    }
+  };
+
+  const createToken = async () => {
+    setSaveStatus('[SYSTEM] Generating infrastructure token...');
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/settings/tokens/create', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Production Pipeline Key' })
+      });
+      if (res.ok) {
+        const newToken = await res.json();
+        setTokens(prev => [...prev, newToken]);
+        setSaveStatus('[SYNC] Token materialized.');
+        setTimeout(() => setSaveStatus(''), 2000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const revokeToken = async (id) => {
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/settings/tokens/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setTokens(prev => prev.filter(t => t.id !== id));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'identity':
+        return (
+          <>
+            <div className="settings-form-group">
+              <label className="settings-label">Engineering Role</label>
+              <input 
+                type="text" 
+                className="settings-input" 
+                value={profile.engineering_role}
+                onChange={e => setProfile({...profile, engineering_role: e.target.value})}
+                placeholder="e.g. Frontend Systems Engineer"
+              />
+            </div>
+            <div className="settings-form-group">
+              <label className="settings-label">Career Target</label>
+              <input 
+                type="text" 
+                className="settings-input" 
+                value={profile.career_target}
+                onChange={e => setProfile({...profile, career_target: e.target.value})}
+                placeholder="e.g. Backend Infrastructure"
+              />
+            </div>
+            <div className="settings-form-group">
+              <label className="settings-label">Primary Stack Vector</label>
+              <input 
+                type="text" 
+                className="settings-input" 
+                value={profile.primary_stack}
+                onChange={e => setProfile({...profile, primary_stack: e.target.value})}
+                placeholder="e.g. React, Node.js, PostgreSQL"
+              />
+            </div>
+          </>
+        );
+      case 'preferences':
+        return (
+          <>
+            <div className="settings-form-group">
+              <label className="settings-label">Recruiter Strictness</label>
+              <select 
+                className="settings-select"
+                value={preferences.recruiter_strictness}
+                onChange={e => setPreferences({...preferences, recruiter_strictness: e.target.value})}
+              >
+                <option value="lenient">Lenient (High False Positives)</option>
+                <option value="moderate">Moderate (Standard)</option>
+                <option value="strict">Strict (Enterprise Grade)</option>
+              </select>
+            </div>
+            <div className="settings-form-group">
+              <label className="settings-label">ATS Analysis Mode</label>
+              <select 
+                className="settings-select"
+                value={preferences.ats_analysis_mode}
+                onChange={e => setPreferences({...preferences, ats_analysis_mode: e.target.value})}
+              >
+                <option value="startup">Startup Ecosystem</option>
+                <option value="standard">Standard Industry</option>
+                <option value="enterprise">FAANG/Enterprise</option>
+              </select>
+            </div>
+            <div className="settings-form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
+              <input 
+                type="checkbox" 
+                id="visibility"
+                checked={preferences.profile_visibility}
+                onChange={e => setPreferences({...preferences, profile_visibility: e.target.checked})}
+                style={{ width: '16px', height: '16px', accentColor: '#8b5cf6' }}
+              />
+              <label htmlFor="visibility" className="settings-label" style={{ marginBottom: 0 }}>
+                Enable Public Intelligence Profile
+              </label>
+            </div>
+          </>
+        );
+      case 'api_tokens':
+        return (
+          <>
+            <p style={{ color: 'rgba(0,0,0,0.6)', marginBottom: '24px', fontSize: '14px' }}>
+              Generate API tokens for programmatic access to the evaluation pipeline and recruiter engines.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+              <button className="btn-save" onClick={createToken}>
+                <Zap size={16} /> Generate Token
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {tokens.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px', color: 'rgba(0,0,0,0.4)', fontFamily: "'DM Mono', monospace", fontSize: '12px' }}>
+                  NO ACTIVE TOKENS PROVISIONED
+                </div>
+              ) : (
+                tokens.map(t => (
+                  <div key={t.id} className="token-card">
+                    <div>
+                      <div className="token-name">{t.name}</div>
+                      <div className="token-value">{t.token}</div>
+                    </div>
+                    <button className="btn-revoke" onClick={() => revokeToken(t.id)}>Revoke</button>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        );
+      default:
+        return (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(0,0,0,0.4)', fontFamily: "'DM Mono', monospace", fontSize: '12px' }}>
+            [SYSTEM] MODULE OFFLINE OR UNDER CONSTRUCTION
+          </div>
+        );
+    }
+  };
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      padding: '120px 2rem 4rem',
-      color: '#000',
-      fontFamily: "'Inter', sans-serif",
-      position: 'relative'
-    }}>
+    <div className="settings-wrap">
+      <div className="grid-bg"></div>
+      
       <motion.div 
+        className="settings-inner"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2rem'
-        }}
       >
-        {/* Header Section */}
-        <motion.div variants={itemVariants} style={{ marginBottom: '1rem' }}>
-          <h1 style={{ 
-            fontSize: '3rem', 
-            fontWeight: '700', 
-            letterSpacing: '-0.02em',
-            background: 'linear-gradient(135deg, #000 0%, rgba(0,0,0,0.6) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '0.5rem'
-          }}>
-            Account Settings
-          </h1>
-          <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '1.1rem' }}>
-            Manage your preferences and platform configurations.
-          </p>
+        <motion.div variants={itemVariants} className="settings-header">
+          <h1 className="settings-title">Control Center</h1>
+          <p className="settings-subtitle">Engineering identity & infrastructure configuration</p>
         </motion.div>
 
-        {/* Layout Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 3fr',
-          gap: '2rem'
-        }}>
-          {/* Sidebar Menu */}
-          <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {menuItems.map((item) => (
-              <div
+        <motion.div variants={itemVariants} className="settings-layout">
+          
+          {/* Left Sidebar */}
+          <div className="settings-sidebar">
+            {menuItems.map(item => (
+              <div 
                 key={item.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1rem 1.25rem',
-                  borderRadius: '16px',
-                  background: item.active ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  color: item.active ? '#000' : 'rgba(0,0,0,0.6)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  border: item.active ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (!item.active) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!item.active) e.currentTarget.style.background = 'transparent';
-                }}
+                className={`settings-nav-item ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(item.id)}
               >
-                <item.icon size={18} />
-                <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{item.label}</span>
+                <item.icon size={16} color={activeTab === item.id ? "#8b5cf6" : "currentColor"} />
+                {item.label}
               </div>
             ))}
-          </motion.div>
+          </div>
 
-          {/* Main Content Area */}
-          <motion.div
-            variants={itemVariants}
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              backdropFilter: 'blur(30px) saturate(120%)',
-              WebkitBackdropFilter: 'blur(30px) saturate(120%)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '24px',
-              padding: '3rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)'
-            }}
-          >
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '2rem' }}>Profile Information</h2>
+          {/* Center Main Panel */}
+          <div className="settings-panel">
+            <div className="panel-title">
+              {(() => {
+                const ActiveIcon = menuItems.find(i => i.id === activeTab)?.icon;
+                return ActiveIcon ? <ActiveIcon className="panel-title-icon" size={20} /> : null;
+              })()}
+              {menuItems.find(i => i.id === activeTab)?.label}
+            </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                  border: '2px solid rgba(255,255,255,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <User size={32} color="rgba(255,255,255,0.8)" />
-                </div>
-                <button style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#000',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}>Change Avatar</button>
-              </div>
+            <div style={{ minHeight: '300px' }}>
+              {renderContent()}
+            </div>
 
-              <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(0,0,0,0.6)', fontSize: '0.9rem' }}>First Name</label>
-                  <input type="text" defaultValue="Demo" style={{
-                    width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)',
-                    color: '#000', fontSize: '1rem', outline: 'none'
-                  }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(0,0,0,0.6)', fontSize: '0.9rem' }}>Last Name</label>
-                  <input type="text" defaultValue="User" style={{
-                    width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)',
-                    color: '#000', fontSize: '1rem', outline: 'none'
-                  }} />
-                </div>
+            {/* Save Actions (Only for form tabs) */}
+            {['identity', 'preferences'].includes(activeTab) && (
+              <div className="settings-actions">
+                <AnimatePresence>
+                  {saveStatus && (
+                    <motion.div 
+                      className="telemetry-toast"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <Terminal size={14} /> {saveStatus}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <button 
+                  className="btn-save" 
+                  onClick={handleSave}
+                  disabled={loading}
+                >
+                  {loading ? <Activity size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                  Commit State
+                </button>
               </div>
+            )}
+          </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(0,0,0,0.6)', fontSize: '0.9rem' }}>Email Address</label>
-                <input type="email" defaultValue="demo@pathora.com" style={{
-                  width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)',
-                  color: '#000', fontSize: '1rem', outline: 'none'
-                }} />
+          {/* Right Telemetry Panel */}
+          <div className="settings-telemetry">
+            <div className="telemetry-card">
+              <div className="telemetry-header">
+                <Activity size={12} color="#10b981" />
+                Infrastructure Health
               </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(0,0,0,0.6)', fontSize: '0.9rem' }}>Bio</label>
-                <textarea rows="4" defaultValue="AI and Software Engineering enthusiast." style={{
-                  width: '100%', padding: '0.75rem 1rem', borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.1)',
-                  color: '#000', fontSize: '1rem', outline: 'none', resize: 'none'
-                }} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button style={{
-                  background: '#2563eb',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '0.75rem 2rem',
-                  borderRadius: '12px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(37,99,235,0.3)'
-                }}>Save Changes</button>
+              <div className="telemetry-value">
+                99.99<span className="telemetry-unit">%</span>
               </div>
             </div>
-          </motion.div>
-        </div>
+            <div className="telemetry-card">
+              <div className="telemetry-header">
+                <Database size={12} color="#8b5cf6" />
+                State Persistence
+              </div>
+              <div className="telemetry-value">
+                PostgreSQL<span className="telemetry-unit">/v14</span>
+              </div>
+            </div>
+            <div className="telemetry-card">
+              <div className="telemetry-header">
+                <Shield size={12} color="#f59e0b" />
+                Security Ops
+              </div>
+              <div className="telemetry-value" style={{ fontSize: '18px' }}>
+                Secure
+              </div>
+            </div>
+          </div>
+          
+        </motion.div>
       </motion.div>
-      <Footer />
+      
+      <div style={{ marginTop: '60px' }}>
+        <Footer />
+      </div>
     </div>
   );
 }

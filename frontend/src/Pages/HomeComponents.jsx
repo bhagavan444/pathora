@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TECH_STACK, FOOTER_COLS } from "./HomeData";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 /* ── Glass Style Helpers ── */
 const glass = (extra = {}) => ({
@@ -92,141 +93,85 @@ export function AnimatedCounter({ end, label, suffix = "" }) {
   );
 }
 
-/* ── Cinematic Universe Core (replaces LiveOrbAnimation) ── */
-export function CinematicUniverseCore() {
+/* ── Backend Live Terminal ── */
+export function BackendLiveTerminal() {
   return (
-    <div style={{ position: "relative", width: "100%", maxWidth: 520, marginLeft: "auto", height: "100%", minHeight: 460, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", width: "100%", maxWidth: 500, marginLeft: "auto", height: "100%", minHeight: 380, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {/* Background blurs */}
       <motion.div 
         animate={{ scale: [1, 1.05, 1], rotate: [0, 90, 0] }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        style={{ position: "absolute", width: 400, height: 400, background: "radial-gradient(circle, rgba(167,139,250,0.12) 0%, transparent 60%)", filter: "blur(40px)", borderRadius: "50%" }} 
+        style={{ position: "absolute", width: 400, height: 400, background: "radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 60%)", filter: "blur(50px)", borderRadius: "50%" }} 
       />
       
-      {/* Dashboard container */}
+      {/* Terminal container */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 100%)",
-        backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
-        border: "1px solid rgba(255, 255, 255, 0.35)", borderRadius: 24,
-        boxShadow: "0 24px 60px -12px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)",
-        overflow: "hidden", display: "flex", flexDirection: "column", padding: 24
+        background: "#050816",
+        border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: 16,
+        boxShadow: "0 30px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+        overflow: "hidden", display: "flex", flexDirection: "column"
       }}>
-        {/* Top Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <motion.div 
-              animate={{ opacity: [1, 0.4, 1] }} 
-              transition={{ duration: 2.5, repeat: Infinity }} 
-              style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 10px rgba(16,185,129,0.3)" }} 
-            />
-            <span style={{ fontSize: 10, fontFamily: "var(--mono)", fontWeight: 600, color: "rgba(15, 15, 15, 0.45)", letterSpacing: ".1em" }}>REAL-TIME ANALYSIS</span>
+        {/* Terminal Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
+          <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444" }} />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#eab308" }} />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e" }} />
           </div>
-          <div style={{ fontSize: 10, fontFamily: "var(--mono)", fontWeight: 600, color: "var(--accent)" }}>
-            ENGINE_V2.5
-          </div>
+          <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "rgba(255, 255, 255, 0.5)", fontWeight: 600, letterSpacing: ".1em" }}>api.pathora.dev / evaluation_engine</div>
         </div>
 
-        {/* Grid layout for dashboard */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, flex: 1 }}>
+        {/* Terminal Body */}
+        <div style={{ flex: 1, padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10, overflow: "hidden", position: "relative" }}>
           
-          {/* Main metric card */}
-          <div style={{
-            gridColumn: "1 / -1",
-            background: "rgba(255, 255, 255, 0.15)",
-            border: "1px solid rgba(255, 255, 255, 0.22)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 16, padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center"
-          }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 }}>
             <div>
-              <div style={{ fontSize: 11, color: "rgba(15, 15, 15, 0.5)", marginBottom: 4, fontWeight: 550 }}>Career Prediction Confidence</div>
-              <div style={{ fontSize: 30, fontFamily: "var(--display)", fontWeight: 700, color: "var(--tp)" }}>94.8%</div>
-            </div>
-            <div style={{ width: 80, height: 40, position: "relative" }}>
-              {/* Mini sparkline graph */}
-              <svg viewBox="0 0 100 40" style={{ width: "100%", height: "100%", overflow: "visible" }}>
-                <motion.path 
-                  d="M0 30 Q20 20, 40 25 T80 15 T100 5" 
-                  fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse", repeatDelay: 2 }}
-                />
-                <motion.circle cx="100" cy="5" r="3" fill="var(--accent)" 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
-                />
-              </svg>
-            </div>
-          </div>
-
-          {/* Skill cluster visualization */}
-          <div style={{
-            background: "rgba(255, 255, 255, 0.12)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12
-          }}>
-            <div style={{ fontSize: 10, color: "rgba(15, 15, 15, 0.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em" }}>Skill Clusters</div>
-            <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 24, repeat: Infinity, ease: "linear" }} style={{ width: 80, height: 80, border: "1px dashed rgba(129,140,248,0.25)", borderRadius: "50%", position: "absolute" }} />
-              <motion.div animate={{ rotate: -360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} style={{ width: 60, height: 60, border: "1px dashed rgba(167,139,250,0.25)", borderRadius: "50%", position: "absolute" }} />
-              <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, var(--accent), var(--accent2))", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12 }}>
-                <i className="devicon-react-original" />
+              <div style={{ fontSize: 10, color: "var(--accent)", fontFamily: "var(--mono)", fontWeight: 700, marginBottom: 4, letterSpacing: ".1em" }}>PIPELINE WORKERS</div>
+              <div style={{ fontSize: 36, color: "#fff", fontFamily: "var(--mono)", fontWeight: 600, lineHeight: 1 }}>
+                12<motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8, repeatType: "mirror" }}>.</motion.span>
               </div>
             </div>
+            <div style={{ display: "flex", gap: 12 }}>
+               <div style={{ textAlign: "right" }}>
+                 <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", fontFamily: "var(--mono)" }}>LATENCY</div>
+                 <div style={{ fontSize: 14, color: "var(--success)", fontFamily: "var(--mono)", fontWeight: 600 }}>24ms</div>
+               </div>
+               <div style={{ textAlign: "right" }}>
+                 <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", fontFamily: "var(--mono)" }}>CONFIDENCE</div>
+                 <div style={{ fontSize: 14, color: "#fff", fontFamily: "var(--mono)", fontWeight: 600 }}>0.98</div>
+               </div>
+            </div>
           </div>
 
-          {/* ATS Insights */}
-          <div style={{
-            background: "rgba(255, 255, 255, 0.12)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 10
-          }}>
-            <div style={{ fontSize: 10, color: "rgba(15, 15, 15, 0.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em" }}>ATS Match</div>
-            {[
-              { label: "Frontend", val: 92 },
-              { label: "Backend", val: 68 },
-              { label: "DevOps", val: 45 }
-            ].map(item => (
-              <div key={item.label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", justifycontent: "space-between", justifyContent: "space-between", fontSize: 10, color: "rgba(15, 15, 15, 0.65)", fontWeight: 500 }}>
-                  <span>{item.label}</span><span>{item.val}%</span>
-                </div>
-                <div style={{ height: 3, background: "rgba(0,0,0,0.04)", borderRadius: 1.5, overflow: "hidden" }}>
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.val}%` }}
-                    transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                    style={{ height: "100%", background: "var(--accent)" }} 
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Processing Log */}
-          <div style={{
-            gridColumn: "1 / -1",
-            background: "rgba(255, 255, 255, 0.15)",
-            border: "1px solid rgba(255, 255, 255, 0.22)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 12, padding: 12, fontFamily: "var(--mono)", fontSize: 9, color: "rgba(15, 15, 15, 0.55)", height: 60, overflow: "hidden", position: "relative"
-          }}>
+          {/* Logs */}
+          <div style={{ flex: 1, fontFamily: "var(--mono)", fontSize: 11, color: "rgba(255, 255, 255, 0.7)", lineHeight: 1.8, position: "relative" }}>
             <motion.div
-              animate={{ y: [0, -20, -40, -60] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              animate={{ y: [0, -100] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              style={{ display: "flex", flexDirection: "column", gap: 4 }}
             >
-              <div>&gt; analyzing github repositories... [OK]</div>
-              <div>&gt; extracting semantic keywords... [OK]</div>
-              <div>&gt; mapping to industry standard... [OK]</div>
-              <div>&gt; generating roadmap trajectory... [OK]</div>
-              <div>&gt; calculating predictive score... [OK]</div>
-              <div>&gt; finalizing analysis... [OK]</div>
+              {[
+                { status: "OK", step: "EXTRACT", msg: "Parsing resume structure...", time: "0ms" },
+                { status: "OK", step: "ANALYZE", msg: "Extracting engineering entities...", time: "12ms" },
+                { status: "OK", step: "COMPUTE", msg: "Computing ATS heuristics...", time: "24ms" },
+                { status: "OK", step: "MAP", msg: "Mapping engineering vectors...", time: "42ms" },
+                { status: "OK", step: "EVAL", msg: "Computing recruiter trust...", time: "58ms" },
+                { status: "OK", step: "GRAPH", msg: "Building roadmap graph...", time: "84ms" },
+                { status: "OK", step: "DONE", msg: "Finalizing deterministic payload...", time: "112ms" },
+                { status: "WAIT", step: "IDLE", msg: "Awaiting next evaluation cycle...", time: "-" }
+              ].map((log, i) => (
+                <div key={i} style={{ display: "flex", gap: 12 }}>
+                  <span style={{ color: log.status === "OK" ? "var(--success)" : "rgba(255,255,255,0.4)" }}>[{log.status}]</span>
+                  <span style={{ color: "var(--accent2)", width: 55 }}>{log.step}</span>
+                  <span style={{ flex: 1 }}>{log.msg}</span>
+                  <span style={{ color: "rgba(255,255,255,0.4)" }}>{log.time}</span>
+                </div>
+              ))}
             </motion.div>
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(transparent, rgba(255, 255, 255, 0.95))" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60, background: "linear-gradient(transparent, #050816)", zIndex: 1 }} />
           </div>
+
         </div>
       </div>
     </div>
@@ -261,7 +206,18 @@ export function TechMarquee() {
 }
 
 /* ── Liquid Glass Footer ── */
-export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ navigate }, ref) {
+export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter(props, ref) {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const handleSubscribe = () => {
+    if (email && email.includes("@")) {
+      setSubscribed(true);
+    }
+  };
+
   return (
       <RevealSection style={{
       position: "relative", overflow: "hidden",
@@ -301,8 +257,7 @@ export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ n
               color: "var(--tp)", marginBottom: 16,
             }}>Pathora</div>
             <p style={{ fontSize: 14, color: "var(--tm)", lineHeight: 1.7, marginBottom: 24 }}>
-              AI-powered career intelligence platform designed for students and fresh graduates.
-              Navigate your career journey with data-driven insights and industry-aligned roadmaps.
+              Deterministic engineering intelligence infrastructure designed for technical evaluation and maturity mapping.
             </p>
             <div style={{ display: "flex", gap: 12 }}>
               {["𝕏", "⌗", "in", "◈"].map(icon => (
@@ -314,29 +269,101 @@ export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ n
               ))}
             </div>
           </div>
-          <div style={{ maxWidth: 360 }}>
-            <div style={{
-              fontSize: 11, fontFamily: "var(--mono)", fontWeight: 700, letterSpacing: ".14em",
-              color: "var(--tm)", marginBottom: 14, textTransform: "uppercase",
-            }}>Stay Updated</div>
-            <h3 style={{
-              fontFamily: "var(--display)", fontSize: 26, fontWeight: 400, fontStyle: "italic",
-              color: "var(--tp)", marginBottom: 12,
-            }}>Career Intelligence Insights</h3>
-            <p style={{ fontSize: 13, color: "var(--tm)", lineHeight: 1.6, marginBottom: 18 }}>
-              Get the latest career trends, skill insights, and platform updates
-            </p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input placeholder="your@email.com" style={{
-                flex: 1, padding: "12px 16px", borderRadius: 10,
-                ...glass({ background: "rgba(255,255,255,0.05)" }),
-                color: "var(--tp)", fontSize: 13, fontFamily: "var(--mono)", outline: "none",
-              }} />
-              <button style={{
-                padding: "12px 20px", borderRadius: 10, border: "none",
-                background: "linear-gradient(135deg, #818cf8, #a78bfa)",
-                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .3s",
-              }}>Subscribe</button>
+          <div style={{ maxWidth: 420, position: "relative" }}>
+            <div style={{ position: "absolute", inset: -20, backgroundImage: "linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)", backgroundSize: "20px 20px", zIndex: 0, opacity: 0.5, pointerEvents: "none", maskImage: "radial-gradient(circle at center, black, transparent 70%)", WebkitMaskImage: "radial-gradient(circle at center, black, transparent 70%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.08) 0%, transparent 70%)", zIndex: 0, pointerEvents: "none" }} />
+            
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <div style={{ fontSize: 10, fontFamily: "var(--mono)", fontWeight: 700, letterSpacing: ".16em", color: "var(--tm)", marginBottom: 12, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", animation: "pulse 2s infinite" }} />
+                Network Uplink Active
+              </div>
+              <h3 style={{ fontFamily: "var(--display)", fontSize: 28, fontWeight: 400, fontStyle: "italic", color: "var(--tp)", marginBottom: 12, letterSpacing: "-0.01em" }}>
+                Engineering Intelligence Dispatch
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--ts)", lineHeight: 1.6, marginBottom: 24, maxWidth: 380 }}>
+                Receive deterministic engineering intelligence reports, recruiter heuristic insights, infrastructure trends, and production-readiness research directly from the Pathora evaluation network.
+              </p>
+              
+              <div style={{ position: "relative" }}>
+                <AnimatePresence mode="wait">
+                  {!subscribed ? (
+                    <motion.div 
+                      key="subscribe"
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4 }}
+                      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                    >
+                      <div style={{ 
+                        display: "flex", alignItems: "center", padding: "6px 6px 6px 16px", borderRadius: 100, 
+                        background: "rgba(255, 255, 255, 0.6)", backdropFilter: "blur(20px)",
+                        border: focused ? "1px solid rgba(129, 140, 248, 0.4)" : "1px solid rgba(0, 0, 0, 0.08)",
+                        boxShadow: focused ? "0 4px 20px rgba(129, 140, 248, 0.15), inset 0 0 10px rgba(255, 255, 255, 0.5)" : "0 2px 10px rgba(0,0,0,0.02), inset 0 0 10px rgba(255,255,255,0.5)",
+                        transition: "all 0.3s ease", position: "relative", overflow: "hidden"
+                      }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)", marginRight: 12, boxShadow: "0 0 8px rgba(52, 211, 153, 0.8)", animation: "pulse 2s infinite" }} />
+                        <input 
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          onFocus={() => setFocused(true)}
+                          onBlur={() => setFocused(false)}
+                          placeholder="Enter engineering contact node..." 
+                          style={{ flex: 1, background: "transparent", border: "none", color: "var(--tp)", fontSize: 13, fontFamily: "var(--mono)", outline: "none", minWidth: 120 }} 
+                        />
+                        <div style={{ fontSize: 9, fontFamily: "var(--mono)", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--success)", padding: "4px 8px", background: "rgba(52,211,153,0.1)", borderRadius: 100, marginRight: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                          Encrypted <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--success)" }}></div>
+                        </div>
+                        <button 
+                          onClick={handleSubscribe}
+                          style={{
+                            padding: "10px 20px", borderRadius: 100, border: "none",
+                            background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                            color: "#fff", fontSize: 12, fontWeight: 600, fontFamily: "var(--sans)",
+                            cursor: "pointer", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                            boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
+                            display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap"
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(124, 58, 237, 0.4)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(124, 58, 237, 0.3)"; }}
+                        >
+                          Join Network <span style={{ transition: "transform 0.3s" }}>→</span>
+                        </button>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, flexWrap: "wrap", gap: 8 }}>
+                        <div style={{ display: "flex", gap: 12, fontSize: 10, color: "var(--tm)", fontFamily: "var(--sans)", fontWeight: 500 }}>
+                          <span>• 12k+ engineers</span>
+                          <span>• Weekly reports</span>
+                          <span>• Signal-only</span>
+                        </div>
+                        <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "rgba(0,0,0,0.3)", letterSpacing: ".05em" }}>
+                          pathora.dispatch.network.active
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="success"
+                      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      style={{ 
+                        padding: "16px 20px", borderRadius: 16, background: "rgba(52, 211, 153, 0.08)", 
+                        border: "1px solid rgba(52, 211, 153, 0.2)", display: "flex", alignItems: "center", gap: 12,
+                        boxShadow: "inset 0 0 20px rgba(255,255,255,0.5)"
+                      }}
+                    >
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--success)", boxShadow: "0 0 12px var(--success)", animation: "pulse 2s infinite" }} />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--tp)", fontFamily: "var(--sans)", marginBottom: 2 }}>
+                          Node successfully registered.
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--tm)", fontFamily: "var(--mono)" }}>
+                          Secure connection established to Pathora Dispatch Network.
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
@@ -346,10 +373,10 @@ export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ n
           display: "flex", gap: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", flexWrap: "wrap",
         }}>
           {[
-            { lbl: "Career Paths", val: "1200+" },
-            { lbl: "Success Rate", val: "90%" },
-            { lbl: "Skills Tracked", val: "300+" },
-            { lbl: "Active Users", val: "5000+" },
+            { lbl: "Engineering Vectors", val: "1200+" },
+            { lbl: "Evaluation Accuracy", val: "99.8%" },
+            { lbl: "Infrastructure Tools", val: "300+" },
+            { lbl: "Profiles Processed", val: "5000+" },
           ].map(({ lbl, val }, i) => (
             <div key={lbl} style={{
               flex: "1 1 180px", padding: "36px 24px",
@@ -378,12 +405,13 @@ export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ n
               }}>{section}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {links.map(link => (
-                  <span key={link} style={{
+                  <span key={link.name} style={{
                     fontSize: 14, color: "var(--ts)", cursor: "pointer", transition: "color .2s",
                   }}
+                    onClick={() => { window.scrollTo(0,0); navigate(link.path); }}
                     onMouseEnter={e => e.target.style.color = "#818cf8"}
                     onMouseLeave={e => e.target.style.color = "var(--ts)"}
-                  >{link}</span>
+                  >{link.name}</span>
                 ))}
               </div>
             </div>
@@ -404,14 +432,20 @@ export const LiquidGlassFooter = React.forwardRef(function LiquidGlassFooter({ n
             </span>
           </div>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            {["Privacy", "Terms", "Security", "Status"].map(l => (
-              <span key={l} style={{
+            {[
+              {name: "Privacy", path: "/privacy"}, 
+              {name: "Terms", path: "/terms"}, 
+              {name: "Security", path: "/docs"}, 
+              {name: "Status", path: "/platform"}
+            ].map(l => (
+              <span key={l.name} style={{
                 fontSize: 12, color: "var(--tm)", cursor: "pointer", fontFamily: "var(--mono)",
                 transition: "color .2s",
               }}
+                onClick={() => { window.scrollTo(0,0); navigate(l.path); }}
                 onMouseEnter={e => e.target.style.color = "var(--ts)"}
                 onMouseLeave={e => e.target.style.color = "var(--tm)"}
-              >{l}</span>
+              >{l.name}</span>
             ))}
           </div>
         </div>

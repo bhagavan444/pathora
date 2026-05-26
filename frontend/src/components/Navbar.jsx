@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Menu, X, User, Activity, Cpu, 
+  Menu, X, User, Cpu, 
   Settings, LogOut, LayoutDashboard,
-  Brain, CreditCard, Terminal,
-  Info, Mail
+  Brain, CreditCard, Terminal, ChevronDown
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
@@ -16,15 +15,17 @@ export default function Navbar({ handleLogout }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showTelemetryPopup, setShowTelemetryPopup] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   
   const profileRef = useRef(null);
   const telemetryRef = useRef(null);
+  const moreMenuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Scroll listener for premium shrink and blur intensity updates
+  // Scroll listener
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -40,23 +41,22 @@ export default function Navbar({ handleLogout }) {
     return unsubscribe;
   }, []);
 
-  // Handle outside clicks to close profile menu
+  // Handle outside clicks
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setShowProfileMenu(false);
-      }
-      if (telemetryRef.current && !telemetryRef.current.contains(e.target)) {
-        setShowTelemetryPopup(false);
-      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfileMenu(false);
+      if (telemetryRef.current && !telemetryRef.current.contains(e.target)) setShowTelemetryPopup(false);
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) setShowMoreMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Reset menu status on route navigation
+  // Reset menus on route navigation
   useEffect(() => {
     setMenuOpen(false);
+    setShowMoreMenu(false);
+    setShowProfileMenu(false);
   }, [location.pathname]);
 
   const handlePredictClick = (e) => {
@@ -67,52 +67,82 @@ export default function Navbar({ handleLogout }) {
     }
   };
 
-  const handleRoadmapsClick = (e) => {
-    if (location.pathname === "/") {
-      e.preventDefault();
-      const el = document.getElementById("roadmap");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-  };
-
   const executeLogout = () => {
     if (handleLogout) handleLogout();
     setShowProfileMenu(false);
     navigate("/");
   };
 
-  const NAV_ITEMS = [
+  const TOP_NAV = [
     { label: "Home", to: "/" },
     { label: "Predict", to: "/predict", isPredict: true },
-    { label: "Assistant", to: "/chat" },
-    { label: "Plans", to: "/plans" },
-    { label: "Assessments", to: "/quiz" },
-    { label: "About", to: "/about" },
-    { label: "Contact", to: "/contact" },
+    { label: "Quiz", to: "/quiz" },
+    { label: "Pathora Bot", to: "/chat" }
   ];
 
+  const DROPDOWN_SECTIONS = [
+    {
+      title: "Features & Utilities",
+      items: [
+        { label: "Platform", to: "/platform" },
+        { label: "Dashboard", to: "/dashboard" },
+        { label: "Pricing Plans", to: "/plans" },
+        { label: "Settings", to: "/settings" },
+        { label: "Admin Panel", to: "/admin" }
+      ]
+    },
+    {
+      title: "Resources",
+      items: [
+        { label: "Docs", to: "/docs" },
+        { label: "Research", to: "/research" },
+        { label: "Resources", to: "/resources" }
+      ]
+    },
+    {
+      title: "Organization",
+      items: [
+        { label: "About Us", to: "/about" },
+        { label: "Careers", to: "/careers" },
+        { label: "Contact", to: "/contact" },
+        { label: "Client Portal", to: "/login" }
+      ]
+    },
+    {
+      title: "Legal",
+      items: [
+        { label: "Privacy", to: "/privacy" },
+        { label: "Terms", to: "/terms" }
+      ]
+    }
+  ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500;600&display=swap');
 
-        /* ═══ PREMIUM DUAL-ENGINE AI GLASS NAVBAR ═══ */
+        /* ═══ PREMIUM AI INFRASTRUCTURE NAVBAR ═══ */
         .pnx-nav-wrapper {
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 99999;
           display: flex;
           justify-content: center;
-          padding: 20px 24px;
-          transition: padding 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          padding: 10px 24px;
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
           pointer-events: none;
           will-change: transform;
+          background: transparent;
+          border-bottom: 1px solid transparent;
         }
         .pnx-nav-wrapper.scrolled {
-          padding: 10px 24px;
+          padding: 4px 24px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(32px) saturate(120%);
+          -webkit-backdrop-filter: blur(32px) saturate(120%);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.02);
         }
 
         .pnx-nav-container {
@@ -121,45 +151,13 @@ export default function Navbar({ handleLogout }) {
           align-items: center;
           justify-content: space-between;
           width: 100%;
-          max-width: 1000px;
-          height: 48px;
-          background: rgba(255, 255, 255, 0.07);
-          backdrop-filter: blur(20px) saturate(190%);
-          -webkit-backdrop-filter: blur(20px) saturate(190%);
-          border-radius: 100px;
-          padding: 0 6px 0 20px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 
-            0 1px 2px rgba(0, 0, 0, 0.01),
-            0 8px 30px -10px rgba(0, 0, 0, 0.05),
-            inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-            inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          max-width: 1100px;
+          height: 40px;
           position: relative;
         }
 
         .pnx-nav-wrapper.scrolled .pnx-nav-container {
-          height: 44px;
-          background: rgba(255, 255, 255, 0.09);
-          backdrop-filter: blur(24px) saturate(200%);
-          -webkit-backdrop-filter: blur(24px) saturate(200%);
-          border-color: rgba(255, 255, 255, 0.22);
-          box-shadow: 
-            0 1px 2px rgba(0, 0, 0, 0.02),
-            0 16px 40px -12px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
-            inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-        }
-
-        /* Ambient glow ribbon behind the navbar */
-        .pnx-nav-glow {
-          position: absolute;
-          top: -20px; left: 15%; right: 15%; height: 40px;
-          background: radial-gradient(circle, rgba(124, 58, 237, 0.06) 0%, transparent 70%);
-          filter: blur(12px);
-          pointer-events: none;
-          z-index: -1;
-          transition: opacity 0.5s;
+          height: 32px;
         }
 
         /* ─── BRAND LOGO / ORB ─── */
@@ -190,7 +188,6 @@ export default function Navbar({ handleLogout }) {
           z-index: 2;
         }
 
-        /* AI Pulsing Rings */
         .pnx-orb-ring {
           position: absolute;
           width: 100%;
@@ -214,49 +211,41 @@ export default function Navbar({ handleLogout }) {
           flex-direction: column;
           line-height: 1;
         }
-
         .pnx-brand-main {
           display: flex;
           align-items: baseline;
         }
-
         .pnx-brand-serif {
           font-family: 'Instrument Serif', serif;
           font-style: italic;
           font-size: 1.35rem;
-          font-weight: 500;
+          font-weight: 300;
           color: #0f0f0f;
           letter-spacing: -0.02em;
         }
-
         .pnx-brand-sans {
           font-family: 'Outfit', sans-serif;
           font-size: 1.05rem;
-          font-weight: 600;
+          font-weight: 300;
           color: #0f0f0f;
-          letter-spacing: -0.01em;
-          margin-left: -1px;
+          letter-spacing: 0.02em;
+          margin-left: 2px;
         }
-
         .pnx-brand-sub {
           font-family: 'DM Mono', monospace;
-          font-size: 7px;
-          font-weight: 500;
-          letter-spacing: 0.25em;
+          font-size: 6.5px;
+          font-weight: 400;
+          letter-spacing: 0.35em;
           text-transform: uppercase;
-          color: rgba(124, 58, 237, 0.85);
-          margin-top: 2px;
+          color: rgba(124, 58, 237, 0.6);
+          margin-top: 5px;
         }
 
         /* ─── CENTER NAVIGATION PILLS ─── */
         .pnx-nav-links {
           display: flex;
           align-items: center;
-          gap: 2px;
-          background: rgba(255, 255, 255, 0.2);
-          padding: 3px;
-          border-radius: 100px;
-          border: 1px solid rgba(0, 0, 0, 0.02);
+          gap: 28px;
           position: relative;
         }
         
@@ -265,44 +254,113 @@ export default function Navbar({ handleLogout }) {
         }
 
         .pnx-nav-item {
-          padding: 6px 10px;
+          padding: 4px 0;
           color: rgba(15, 15, 15, 0.45);
           text-decoration: none;
-          font-size: 0.76rem;
-          font-weight: 500;
+          font-size: 0.78rem;
+          font-weight: 300;
           font-family: 'Outfit', sans-serif;
-          letter-spacing: 0.01em;
-          border-radius: 100px;
+          letter-spacing: 0.06em;
           position: relative;
-          transition: color 0.25s ease;
+          transition: color 0.3s ease;
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
         }
 
         .pnx-nav-item:hover {
-          color: rgba(15, 15, 15, 0.9);
+          color: rgba(15, 15, 15, 0.95);
+          transform: translateY(-0.5px);
         }
 
         .pnx-nav-item.active {
-          color: #fff !important;
+          color: #0f0f0f !important;
+          font-weight: 500;
         }
 
         .pnx-hover-bg {
           position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.04);
-          border-radius: 100px;
+          bottom: -4px;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: rgba(0, 0, 0, 0.08);
+          border-radius: 2px;
           z-index: -1;
         }
 
         .pnx-active-bg {
           position: absolute;
-          inset: 0;
-          background: #0f0f0f;
-          border-radius: 100px;
+          bottom: -4px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 60%;
+          height: 1.5px;
+          background: linear-gradient(90deg, transparent, rgba(15, 15, 15, 0.8), transparent);
+          border-radius: 2px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
           z-index: -1;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ─── MORE DROPDOWN ─── */
+        .pnx-more-dropdown {
+          position: absolute;
+          top: calc(100% + 12px);
+          right: -20px;
+          left: auto;
+          transform: none;
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(48px) saturate(200%);
+          -webkit-backdrop-filter: blur(48px) saturate(200%);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 14px;
+          padding: 16px 20px;
+          width: max-content;
+          display: flex;
+          gap: 24px;
+          box-shadow: 0 12px 32px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5);
+          z-index: 1000;
+        }
+        
+        .pnx-more-col {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .pnx-more-header {
+          font-size: 9px;
+          font-family: 'DM Mono', monospace;
+          color: rgba(15,15,15,0.4);
+          text-transform: uppercase;
+          letter-spacing: .08em;
+          margin-bottom: 6px;
+          font-weight: 600;
+        }
+
+        .pnx-more-link {
+          font-size: 12.5px;
+          color: rgba(15,15,15,0.65);
+          text-decoration: none;
+          font-family: 'Outfit', sans-serif;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 8px;
+          border-radius: 6px;
+          margin-left: -8px;
+        }
+        .pnx-more-link:hover {
+          color: rgba(15,15,15,0.95);
+          background: rgba(0,0,0,0.03);
+          transform: translateX(1px);
+        }
+        .pnx-more-link.active {
+          color: #0f0f0f;
+          font-weight: 500;
+          background: rgba(0,0,0,0.02);
         }
 
         /* ─── RIGHT SECTION ─── */
@@ -312,7 +370,6 @@ export default function Navbar({ handleLogout }) {
           gap: 10px;
         }
 
-        /* Telemetry dashboard pill */
         .pnx-telemetry-badge {
           display: flex;
           align-items: center;
@@ -323,7 +380,7 @@ export default function Navbar({ handleLogout }) {
           border-radius: 100px;
           cursor: pointer;
           user-select: none;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.3s;
         }
         .pnx-telemetry-badge:hover {
           background: rgba(0, 0, 0, 0.05);
@@ -347,10 +404,6 @@ export default function Navbar({ handleLogout }) {
           border-radius: 50%;
           animation: pnxPurplePulse 2.5s infinite ease-out;
         }
-        @keyframes pnxPurplePulse {
-          0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
 
         .pnx-telemetry-text {
           font-family: 'DM Mono', monospace;
@@ -361,21 +414,17 @@ export default function Navbar({ handleLogout }) {
           text-transform: uppercase;
         }
 
-        /* Diagnostic dropdown popup */
         .pnx-telemetry-popup {
           position: absolute;
           top: calc(100% + 12px);
           right: 80px;
-          background: rgba(255, 255, 255, 0.85);
+          background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(28px) saturate(180%);
-          -webkit-backdrop-filter: blur(28px) saturate(180%);
-          border: 1px solid rgba(124, 58, 237, 0.15);
+          border: 1px solid rgba(0, 0, 0, 0.06);
           border-radius: 16px;
           padding: 16px;
           width: 240px;
-          box-shadow: 
-            0 0 0 0.5px rgba(0,0,0,0.02),
-            0 20px 48px -10px rgba(124, 58, 237, 0.08);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
           z-index: 1000;
         }
 
@@ -396,47 +445,6 @@ export default function Navbar({ handleLogout }) {
           padding-bottom: 0;
         }
 
-        /* Sign-in micro-button */
-        .pnx-btn-signin {
-          background: #0f0f0f;
-          color: #fff;
-          padding: 7px 18px;
-          border-radius: 100px;
-          font-size: 0.74rem;
-          font-weight: 600;
-          font-family: 'Outfit', sans-serif;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          position: relative;
-          overflow: hidden;
-        }
-        .pnx-btn-signin::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-          transform: translateX(-100%);
-          transition: transform 0.6s ease;
-        }
-        .pnx-btn-signin:hover {
-          background: #1a1a1a;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-          transform: translateY(-1px);
-        }
-        .pnx-btn-signin:hover::before {
-          transform: translateX(100%);
-        }
-        
-        @media (max-width: 1100px) {
-          .pnx-btn-signin.desktop-only { display: none; }
-        }
-
-        /* Custom rounded profile capsule */
         .pnx-profile-capsule {
           position: relative;
         }
@@ -452,7 +460,7 @@ export default function Navbar({ handleLogout }) {
           justify-content: center;
           color: #374151;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.3s;
           box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.02);
         }
         .pnx-profile-avatar:hover {
@@ -463,14 +471,12 @@ export default function Navbar({ handleLogout }) {
           box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
         }
 
-        /* Premium Glass dropdown menu */
         .pnx-profile-dropdown {
           position: absolute;
           top: calc(100% + 12px);
           right: 0;
           background: rgba(255, 255, 255, 0.85);
-          backdrop-filter: blur(32px) saturate(180%);
-          -webkit-backdrop-filter: blur(32px) saturate(180%);
+          backdrop-filter: blur(32px);
           border: 1px solid rgba(255, 255, 255, 0.5);
           border-radius: 16px;
           padding: 6px;
@@ -478,9 +484,7 @@ export default function Navbar({ handleLogout }) {
           display: flex;
           flex-direction: column;
           gap: 2px;
-          box-shadow: 
-            0 0 0 0.5px rgba(0,0,0,0.02),
-            0 24px 64px -12px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.08);
           z-index: 1000;
           transform-origin: top right;
         }
@@ -497,6 +501,7 @@ export default function Navbar({ handleLogout }) {
           display: flex;
           align-items: center;
           gap: 10px;
+          text-decoration: none;
         }
         
         .pnx-dropdown-item:hover {
@@ -514,7 +519,7 @@ export default function Navbar({ handleLogout }) {
           color: #ef4444;
         }
 
-        /* ─── MOBILE SYSTEM TOGGLE ─── */
+        /* ─── MOBILE SYSTEM ─── */
         .pnx-mobile-toggle {
           display: none;
           width: 32px;
@@ -528,83 +533,70 @@ export default function Navbar({ handleLogout }) {
           color: #374151;
           transition: all 0.3s;
         }
-        .pnx-mobile-toggle:hover {
-          background: rgba(255, 255, 255, 0.75);
-          color: #000;
-        }
         @media (max-width: 1100px) {
           .pnx-mobile-toggle { display: flex; }
         }
 
-        /* ─── PREMIUM MOBILE SYSTEM OVERLAY (Bottom-sheet styling) ─── */
         .pnx-mobile-sheet {
           position: fixed;
-          bottom: 24px; left: 16px; right: 16px;
-          background: rgba(255, 255, 255, 0.88);
+          top: 0; right: 0; bottom: 0;
+          width: 300px;
+          background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(32px) saturate(180%);
-          -webkit-backdrop-filter: blur(32px) saturate(180%);
-          border-radius: 30px;
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 
-            0 24px 64px -8px rgba(0, 0, 0, 0.15),
-            0 1px 3px rgba(0, 0, 0, 0.02);
+          border-left: 1px solid rgba(0, 0, 0, 0.06);
+          box-shadow: -10px 0 40px rgba(0, 0, 0, 0.05);
           z-index: 10000;
-          padding: 24px;
+          padding: 80px 24px 24px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
-        }
-
-        .pnx-mobile-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 1px solid rgba(0,0,0,0.05);
-          padding-bottom: 14px;
-        }
-
-        .pnx-mobile-nav-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          max-height: 340px;
+          gap: 32px;
           overflow-y: auto;
-          padding-right: 4px;
+        }
+        
+        .pnx-mobile-close {
+          position: absolute;
+          top: 24px;
+          right: 24px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--ts);
         }
 
-        .pnx-mobile-nav-card {
+        .pnx-mobile-nav-col {
           display: flex;
           flex-direction: column;
-          gap: 4px;
-          padding: 16px;
-          background: rgba(255, 255, 255, 0.5);
-          border: 1px solid rgba(0, 0, 0, 0.04);
-          border-radius: 18px;
+          gap: 16px;
+        }
+
+        .pnx-mobile-link {
+          font-size: 18px;
+          font-weight: 500;
+          color: var(--tp);
           text-decoration: none;
-          transition: all 0.25s;
-        }
-        .pnx-mobile-nav-card:hover {
-          background: rgba(124, 58, 237, 0.05);
-          border-color: rgba(124, 58, 237, 0.15);
-        }
-        .pnx-mobile-nav-card.active {
-          background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.08));
-          border-color: rgba(124, 58, 237, 0.25);
+          font-family: 'Outfit', sans-serif;
         }
 
-        .pnx-mobile-nav-label {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.85rem;
+        .pnx-mobile-acc-header {
+          font-size: 11px;
+          font-family: 'DM Mono', monospace;
+          color: var(--tm, rgba(0,0,0,0.4));
+          text-transform: uppercase;
+          letter-spacing: .1em;
+          margin-bottom: 12px;
+          margin-top: 24px;
           font-weight: 600;
-          color: #0f0f0f;
-        }
-        .pnx-mobile-nav-desc {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.65rem;
-          color: #6b7280;
         }
 
-        /* Popup Notification */
+        .pnx-mobile-acc-item {
+          font-size: 15px;
+          color: var(--ts, rgba(0,0,0,0.6));
+          text-decoration: none;
+          font-family: 'Outfit', sans-serif;
+          margin-bottom: 16px;
+          display: block;
+        }
+
         .pnx-login-popup {
           position: fixed;
           top: 80px;
@@ -612,7 +604,6 @@ export default function Navbar({ handleLogout }) {
           transform: translateX(-50%);
           background: rgba(15, 15, 15, 0.9);
           backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
           color: white;
           padding: 8px 18px;
           border-radius: 100px;
@@ -624,7 +615,6 @@ export default function Navbar({ handleLogout }) {
           display: flex;
           align-items: center;
           gap: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
         }
       `}</style>
 
@@ -636,9 +626,7 @@ export default function Navbar({ handleLogout }) {
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="pnx-nav-container">
-          <div className="pnx-nav-glow" style={{ opacity: scrolled ? 0.4 : 0.85 }} />
-
-          {/* LEFT: Branding & AI Pulsing Orb */}
+          {/* LEFT: Branding */}
           <Link to="/" className="pnx-logo-link">
             <div className="pnx-orb-container">
               <div className="pnx-orb-ring" />
@@ -654,58 +642,81 @@ export default function Navbar({ handleLogout }) {
             </div>
           </Link>
 
-          {/* CENTER: Navigation tabs with magnetic hover index & active layout animations */}
+          {/* CENTER: Navigation tabs */}
           <nav className="pnx-nav-links">
-            {NAV_ITEMS.map((item, idx) => {
-              const isActive = location.pathname === item.to;
+            {TOP_NAV.map((item, idx) => {
+              const isActive = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
               return (
                 <Link
                   key={item.label}
                   to={item.to}
-                  onClick={item.isPredict ? handlePredictClick : (item.isRoadmap ? handleRoadmapsClick : undefined)}
+                  onClick={item.isPredict ? handlePredictClick : undefined}
                   className={`pnx-nav-item ${isActive ? "active" : ""}`}
                   onMouseEnter={() => setHoveredIndex(idx)}
                   onMouseLeave={() => setHoveredIndex(null)}
-                  style={{ position: "relative" }}
                 >
-                  {/* Liquid Hover Indicator */}
-                  {hoveredIndex === idx && (
-                    <motion.div 
-                      layoutId="hoverTabBackground"
-                      className="pnx-hover-bg"
-                      transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                    />
-                  )}
-
-                  {/* Active Selection Indicator */}
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeTabBackground"
-                      className="pnx-active-bg"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
+                  {hoveredIndex === idx && <motion.div layoutId="hoverTabBackground" className="pnx-hover-bg" transition={{ type: "spring", stiffness: 450, damping: 30 }} />}
+                  {isActive && <motion.div layoutId="activeTabBackground" className="pnx-active-bg" transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
                   <span style={{ position: "relative", zIndex: 2 }}>{item.label}</span>
                 </Link>
               );
             })}
+            
+            {/* MORE DROPDOWN TRIGGER */}
+            <div 
+              className={`pnx-nav-item`}
+              ref={moreMenuRef}
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              style={{ display: "flex", gap: 4 }}
+            >
+              <span style={{ position: "relative", zIndex: 2 }}>More</span>
+              <ChevronDown size={14} style={{ opacity: 0.5 }} />
+              
+              <AnimatePresence>
+                {showMoreMenu && (
+                  <motion.div
+                    className="pnx-more-dropdown"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {DROPDOWN_SECTIONS.map((section) => (
+                      <div key={section.title} className="pnx-more-col">
+                        <div className="pnx-more-header">{section.title}</div>
+                        {section.items.map(link => {
+                          const isLinkActive = location.pathname === link.to;
+                          return (
+                            <Link 
+                              key={link.label} 
+                              to={link.to} 
+                              className={`pnx-more-link ${isLinkActive ? "active" : ""}`}
+                              onClick={(e) => {
+                                if(link.isPredict) handlePredictClick(e);
+                                setShowMoreMenu(false);
+                              }}
+                            >
+                              {link.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
-          {/* RIGHT: Live Recruiter Status Diagnostics & Profile Dropdown */}
+          {/* RIGHT: Diagnostics & Profile */}
           <div className="pnx-right-section">
-            {/* Live Recruiter Pulse Dashboard */}
-            <div 
-              className="pnx-telemetry-badge"
-              onClick={() => setShowTelemetryPopup(!showTelemetryPopup)}
-              ref={telemetryRef}
-            >
+            <div className="pnx-telemetry-badge" onClick={() => setShowTelemetryPopup(!showTelemetryPopup)} ref={telemetryRef}>
               <div className="pnx-telemetry-dot">
                 <div className="pnx-telemetry-pulse" />
               </div>
               <span className="pnx-telemetry-text">SYSTEM OPERATIONAL</span>
             </div>
 
-            {/* Recruiter Telemetry Diagnostic Popover */}
             <AnimatePresence>
               {showTelemetryPopup && (
                 <motion.div
@@ -713,12 +724,7 @@ export default function Navbar({ handleLogout }) {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid rgba(0, 0, 0, 0.06)",
-                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)"
-                  }}
+                  transition={{ duration: 0.2 }}
                 >
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
                     <Cpu size={12} style={{ color: "#8b5cf6" }} />
@@ -732,14 +738,6 @@ export default function Navbar({ handleLogout }) {
                     <span>LATENCY</span>
                     <span style={{ color: '#0f0f0f', fontWeight: 600 }}>14ms</span>
                   </div>
-                  <div className="pnx-telemetry-item">
-                    <span>INFERENCE CORE</span>
-                    <span style={{ color: '#8b5cf6', fontWeight: 600 }}>GEMINI 2.5</span>
-                  </div>
-                  <div className="pnx-telemetry-item" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-                    <span>UPTIME SLA</span>
-                    <span style={{ color: '#10b981', fontWeight: 600 }}>99.98%</span>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -751,14 +749,9 @@ export default function Navbar({ handleLogout }) {
                 whileHover={{ scale: 1.04, y: -0.5 }}
                 whileTap={{ scale: 0.96 }}
               >
-                {user ? (
-                  <User size={15} strokeWidth={2} />
-                ) : (
-                  <Menu size={15} strokeWidth={2} />
-                )}
+                {user ? <User size={15} strokeWidth={2} /> : <User size={15} strokeWidth={2} />}
               </motion.div>
               
-              {/* Profile dropdown glass panel */}
               <AnimatePresence>
                 {showProfileMenu && (
                   <motion.div
@@ -766,70 +759,26 @@ export default function Navbar({ handleLogout }) {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.2 }}
                   >
                     {user ? (
                       <>
-                        <div className="pnx-dropdown-item session-info" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: 8, marginBottom: 4, cursor: 'default', pointerEvents: 'none' }}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.5)' }} />
-                          <span style={{ fontSize: '0.62rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.38)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
-                            {user.email || "Active Session"}
+                        <div className="pnx-dropdown-item" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: 8, cursor: 'default', pointerEvents: 'none' }}>
+                          <span style={{ fontSize: '0.62rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.38)', fontWeight: 600 }}>
+                            {user.email}
                           </span>
                         </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/dashboard'); }}>
-                          <LayoutDashboard size={14} />
-                          <span>Dashboard</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/quiz'); }}>
-                          <Brain size={14} />
-                          <span>Assessments</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/plans'); }}>
-                          <CreditCard size={14} />
-                          <span>Plans & Pricing</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}>
-                          <Settings size={14} />
-                          <span>Preferences</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/admin'); }}>
-                          <Terminal size={14} />
-                          <span>Admin Console</span>
-                        </div>
-                        <div className="pnx-dropdown-item logout" onClick={executeLogout} style={{ borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: 4, paddingTop: 8 }}>
-                          <LogOut size={14} />
-                          <span>Log out</span>
+                        <Link to="/dashboard" className="pnx-dropdown-item"><LayoutDashboard size={14} /> Dashboard</Link>
+                        <Link to="/settings" className="pnx-dropdown-item"><Settings size={14} /> Preferences</Link>
+                        <div className="pnx-dropdown-item logout" onClick={executeLogout} style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                          <LogOut size={14} /> Log out
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="pnx-dropdown-item session-info" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: 8, marginBottom: 4, cursor: 'default', pointerEvents: 'none' }}>
-                          <span style={{ fontSize: '0.62rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.38)', fontWeight: 600 }}>System Console</span>
-                        </div>
-                        <div className="pnx-dropdown-item login-btn" onClick={() => { setShowProfileMenu(false); navigate('/login'); }} style={{ background: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6', fontWeight: 600 }}>
-                          <User size={14} />
-                          <span>Sign In</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/quiz'); }}>
-                          <Brain size={14} />
-                          <span>Assessments</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/plans'); }}>
-                          <CreditCard size={14} />
-                          <span>Plans & Pricing</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/dashboard'); }}>
-                          <LayoutDashboard size={14} />
-                          <span>Dashboard</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}>
-                          <Settings size={14} />
-                          <span>Preferences</span>
-                        </div>
-                        <div className="pnx-dropdown-item" onClick={() => { setShowProfileMenu(false); navigate('/admin'); }}>
-                          <Terminal size={14} />
-                          <span>Admin Console</span>
-                        </div>
+                        <Link to="/login" className="pnx-dropdown-item" style={{ background: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6', fontWeight: 600 }}>
+                          <User size={14} /> Sign In
+                        </Link>
                       </>
                     )}
                   </motion.div>
@@ -837,28 +786,17 @@ export default function Navbar({ handleLogout }) {
               </AnimatePresence>
             </div>
 
-            {/* Mobile diagnostic overlay toggle button */}
-            <button
-              className="pnx-mobile-toggle"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={menuOpen ? 'close' : 'menu'}
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {menuOpen ? <X size={16} strokeWidth={2.5} /> : <Menu size={16} strokeWidth={2.5} />}
-                </motion.div>
-              </AnimatePresence>
+            <button className="pnx-mobile-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Login requirement notifier trigger popup */}
       <AnimatePresence>
         {showLoginPopup && (
           <motion.div
@@ -866,125 +804,58 @@ export default function Navbar({ handleLogout }) {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 450, damping: 30 }}
           >
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />
             Authentication required to unlock predictions.
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* MOBILE CONTROL PANEL & NAVIGATION BOTTOM SHEET */}
+      {/* MOBILE SLIDE DRAWER */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Blurred Backdrop Layer */}
             <motion.div 
               style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(10, 10, 14, 0.2)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                zIndex: 9998,
-                pointerEvents: "auto"
+                position: "fixed", inset: 0, background: "rgba(10, 10, 14, 0.4)",
+                backdropFilter: "blur(4px)", zIndex: 9998, pointerEvents: "auto"
               }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
             />
-
-            {/* Premium Mobile Dock Panel */}
             <motion.div
               className="pnx-mobile-sheet"
-              initial={{ y: 200, opacity: 0, scale: 0.95 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 200, opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 40 }}
             >
-              {/* Header section with diagnostics */}
-              <div className="pnx-mobile-header">
-                <div>
-                  <h4 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#0f0f0f' }}>Pathora System Panel</h4>
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.65rem', color: '#6b7280', marginTop: 2 }}>Recruiter Intelligence Core</p>
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.15)', padding: '4px 10px', borderRadius: 100 }}>
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#8b5cf6', position: 'relative' }}>
-                    <div className="pnx-telemetry-pulse" />
-                  </div>
-                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, color: '#8b5cf6', fontWeight: 'bold' }}>SYSTEM OPERATIONAL</span>
-                </div>
+              <button className="pnx-mobile-close" onClick={() => setMenuOpen(false)}>
+                <X size={24} />
+              </button>
+
+              <div className="pnx-mobile-nav-col">
+                {TOP_NAV.map(item => (
+                  <Link key={item.label} to={item.to} className="pnx-mobile-link" onClick={(e) => {
+                    if(item.isPredict) handlePredictClick(e);
+                    setMenuOpen(false);
+                  }}>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
 
-              {/* Segmented Navigation Cards */}
-              <div className="pnx-mobile-nav-grid">
-                {NAV_ITEMS.map((item) => {
-                  const isActive = location.pathname === item.to;
-                  return (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      onClick={(e) => {
+              <div className="pnx-mobile-acc-group">
+                {DROPDOWN_SECTIONS.map(section => (
+                  <div key={section.title}>
+                    <div className="pnx-mobile-acc-header">{section.title}</div>
+                    {section.items.map(link => (
+                      <Link key={link.label} to={link.to} className="pnx-mobile-acc-item" onClick={(e) => {
+                        if(link.isPredict) handlePredictClick(e);
                         setMenuOpen(false);
-                        if (item.isPredict) handlePredictClick(e);
-                        if (item.isRoadmap) handleRoadmapsClick(e);
-                      }}
-                      className={`pnx-mobile-nav-card ${isActive ? "active" : ""}`}
-                    >
-                      <span className="pnx-mobile-nav-label">{item.label}</span>
-                      <span className="pnx-mobile-nav-desc">
-                        {item.label === "Home" && "Gateway Hub"}
-                        {item.label === "Predict" && "ATS Scanner"}
-                        {item.label === "Assistant" && "Interactive Guide"}
-                        {item.label === "Plans" && "Pricing Tier"}
-                        {item.label === "About" && "Our Mission"}
-                        {item.label === "Contact" && "Get In Touch"}
-                      </span>
-                    </Link>
-                  );
-                })}
-
-                {/* Additional Platform Features in Mobile Menu */}
-                <Link to="/quiz" onClick={() => setMenuOpen(false)} className="pnx-mobile-nav-card">
-                  <span className="pnx-mobile-nav-label">Quiz</span>
-                  <span className="pnx-mobile-nav-desc">Assessments</span>
-                </Link>
-                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="pnx-mobile-nav-card">
-                  <span className="pnx-mobile-nav-label">Dashboard</span>
-                  <span className="pnx-mobile-nav-desc">Performance Center</span>
-                </Link>
-                <Link to="/settings" onClick={() => setMenuOpen(false)} className="pnx-mobile-nav-card">
-                  <span className="pnx-mobile-nav-label">Settings</span>
-                  <span className="pnx-mobile-nav-desc">Preferences</span>
-                </Link>
-                <Link to="/admin" onClick={() => setMenuOpen(false)} className="pnx-mobile-nav-card">
-                  <span className="pnx-mobile-nav-label">Admin</span>
-                  <span className="pnx-mobile-nav-desc">Console Configuration</span>
-                </Link>
-                
-                {/* Profile Card Action */}
-                {user ? (
-                  <div 
-                    className="pnx-mobile-nav-card" 
-                    onClick={() => { executeLogout(); setMenuOpen(false); }}
-                    style={{ background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.1)', gridColumn: 'span 2' }}
-                  >
-                    <span className="pnx-mobile-nav-label" style={{ color: '#ef4444' }}>Disconnect Session</span>
-                    <span className="pnx-mobile-nav-desc">Sign Out ({user.email})</span>
+                      }}>
+                        {link.label}
+                      </Link>
+                    ))}
                   </div>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={() => setMenuOpen(false)}
-                    className="pnx-mobile-nav-card"
-                    style={{ background: '#0f0f0f', borderColor: '#0f0f0f', gridColumn: 'span 2' }}
-                  >
-                    <span className="pnx-mobile-nav-label" style={{ color: '#fff' }}>Access Platform</span>
-                    <span className="pnx-mobile-nav-desc" style={{ color: 'rgba(255,255,255,0.6)' }}>Sign In</span>
-                  </Link>
-                )}
+                ))}
               </div>
             </motion.div>
           </>

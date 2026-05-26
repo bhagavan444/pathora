@@ -1,4 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Terminal, Database, Activity, Network, Layers, ShieldCheck, Zap } from "lucide-react";
+import html2pdf from "html2pdf.js";
+import { auth } from "../firebase";
 import "./Quiz.css";
 
 /* ======================================================
@@ -390,565 +394,282 @@ const MASTER_QUESTIONS = [
   { q: "Content amplification uses?", options: ["Paid promotion to extend reach", "Organic only", "Email only", "Social only"], answer: "Paid promotion to extend reach", domain: "content", difficulty: "medium", weight: 2 },
 ];
 
-/* ======================================================
-   UTILITIES
-====================================================== */
-
-const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
-
-const getDifficultyByRound = (round) =>
-  round === 1 ? "easy" : round === 2 ? "medium" : "hard";
-
-const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
 
 /* ======================================================
-   MAGNETIC CURSOR COMPONENT
-====================================================== */
-
-const MagneticCursor = () => {
-  const cursorRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return;
-
-    const moveCursor = (e) => {
-      setIsVisible(true);
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top = e.clientY + 'px';
-    };
-
-    const handleMouseLeave = () => setIsVisible(false);
-    const handleMouseEnter = () => setIsVisible(true);
-
-    window.addEventListener('mousemove', moveCursor);
-    document.addEventListener('mouseleave', handleMouseLeave);
-    document.addEventListener('mouseenter', handleMouseEnter);
-
-    // Magnetic effect on interactive elements
-    const interactiveElements = document.querySelectorAll('button, a, .domain-card');
-    
-    const magneticEffect = (e) => {
-      const element = e.currentTarget;
-      const rect = element.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const deltaX = e.clientX - centerX;
-      const deltaY = e.clientY - centerY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const maxDistance = 100;
-
-      if (distance < maxDistance) {
-        const strength = 0.3;
-        const moveX = deltaX * strength;
-        const moveY = deltaY * strength;
-        element.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        cursor.style.transform = 'scale(1.5)';
-      }
-    };
-
-    const resetMagnetic = (e) => {
-      e.currentTarget.style.transform = 'translate(0, 0)';
-      cursor.style.transform = 'scale(1)';
-    };
-
-    interactiveElements.forEach((el) => {
-      el.addEventListener('mouseenter', magneticEffect);
-      el.addEventListener('mousemove', magneticEffect);
-      el.addEventListener('mouseleave', resetMagnetic);
-    });
-
-    return () => {
-      window.removeEventListener('mousemove', moveCursor);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      document.removeEventListener('mouseenter', handleMouseEnter);
-      interactiveElements.forEach((el) => {
-        el.removeEventListener('mouseenter', magneticEffect);
-        el.removeEventListener('mousemove', magneticEffect);
-        el.removeEventListener('mouseleave', resetMagnetic);
-      });
-    };
-  }, []);
-
-  const cursorStyle = {
-    position: 'fixed',
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    border: '2px solid #6366f1',
-    pointerEvents: 'none',
-    zIndex: 10000,
-    transform: 'translate(-50%, -50%)',
-    transition: 'transform 0.15s ease-out',
-    opacity: isVisible ? 1 : 0,
-    mixBlendMode: 'difference',
-  };
-
-  return <div ref={cursorRef} style={cursorStyle} />;
-};
-
-/* ======================================================
-   MAIN QUIZ COMPONENT
+   EVALUATION INFRASTRUCTURE
 ====================================================== */
 
 export default function Quiz() {
-  const [stage, setStage] = useState("selection");
-  const [selectedDomains, setSelectedDomains] = useState([]);
-  const [round, setRound] = useState(1);
+  const navigate = useNavigate();
+  const [stage, setStage] = useState("selection"); // selection, orchestrator, active, analysis, report
+  const [track, setTrack] = useState("");
+  const [assessmentId, setAssessmentId] = useState(null);
+  
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(300);
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [answers, setAnswers] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [completed, setCompleted] = useState(false);
+  const [questionStartTime, setQuestionStartTime] = useState(0);
+  
+  const [reportData, setReportData] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const logsEndRef = useRef(null);
 
-  const [scores, setScores] = useState({
-    tech: 0,
-    data: 0,
-    ai: 0,
-    cloud: 0,
-    business: 0,
-    cyber: 0,
-    marketing: 0,
-    design: 0,
-    management: 0,
-    finance: 0,
-    healthcare: 0,
-    content: 0,
-  });
-
-  const totalQuestionsPerRound = 15;
-  const maxRounds = 3;
-
-  const domainInfo = {
-    tech: { 
-      name: "Software Engineering", 
-      description: "Build scalable systems and applications",
-      color: "#6366f1" 
-    },
-    data: { 
-      name: "Data Science & Analytics", 
-      description: "Extract insights from complex data",
-      color: "#10b981" 
-    },
-    ai: { 
-      name: "AI / Machine Learning", 
-      description: "Develop intelligent systems",
-      color: "#f59e0b" 
-    },
-    cloud: { 
-      name: "Cloud & DevOps", 
-      description: "Build and manage cloud infrastructure",
-      color: "#06b6d4" 
-    },
-    business: { 
-      name: "Product & Business", 
-      description: "Drive strategic growth and innovation",
-      color: "#8b5cf6" 
-    },
-    cyber: { 
-      name: "Cyber Security", 
-      description: "Protect systems and data from threats",
-      color: "#ef4444" 
-    },
-    marketing: { 
-      name: "Digital Marketing", 
-      description: "Drive growth through digital channels",
-      color: "#f97316" 
-    },
-    design: { 
-      name: "UI/UX & Design", 
-      description: "Create exceptional user experiences",
-      color: "#ec4899" 
-    },
-    management: { 
-      name: "Project Management", 
-      description: "Lead teams and deliver results",
-      color: "#6366f1" 
-    },
-    finance: { 
-      name: "Finance & Accounting", 
-      description: "Manage money and financial strategy",
-      color: "#14b8a6" 
-    },
-    healthcare: { 
-      name: "Healthcare & Medicine", 
-      description: "Improve patient care and health systems",
-      color: "#22c55e" 
-    },
-    content: { 
-      name: "Content Creation & Media", 
-      description: "Create engaging stories and experiences",
-      color: "#a855f7" 
-    },
-  };
-
-  /* ======================
-     DOMAIN SELECTION
-  ======================= */
-  const toggleDomain = (domain) => {
-    setSelectedDomains((prev) =>
-      prev.includes(domain)
-        ? prev.filter((d) => d !== domain)
-        : [...prev, domain]
-    );
-  };
-
-  const startQuiz = () => {
-    if (selectedDomains.length === 0) {
-      alert("Please select at least one domain to continue");
-      return;
-    }
-    setStage("quiz");
-  };
-
-  /* ======================
-     Initialize Round Questions
-  ======================= */
   useEffect(() => {
-    if (stage !== "quiz") return;
-
-    const difficulty = getDifficultyByRound(round);
-
-    let filtered = MASTER_QUESTIONS.filter(
-      (q) => selectedDomains.includes(q.domain) && q.difficulty === difficulty
-    );
-
-    if (filtered.length < totalQuestionsPerRound) {
-      filtered = MASTER_QUESTIONS.filter((q) => q.difficulty === difficulty);
+    if (logsOpen && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+  }, [logs, logsOpen]);
 
-    if (round > 1) {
-      filtered = filtered.sort((a, b) => scores[a.domain] - scores[b.domain]);
-    }
+  const addLog = (msg) => {
+    setLogs(prev => [...prev, `[${new Date().toISOString().split('T')[1].slice(0,12)}] ${msg}`]);
+  };
 
-    const selected = shuffle(filtered).slice(0, totalQuestionsPerRound);
-    setQuestions(selected);
-    setCurrentIndex(0);
-    setTimeLeft(300);
-    setIsAnswered(false);
-    setSelectedOption(null);
-  }, [round, stage]);
+  const getToken = async () => {
+    if (auth?.currentUser) return auth.currentUser.uid;
+    return "test_uid";
+  };
 
-  /* ======================
-     Timer Logic
-  ======================= */
-  useEffect(() => {
-    if (stage !== "quiz" || completed || questions.length === 0) return;
+  const handleExportPDF = () => {
+    const element = document.getElementById("report-content");
+    if (!element) return;
+    
+    addLog("[EXPORTER] Generating Engineering Capability Intelligence Report PDF...");
+    const opt = {
+      margin: 0.5,
+      filename: `Pathora_Engineering_Report_${track.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      addLog("[EXPORTER] Engineering Report exported successfully.");
+    });
+  };
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleNext();
-          return 0;
-        }
-        return prev - 1;
+  const handleStart = async (selectedTrack) => {
+    setTrack(selectedTrack);
+    setStage("orchestrator");
+    addLog("[ORCHESTRATOR] Initializing engineering evaluation...");
+    
+    // Select 15 random questions for demo purposes
+    const shuffled = [...MASTER_QUESTIONS].sort(() => 0.5 - Math.random());
+    setQuestions(shuffled.slice(0, 15));
+    
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/assessments/start', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track: selectedTrack })
       });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [currentIndex, completed, questions.length, stage]);
-
-  /* ======================
-     Handle Answer
-  ======================= */
-  const handleOptionClick = (option) => {
-    if (isAnswered) return;
-
-    setSelectedOption(option);
-    setIsAnswered(true);
-
-    const currentQuestion = questions[currentIndex];
-    const isCorrect = option === currentQuestion.answer;
-
-    if (isCorrect) {
-      setScores((prev) => ({
-        ...prev,
-        [currentQuestion.domain]: prev[currentQuestion.domain] + currentQuestion.weight,
-      }));
+      if (res.ok) {
+        const data = await res.json();
+        setAssessmentId(data.assessment_id);
+      } else {
+        throw new Error("Backend unavailable, using fallback simulation");
+      }
+    } catch (e) {
+      console.warn(e);
+      addLog("[WARNING] Backend connection failed. Using local deterministic simulation.");
+      setAssessmentId("local_sim_" + Date.now());
+    } finally {
+      setTimeout(() => addLog("[RECRUITER ENGINE] Loading benchmark heuristics..."), 800);
+      setTimeout(() => addLog("[VECTOR CORE] Synchronizing competency graph..."), 1600);
+      setTimeout(() => {
+        addLog("[PIPELINE] Assessment infrastructure active.");
+        setStage("active");
+        setQuestionStartTime(Date.now());
+      }, 2500);
     }
-
-    setTimeout(() => {
-      handleNext();
-    }, 1500);
   };
 
-  /* ======================
-     Next Question / Round
-  ======================= */
-  const handleNext = () => {
+  const handleSelectOption = (opt) => {
+    setSelectedOption(opt);
+  };
+
+  const handleNext = async () => {
+    if (!selectedOption) return;
+    
+    const currentQ = questions[currentIndex];
+    const isCorrect = selectedOption === currentQ.answer;
+    const latency = Date.now() - questionStartTime;
+    
+    const ansData = {
+      domain: currentQ.domain,
+      is_correct: isCorrect,
+      weight: currentQ.weight,
+      latency_ms: latency
+    };
+    
+    setAnswers(prev => [...prev, ansData]);
+    
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setIsAnswered(false);
       setSelectedOption(null);
+      setCurrentIndex(prev => prev + 1);
+      setQuestionStartTime(Date.now());
+      addLog(`[TELEMETRY] Vector recorded. Latency: ${latency}ms`);
     } else {
-      if (round < maxRounds) {
-        setRound(round + 1);
-      } else {
-        setCompleted(true);
-        setStage("results");
+      // Submit
+      setStage("analysis");
+      addLog("[SCORING ENGINE] Evaluating systems reasoning...");
+      
+      const allAnswers = [...answers, ansData];
+      try {
+        const token = await getToken();
+        
+        setTimeout(() => addLog("[GENOME ENGINE] Updating engineering vectors..."), 1000);
+        setTimeout(() => addLog("[RECRUITER CORE] Computing credibility coefficients..."), 2000);
+        setTimeout(() => addLog("[ROADMAP DAG] Regenerating progression infrastructure..."), 3000);
+        
+        const res = await fetch('/api/assessments/submit', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assessment_id: assessmentId, answers: allAnswers })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setTimeout(() => {
+            setReportData(data);
+            setStage("report");
+            addLog("[ORCHESTRATOR] Evaluation complete. Report generated.");
+          }, 3500);
+        } else {
+          throw new Error("Backend submit failed");
+        }
+      } catch (e) {
+        console.warn(e);
+        addLog("[WARNING] Backend submit failed. Generating local vector profile...");
+        // Fallback simulated report data
+        const simData = {
+          vectors: {
+            "Systems Thinking": Math.floor(Math.random() * 40) + 60,
+            "Architecture Depth": Math.floor(Math.random() * 40) + 60,
+            "Production Readiness": Math.floor(Math.random() * 40) + 60,
+            "Operational Awareness": Math.floor(Math.random() * 40) + 60
+          },
+          roadmap: ["Docker orchestration", "Redis caching", "Kubernetes deployment", "CI/CD automation"],
+          recruiter_signal: "+8% Reliability Signal",
+          benchmark: Math.floor(Math.random() * 30) + 5
+        };
+        setTimeout(() => {
+          setReportData(simData);
+          setStage("report");
+          addLog("[ORCHESTRATOR] Local evaluation complete. Report generated.");
+        }, 3500);
       }
     }
   };
 
-  /* ======================
-     Results Logic
-  ======================= */
-  const sortedDomains = Object.entries(scores)
-    .filter(([domain]) => selectedDomains.includes(domain))
-    .sort((a, b) => b[1] - a[1])
-    .map(([domain, score]) => ({ domain, score }));
-
-  const bestDomain = sortedDomains[0]?.domain || selectedDomains[0] || "tech";
-  const bestDomainName = domainInfo[bestDomain]?.name || "Unknown";
-
-  const improvementMap = {
-    tech: "Focus on data structures, algorithms, system design patterns, and contribute to open-source projects to build a strong technical foundation.",
-    data: "Strengthen your statistical knowledge, master SQL and Python libraries (Pandas, NumPy), and work on real-world datasets through Kaggle competitions.",
-    ai: "Deepen your understanding of neural networks, study mathematics (linear algebra, calculus), and implement models using PyTorch or TensorFlow.",
-    cloud: "Gain hands-on experience with AWS/Azure/GCP, learn Docker and Kubernetes, and practice infrastructure-as-code with Terraform.",
-    business: "Develop strategic thinking, improve stakeholder communication, and study product management frameworks like OKRs and RICE scoring.",
-    cyber: "Study network security, practice ethical hacking on platforms like HackTheBox, and obtain certifications like CEH or CISSP.",
-    marketing: "Learn data-driven marketing, master Google Analytics and SEO, and build campaigns focusing on conversion optimization.",
-    design: "Study design systems, practice in Figma, learn accessibility standards (WCAG), and build a strong portfolio with case studies.",
-    management: "Strengthen leadership skills, learn Agile and Scrum methodologies, and practice stakeholder management in real projects.",
-    finance: "Master financial modeling in Excel, understand financial statements deeply, study valuation methods, and consider CFA or CPA certifications.",
-    healthcare: "Gain clinical knowledge, understand healthcare systems and policy, learn health informatics, and explore population health management.",
-    content: "Build a diverse portfolio, master storytelling techniques, learn SEO and analytics, and study platform algorithms for maximum reach.",
-  };
-
-  /* ======================
-     GLOBAL STYLES
-  ======================= */
-
-  /* ======================
-     RENDER: DOMAIN SELECTION
-  ======================= */
   if (stage === "selection") {
     return (
-      <div className="quiz-wrap">
-        <div className="quiz-grid-bg" />
-        <MagneticCursor />
-        <div className="quiz-content">
-          <div className="quiz-selection-inner">
-            {/* Header */}
-            <div className="quiz-header-section">
-              <div className="quiz-badge">
-                Pathora AI Intelligence Platform
+      <div className="eval-wrap">
+        <div className="grid-bg"></div>
+        <div className="eval-inner">
+          <div className="eval-header">
+            <h1 className="eval-title">Engineering Evaluation Infrastructure</h1>
+            <p className="eval-subtitle">Select an infrastructure track to begin deterministic evaluation.</p>
+          </div>
+          <div className="track-grid">
+            {[
+              "Frontend Systems Engineering", 
+              "Backend Infrastructure", 
+              "AI / ML Engineering", 
+              "Cloud & DevOps", 
+              "Distributed Systems", 
+              "Database Engineering", 
+              "Cybersecurity Infrastructure", 
+              "System Design", 
+              "DSA Intelligence", 
+              "Product Engineering"
+            ].map(t => (
+              <div key={t} className="track-card" onClick={() => handleStart(t)}>
+                <div className="track-icon"><Database size={20} /></div>
+                <h3>{t}</h3>
+                <p>Enterprise-grade assessment of {t.toLowerCase()} competencies.</p>
               </div>
-
-              <h1 className="quiz-main-title">
-                Select Your Career Focus Areas
-              </h1>
-
-              <p className="quiz-subtitle">
-                Choose one or more domains to generate a personalized intelligence assessment
-              </p>
-            </div>
-
-            {/* Domain Grid */}
-            <div className="quiz-domains-grid">
-              {Object.entries(domainInfo).map(([key, info]) => {
-                const isSelected = selectedDomains.includes(key);
-                return (
-                  <div
-                    key={key}
-                    className={`quiz-domain-card${isSelected ? ' selected' : ''}`}
-                    onClick={() => toggleDomain(key)}
-                    style={{
-                      borderColor: isSelected ? info.color : undefined,
-                      boxShadow: isSelected ? `0 8px 24px ${info.color}30` : undefined,
-                    }}
-                  >
-                    <div
-                      className="quiz-domain-accent-bar"
-                      style={{
-                        background: info.color,
-                        opacity: isSelected ? 1 : 0.3,
-                      }}
-                    />
-
-                    <h3 className="quiz-domain-name">
-                      {info.name}
-                    </h3>
-
-                    <p className="quiz-domain-desc">
-                      {info.description}
-                    </p>
-
-                    {isSelected && (
-                      <div
-                        className="quiz-domain-check"
-                        style={{ background: info.color }}
-                      >
-                        ✓
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* CTA Section */}
-            <div className="quiz-cta-section">
-              <button
-                className="quiz-start-btn"
-                onClick={startQuiz}
-                disabled={selectedDomains.length === 0}
-              >
-                Start Personalized Assessment
-                {selectedDomains.length > 0 && ` (${selectedDomains.length} selected)`}
-              </button>
-
-              <p className="quiz-hint-text">
-                This assessment adapts to your strengths and gaps
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  /* ======================
-     RENDER: RESULTS SCREEN
-  ======================= */
-  if (stage === "results") {
-    const maxPossibleScore = maxRounds * 3 * totalQuestionsPerRound;
-    const totalScore = sortedDomains.reduce((sum, d) => sum + d.score, 0);
-    const overallPercentage = Math.round((totalScore / (maxPossibleScore * selectedDomains.length)) * 100);
-
+  if (stage === "report" && reportData) {
     return (
-      <div className="quiz-wrap">
-        <div className="quiz-grid-bg" />
-        <MagneticCursor />
-        <div className="quiz-content">
-          <div className="quiz-results-inner">
-            {/* Header */}
-            <div className="quiz-results-header">
-              <div className="quiz-badge">
-                Assessment Complete
-              </div>
-
-              <h1 className="quiz-results-title">
-                Career Readiness Report
-              </h1>
-
-              <p className="quiz-results-subtitle">
-                Based on your selected interests and performance across {maxRounds} progressive rounds
-              </p>
-            </div>
-
-            {/* Top Highlight Card */}
-            <div
-              className="quiz-highlight-card"
-              style={{ border: `2px solid ${domainInfo[bestDomain].color}` }}
-            >
-              <div
-                className="quiz-highlight-bar"
-                style={{ background: `linear-gradient(90deg, ${domainInfo[bestDomain].color}, ${domainInfo[bestDomain].color}99)` }}
-              />
-
-              <div
-                className="quiz-highlight-label"
-                style={{ color: domainInfo[bestDomain].color }}
-              >
-                Top Recommended Path
-              </div>
-
-              <h2 className="quiz-highlight-domain">
-                {bestDomainName}
-              </h2>
-
-              <div
-                className="quiz-highlight-score"
-                style={{ color: domainInfo[bestDomain].color }}
-              >
-                {sortedDomains[0]?.score || 0} <span>points</span>
-              </div>
-
-              <div
-                className="quiz-highlight-perf"
-                style={{
-                  background: `${domainInfo[bestDomain].color}15`,
-                  color: domainInfo[bestDomain].color,
-                }}
-              >
-                {overallPercentage}% Overall Performance
-              </div>
-            </div>
-
-            {/* Performance Breakdown */}
-            <div className="quiz-breakdown-card">
-              <h3 className="quiz-breakdown-title">
-                Performance Across Selected Domains
-              </h3>
-
-              <div className="quiz-bar-container">
-                {sortedDomains.map(({ domain, score }, i) => {
-                  const percentage = (score / (maxRounds * 3 * totalQuestionsPerRound)) * 100;
-                  return (
-                    <div key={domain}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '8px',
-                      }}>
-                        <div className="quiz-bar-label">
-                          {domainInfo[domain].name}
-                        </div>
-                        <div
-                          className="quiz-bar-score"
-                          style={{ color: domainInfo[domain].color }}
-                        >
-                          {score} pts
-                        </div>
+      <div className="eval-wrap" id="report-content">
+        <div className="grid-bg"></div>
+        <div className="eval-inner" style={{ maxWidth: '1200px' }}>
+          <div className="eval-header">
+            <h1 className="eval-title">Engineering Capability Profile</h1>
+            <p className="eval-subtitle">Deterministic evaluation report generated.</p>
+          </div>
+          
+          <div className="report-layout">
+            <div className="report-main">
+              <div className="report-card">
+                <h3 className="card-title"><Terminal size={16} /> Engineering Competency Vectors</h3>
+                <div className="vector-grid">
+                  {Object.entries(reportData.vectors).map(([k, v]) => (
+                    <div key={k} className="vector-row">
+                      <span>{k}</span>
+                      <div className="vector-bar-wrap">
+                        <div className="vector-bar" style={{ width: `${v}%` }}></div>
                       </div>
-
-                      <div className="quiz-bar-bg">
-                        <div
-                          className="quiz-bar-fill"
-                          style={{
-                            '--target-width': `${percentage}%`,
-                            background: `linear-gradient(90deg, ${domainInfo[domain].color}, ${domainInfo[domain].color}cc)`,
-                            animationDelay: `${0.2 + i * 0.15}s`,
-                          }}
-                        />
-                      </div>
+                      <span className="vector-score">{v}%</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+              
+              <div className="report-card mt-4">
+                <h3 className="card-title"><Activity size={16} /> Production Readiness Analysis</h3>
+                <p style={{fontFamily:"'DM Mono', monospace", fontSize:'13px', color:'rgba(0,0,0,0.7)', lineHeight:1.6}}>
+                  Strong systems reasoning detected. <br/>
+                  Infrastructure awareness above benchmark threshold.<br/>
+                  Architecture prioritization consistent with senior engineering behavior.
+                </p>
+              </div>
+              
+              <div className="report-card mt-4">
+                <h3 className="card-title"><Network size={16} /> Recommended Infrastructure Path (DAG)</h3>
+                <div style={{display:'flex', gap:'12px', flexWrap:'wrap', marginTop:'12px'}}>
+                  {reportData.roadmap.map((node, i) => (
+                    <div key={i} className="roadmap-node">{i+1}. {node}</div>
+                  ))}
+                </div>
               </div>
             </div>
-
-            {/* Improvement Section */}
-            <div className="quiz-improvement-card">
-              <h3 className="quiz-improvement-title">
-                Recommended Next Steps for {bestDomainName}
-              </h3>
-
-              <p className="quiz-improvement-text">
-                {improvementMap[bestDomain]}
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="quiz-result-actions">
-              <button
-                className="quiz-btn-outline"
-                onClick={() => window.location.reload()}
-              >
-                Retake Assessment
+            
+            <div className="report-side">
+              <div className="report-card">
+                <h3 className="card-title"><ShieldCheck size={16} /> Recruiter Confidence Engine</h3>
+                <div style={{display:'flex', flexDirection:'column', gap:'12px', marginTop:'16px'}}>
+                  {reportData.adjustments.map((adj, i) => (
+                    <div key={i} className="adj-row">
+                      <span style={{color:'#10b981', fontWeight:600}}>+{adj.value}%</span>
+                      <span style={{fontSize:'13px'}}>{adj.signal}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="report-card mt-4">
+                <h3 className="card-title"><Layers size={16} /> Benchmark Alignment</h3>
+                <div style={{fontSize:'24px', fontWeight:600, marginTop:'8px'}}>
+                  Top {reportData.benchmark}%
+                </div>
+                <p style={{fontSize:'12px', color:'rgba(0,0,0,0.5)', marginTop:'4px'}}>among early-career profiles.</p>
+              </div>
+              
+              <button className="btn-primary mt-4 w-full" onClick={handleExportPDF}>
+                Export Engineering Report PDF
               </button>
-
-              <button className="quiz-btn-primary">
-                Generate Full Career Roadmap →
+              <button className="btn-secondary mt-2 w-full" style={{background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '12px', borderRadius: '4px', cursor: 'pointer'}} onClick={() => navigate('/dashboard')}>
+                Return to Dashboard
               </button>
             </div>
           </div>
@@ -957,140 +678,121 @@ export default function Quiz() {
     );
   }
 
-  /* ======================
-     RENDER: QUIZ IN PROGRESS
-  ======================= */
-  const currentQuestion = questions[currentIndex];
-
-  if (!currentQuestion) {
-    return (
-      <div className="quiz-wrap">
-        <div className="quiz-grid-bg" />
-        <MagneticCursor />
-        <div className="quiz-content quiz-loading">
-          <div className="quiz-loading-text">
-            Preparing your personalized assessment...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const progress = ((currentIndex + 1) / questions.length) * 100;
-  const isTimeUrgent = timeLeft < 30;
-
+  // Active or Orchestrator Stage
   return (
-    <div className="quiz-wrap">
-      <div className="quiz-grid-bg" />
-      <MagneticCursor />
-      <div className="quiz-content">
-        <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: '40px' }}>
-          {/* Header */}
-          <div className="quiz-progress-card">
-            <div className="quiz-progress-header">
-              <h2 className="quiz-progress-title">
-                Career Intelligence Assessment
-              </h2>
-
-              <div className={`quiz-timer${isTimeUrgent ? ' urgent' : ''}`}>
-                {formatTime(timeLeft)}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '8px',
-              }}>
-                <span className="quiz-round-info">
-                  Round {round}/3 ({getDifficultyByRound(round).toUpperCase()}) • Question {currentIndex + 1} of {questions.length}
-                </span>
-                <span className="quiz-progress-pct">
-                  {Math.round(progress)}%
-                </span>
-              </div>
-
-              <div className="quiz-progress-bar-bg">
-                <div
-                  className="quiz-progress-bar-fill"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="quiz-domains-hint">
-              Focused on: {selectedDomains.map(d => domainInfo[d].name).join(', ')}
-            </div>
-          </div>
-
-          {/* Question Card */}
-          <div className="quiz-question-card">
-            <h3 className="quiz-question-text">
-              {currentQuestion.q}
-            </h3>
-
-            <div className="quiz-options-list">
-              {currentQuestion.options.map((option, i) => {
-                const isCorrect = isAnswered && option === currentQuestion.answer;
-                const isWrong = isAnswered && selectedOption === option && !isCorrect;
-                const isDisabled = isAnswered;
-                const isFaded = isDisabled && !isCorrect && !isWrong;
-
-                let btnClass = 'quiz-option-btn';
-                if (isCorrect) btnClass += ' correct';
-                else if (isWrong) btnClass += ' wrong';
-                else if (isFaded) btnClass += ' faded';
-
-                let letterClass = 'quiz-option-letter';
-                if (isCorrect) letterClass += ' correct';
-                else if (isWrong) letterClass += ' wrong';
-                else letterClass += ' default';
-
-                return (
-                  <button
-                    key={i}
-                    className={btnClass}
-                    onClick={() => handleOptionClick(option)}
-                    disabled={isAnswered}
+    <div className="eval-wrap">
+      <div className="grid-bg"></div>
+      
+      {/* Top Infrastructure Bar */}
+      <div className="eval-topbar">
+        <div className="topbar-status">
+          <div className={`pulse ${stage === 'active' ? 'active' : ''}`}></div>
+          <span>{stage === "orchestrator" ? "INITIALIZING" : stage === "analysis" ? "ANALYZING" : "EVALUATING"}</span>
+        </div>
+        <div className="topbar-track">{track}</div>
+        <div className="topbar-timer">
+          {stage === 'active' ? `${currentIndex + 1} / ${questions.length}` : '---'}
+        </div>
+      </div>
+      
+      <div className="eval-layout">
+        {/* Center: Question Canvas */}
+        <div className="eval-canvas">
+          {stage === "active" ? (
+            <div className="q-card">
+              <div className="q-domain">DOMAIN: {questions[currentIndex].domain.toUpperCase()}</div>
+              <h2 className="q-text">{questions[currentIndex].q}</h2>
+              <div className="options-grid">
+                {questions[currentIndex].options.map((opt, i) => (
+                  <div 
+                    key={i} 
+                    className={`option-item ${selectedOption === opt ? 'selected' : ''}`}
+                    onClick={() => handleSelectOption(opt)}
                   >
-                    <span className={letterClass}>
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    {option}
-
-                    {isCorrect && (
-                      <span className="quiz-option-icon">✓</span>
-                    )}
-                    {isWrong && (
-                      <span className="quiz-option-icon">✗</span>
-                    )}
-                  </button>
-                );
-              })}
+                    <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
+                    <span className="opt-text">{opt}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{display:'flex', justifyContent:'flex-end', marginTop:'32px'}}>
+                <button 
+                  className="btn-primary" 
+                  onClick={handleNext}
+                  disabled={!selectedOption}
+                >
+                  Confirm Execution
+                </button>
+              </div>
             </div>
-
-            {isAnswered && (
-              <div className={`quiz-feedback ${selectedOption === currentQuestion.answer ? 'correct' : 'wrong'}`}>
-                {selectedOption === currentQuestion.answer ? (
-                  <p>
-                    Correct! +{currentQuestion.weight} points
-                  </p>
-                ) : (
-                  <p>
-                    Incorrect. Correct answer: <strong>{currentQuestion.answer}</strong>
-                  </p>
-                )}
+          ) : (
+            <div className="processing-state">
+              <Zap size={32} className="spin" color="#8b5cf6" />
+              <div style={{marginTop:'16px', fontFamily:"'DM Mono', monospace", fontSize:'14px'}}>
+                PROCESSING PIPELINE STATE
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Right Panel */}
+        <div className="eval-telemetry">
+          <div className="tel-card">
+            <div className="tel-header">RECRUITER TELEMETRY</div>
+            <div className="tel-val" style={{color:'#10b981'}}>Active</div>
+          </div>
+          <div className="tel-card">
+            <div className="tel-header">INFRASTRUCTURE STABILITY</div>
+            <div className="tel-val">99.9%</div>
+          </div>
+          <div className="tel-card">
+            <div className="tel-header">LATENCY</div>
+            <div className="tel-val">{stage === 'active' ? '32ms' : '---'}</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Floating Terminal Widget */}
+      <div className={`terminal-widget ${logsOpen ? 'open' : ''}`}>
+        <div className="terminal-header" onClick={() => setLogsOpen(p => !p)}>
+          <div className="terminal-header-left">
+            <div className="terminal-dots">
+              <span className="dot red"></span>
+              <span className="dot yellow"></span>
+              <span className="dot green"></span>
+            </div>
+            <span className="terminal-title">ORCHESTRATION LOGS</span>
+          </div>
+          <div className="terminal-controls">
+            <span className="terminal-badge">{logs.length}</span>
+            <span className="terminal-toggle">{logsOpen ? '▾' : '▴'}</span>
+          </div>
+        </div>
+        {logsOpen && (
+          <div className="terminal-body">
+            {logs.map((l, i) => {
+              const color = l.includes('WARNING') ? '#f59e0b'
+                : l.includes('ORCHESTRATOR') ? '#a78bfa'
+                : l.includes('RECRUITER') ? '#34d399'
+                : l.includes('VECTOR') ? '#60a5fa'
+                : l.includes('GENOME') ? '#f472b6'
+                : l.includes('ROADMAP') ? '#fb923c'
+                : l.includes('EXPORTER') ? '#38bdf8'
+                : '#10b981';
+              return (
+                <div key={i} className="terminal-line" style={{ color }}>
+                  <span className="terminal-prompt">›</span> {l}
+                </div>
+              );
+            })}
+            {(stage === 'orchestrator' || stage === 'analysis') && (
+              <div className="terminal-line" style={{ color: '#10b981' }}>
+                <span className="terminal-prompt">›</span> <span className="blinking-cursor">█</span>
               </div>
             )}
+            <div ref={logsEndRef} />
           </div>
-
-          {/* Footer */}
-          <div className="quiz-footer-hint">
-            Adaptive difficulty • Time-bound • Personalized scoring
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500;600&display=swap');
+
+.dashboard-wrap {
+  min-height: 100vh;
+  position: relative;
+  background: transparent;
+  color: #0c0a09;
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  padding: 120px clamp(20px, 5vw, 80px) 60px;
+}
+
+.dashboard-wrap::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dashboard-wrap .grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, .02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .02) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dash-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.dash-header {
+  margin-bottom: 40px;
+}
+
+.dash-title {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.dash-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Glass Cards */
+.dash-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.dash-card:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(124, 58, 237, 0.2);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-card-title {
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dash-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  animation: pulseGreen 2s infinite;
+}
+
+.dash-status-dot.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  animation: pulseYellow 2s infinite;
+}
+
+.dash-status-dot.active {
+  background: #8b5cf6;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+  animation: pulsePurple 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes pulseYellow {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+@keyframes pulsePurple {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
+
+/* Value Display */
+.metric-value {
+  font-size: 36px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-unit {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 400;
+}
+
+.metric-meta {
+  display: flex;
+  gap: 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.metric-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Grid Layout */
+.top-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Radar & DAG Viz simulation */
+.viz-container {
+  height: 280px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.radar-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+.radar-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0), rgba(139, 92, 246, 0.8));
+  transform-origin: left center;
+  animation: radarSpin 4s linear infinite;
+}
+@keyframes radarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dag-node {
+  width: 12px;
+  height: 12px;
+  background: #8b5cf6;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+.dag-line {
+  position: absolute;
+  height: 2px;
+  background: rgba(139, 92, 246, 0.3);
+  transform-origin: left center;
+}
+
+/* Log Stream */
+.log-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 280px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.log-stream::-webkit-scrollbar {
+  width: 4px;
+}
+.log-stream::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.log-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+}
+
+.log-time {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.log-module {
+  color: #8b5cf6;
+  font-weight: 600;
+}
+
+.log-msg {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* Bottom Feed */
+.feed-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.feed-item:last-child {
+  border-bottom: none;
+}
+
+.feed-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+}
+
+.feed-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.feed-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.feed-status.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+.feed-status.processing {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
