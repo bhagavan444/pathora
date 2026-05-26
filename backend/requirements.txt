@@ -29,3 +29,4 @@ psycopg2-binary>=2.9.9
 # Utilities
 numpy>=1.24.0
 spacy>=3.7.2
+a2wsgi>=1.0.7
