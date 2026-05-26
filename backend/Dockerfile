@@ -24,4 +24,4 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-CMD ["gunicorn", "flask_app:app", "--workers", "2", "--worker-class", "gthread", "--threads", "4", "--timeout", "180", "--bind", "0.0.0.0:8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
