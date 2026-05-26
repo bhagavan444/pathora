@@ -496,7 +496,8 @@ const FileCard = React.memo(function FileCard({ file, onRemove, analyzing }) {
         }}>✕</button>
     </motion.div>
   );
-}
+});
+
 
 // ─── PLACEHOLDER ANIMATOR ──────────────────────────────────────────────────
 function useAnimatedPlaceholder() {
