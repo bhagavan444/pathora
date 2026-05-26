@@ -557,9 +557,3 @@
   }
 }
 
-/* Desktop Pointer Only */
-@media (pointer: fine) {
-  .login-container * {
-    cursor: none !important;
-  }
-}

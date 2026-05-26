@@ -16,90 +16,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import './Login.css';
 import './Home.css';
 
-/* ================= HIGH PERFORMANCE CUSTOM CURSOR ================= */
-const CustomCursor = memo(() => {
-  const cursorRef = useRef(null);
-  const isPointerFine = useRef(
-    typeof window !== "undefined" ? window.matchMedia("(pointer: fine)").matches : false
-  );
-
-  useEffect(() => {
-    if (!isPointerFine.current) return;
-
-    let cursorX = -100;
-    let cursorY = -100;
-    let targetX = -100;
-    let targetY = -100;
-    let animationFrameId;
-
-    const onMouseMove = (e) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
-      
-      const target = e.target;
-      if (cursorRef.current) {
-        if (
-          target.tagName.toLowerCase() === 'button' ||
-          target.tagName.toLowerCase() === 'a' ||
-          target.closest('button') ||
-          target.closest('a') ||
-          target.tagName.toLowerCase() === 'input'
-        ) {
-          cursorRef.current.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) scale(2.5)`;
-          cursorRef.current.style.backgroundColor = "transparent";
-          cursorRef.current.style.border = "1px solid var(--login-primary)";
-        } else {
-          cursorRef.current.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) scale(1)`;
-          cursorRef.current.style.backgroundColor = "var(--login-primary)";
-          cursorRef.current.style.border = "none";
-        }
-      }
-    };
-
-    const updateCursor = () => {
-      cursorX += (targetX - cursorX) * 0.2;
-      cursorY += (targetY - cursorY) * 0.2;
-
-      if (cursorRef.current) {
-        const currentTransform = cursorRef.current.style.transform;
-        const scaleMatch = currentTransform.match(/scale\(([^)]+)\)/);
-        const scale = scaleMatch ? scaleMatch[0] : "scale(1)";
-        cursorRef.current.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${scale}`;
-      }
-      animationFrameId = requestAnimationFrame(updateCursor);
-    };
-
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    animationFrameId = requestAnimationFrame(updateCursor);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  if (!isPointerFine.current) return null;
-
-  return (
-    <div
-      ref={cursorRef}
-      style={{
-        position: "fixed",
-        top: "-8px",
-        left: "-8px",
-        width: "16px",
-        height: "16px",
-        borderRadius: "50%",
-        backgroundColor: "var(--login-primary)",
-        pointerEvents: "none",
-        zIndex: 9999,
-        mixBlendMode: "difference",
-        transition: "width 0.2s, height 0.2s, background-color 0.2s, border 0.2s",
-      }}
-    />
-  );
-});
-
 /* ================= ANIMATION COMPONENT ================= */
 const FadeSection = ({ children, delay = 0, yOffset = 20, className = "" }) => {
   const prefersReducedMotion = useReducedMotion();
@@ -284,7 +200,7 @@ export default function Login({ handleLogin }) {
   /* ================= RENDER ================= */
   return (
     <div className="login-container home-wrap">
-      <CustomCursor />
+
       <div className="grid-bg" />
 
       {/* LEFT PANEL - BRAND SHOWCASE */}
