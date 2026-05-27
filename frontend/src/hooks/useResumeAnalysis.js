@@ -146,8 +146,11 @@ export function useResumeAnalysis() {
       let finalMessage = err.message || "Backend intelligence engine failed.";
       let errorType = "SERVER_CRASH";
       
-      // Specifically target network disconnects
-      if (err.message === "Network Error" || err.message === "Failed to fetch") {
+      // Specifically target network disconnects and Render 502/503
+      if (err.response?.status === 502 || err.response?.status === 503) {
+          errorType = "RENDER_BACKEND_OFFLINE";
+          finalMessage = `Render server returned ${err.response.status}. The Python backend is currently crashing on boot or hibernating. Please check Render Logs.`;
+      } else if (err.message === "Network Error" || err.message === "Failed to fetch") {
           errorType = "BACKEND_OFFLINE_OR_TIMEOUT";
           finalMessage = "Network connection failed or timed out. If deployed on a serverless/free tier, the backend may still be warming up. Please try again.";
       } else if (err.message.includes("API_ROUTE_NOT_FOUND")) {
